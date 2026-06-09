@@ -31,12 +31,6 @@ const trendData = [
   { month: "Aug", forecastIn: 114, forecastOut: 118 },
 ];
 
-const weekBands = [
-  { label: "Week 1–2", value: "+14% above avg", bg: "#fdecea", color: "#8b2e1a"       },
-  { label: "Week 3",   value: "+8% above avg",  bg: "#fdf6d8", color: "#7a6010"       },
-  { label: "Week 4",   value: "Near baseline",  bg: C.surfaceGreen, color: C.textSecondary },
-];
-
 const signals = [
   { name: "CPI food index elevated", level: "High",   bg: "#fdecea",      color: "#8b2e1a"       },
   { name: "Unemployment rising",     level: "High",   bg: "#fdecea",      color: "#8b2e1a"       },
@@ -67,7 +61,7 @@ function KpiCard({ icon, label, value, badge, badgeBg, badgeColor, valueSize = 2
       borderTop: `3px solid ${accent || C.jungleTeal}`,
       borderRadius: 12, padding: "16px 16px 14px",
     }}>
-      <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 7, display: "flex", alignItems: "center", gap: 5 }}>
+      <div style={{ fontSize: 13, color: C.textMuted, marginBottom: 7, display: "flex", alignItems: "center", gap: 5 }}>
         <i className={`ti ti-${icon}`} style={{ fontSize: 13 }} aria-hidden="true" />
         {label}
       </div>
@@ -101,31 +95,30 @@ const ChartTooltip = ({ active, payload, label }) => {
 
 export default function Dashboard() {
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: C.pageBg, overflow: "hidden" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: C.pageBg, overflow: "hidden", maxWidth: "100%"}}>
 
       {/* Header */}
       <header style={{ padding: "32px 28px 24px", background: C.pageBg, flexShrink: 0 }}>
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
           <div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: C.forestGreen, marginBottom: 5 }}>
+            <div style={{ fontSize: 25, fontWeight: 700, color: C.forestGreen, marginBottom: 15 }}>
               Dashboard overview
             </div>
-            <div style={{ fontSize: 13, color: C.textMuted, maxWidth: 560, lineHeight: 1.6 }}>
-              Visualizations reflect synthetic data modelled on realistic food bank demand and
-              supply patterns. Intended for awareness and planning — not raw operational data.
-            </div>
-          </div>
-          {/* Demand alert pill */}
-          <div style={{
+            <div style={{
             display: "flex", alignItems: "center", gap: 6, flexShrink: 0,
             background: "#fdecea", color: "#8b2e1a",
             fontSize: 12, fontWeight: 500,
-            padding: "7px 13px", borderRadius: 8,
+            padding: "7px 13px", borderRadius: 7,
             border: "0.5px solid #e8a090", marginTop: 4,
           }}>
             <i className="ti ti-alert-triangle" style={{ fontSize: 13 }} aria-hidden="true" />
             High demand forecast — June 2026
           </div>
+          </div>
+          {/* Demand alert pill */}
+          <div style={{ fontSize: 14, color: C.textMuted, maxWidth: 560, lineHeight: 1.6, marginTop:10 }}>
+              Visualizations reflect synthetic data modelled on realistic food bank demand and supply patterns, not raw operational data.
+            </div>
         </div>
       </header>
 
@@ -159,13 +152,13 @@ export default function Dashboard() {
             background: C.surfaceWhite, border: `0.5px solid ${C.borderLight}`,
             borderRadius: 12, padding: 20,
           }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: C.textPrimary, marginBottom: 3 }}>
+            <div style={{ fontSize: 18, fontWeight: 600, color: C.textPrimary, marginBottom: 3 }}>
               Supply &amp; demand trend
             </div>
-            <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 16 }}>
-              Indexed to baseline (100 = monthly avg) · Jan–May actual, Jun–Aug forecast · no raw volumes shown
+            <div style={{ fontSize: 12, color: C.textMuted, marginBottom: 16 }}>
+              Indexed to baseline (100 = monthly avg) · Jan–May actual, Jun–Aug forecast 
             </div>
-            <ResponsiveContainer width="100%" height={200}>
+            <ResponsiveContainer width="100%" height={230}>
               <AreaChart data={trendData} margin={{ top: 4, right: 12, bottom: 0, left: -20 }}>
                 <defs>
                   <linearGradient id="inGrad" x1="0" y1="0" x2="0" y2="1">
@@ -184,10 +177,10 @@ export default function Dashboard() {
                 <ReferenceLine y={100} stroke={C.wheat} strokeDasharray="4 2" />
                 {/* Actuals */}
                 <Area type="monotone" dataKey="inbound"     name="Donations (actual)"  stroke={C.jungleTeal} strokeWidth={2.5} fill="url(#inGrad)"  dot={{ r: 3 }} connectNulls={false} />
-                <Area type="monotone" dataKey="outbound"    name="Demand (actual)"     stroke={C.wheat}      strokeWidth={2.5} fill="url(#outGrad)" dot={{ r: 3 }} strokeDasharray="5 3" connectNulls={false} />
+                <Area type="monotone" dataKey="outbound"    name="Demand (actual)"     stroke={C.wheat}      strokeWidth={2.5} fill="url(#outGrad)" dot={{ r: 3 }} connectNulls={false} />
                 {/* Forecasts */}
-                <Area type="monotone" dataKey="forecastIn"  name="Donations (forecast)" stroke={C.jungleTeal} strokeWidth={1.5} fill="none" dot={{ r: 2.5 }} strokeDasharray="6 4" connectNulls />
-                <Area type="monotone" dataKey="forecastOut" name="Demand (forecast)"    stroke={C.wheat}      strokeWidth={1.5} fill="none" dot={{ r: 2.5 }} strokeDasharray="6 4" connectNulls />
+                <Area type="monotone" dataKey="forecastIn"  name="Donations (forecast)" stroke={"#8b2e1a"} strokeWidth={2.5} fill="none" dot={{ r: 2.5 }} strokeDasharray="6 4" connectNulls />
+                <Area type="monotone" dataKey="forecastOut" name="Demand (forecast)"    stroke={"#2d5a9e"} strokeWidth={2.5} fill="none" dot={{ r: 2.5 }} strokeDasharray="6 4" connectNulls />
               </AreaChart>
             </ResponsiveContainer>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 16, marginTop: 10 }}>
@@ -196,7 +189,7 @@ export default function Dashboard() {
                 { color: C.wheat,      label: "Demand (actual)"      },
                 { color: C.dustyDenim, label: "Forecast (both lines)" },
               ].map(({ color, label }) => (
-                <span key={label} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: C.textMuted }}>
+                <span key={label} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: C.textMuted }}>
                   <span style={{ width: 10, height: 3, background: color, display: "inline-block", borderRadius: 2 }} />
                   {label}
                 </span>
@@ -209,10 +202,10 @@ export default function Dashboard() {
             background: C.surfaceWhite, border: `0.5px solid ${C.borderLight}`,
             borderRadius: 12, padding: 20,
           }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: C.textPrimary, marginBottom: 3 }}>
+            <div style={{ fontSize: 18, fontWeight: 600, color: C.textPrimary, marginBottom: 3 }}>
               Demand signals
             </div>
-            <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 14 }}>
+            <div style={{ fontSize: 12, color: C.textMuted, marginBottom: 14 }}>
               Key factors driving this month's forecast
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -222,7 +215,7 @@ export default function Dashboard() {
                   padding: "9px 11px", borderRadius: 8,
                   background: C.surfaceGreen, border: `0.5px solid ${C.borderLight}`,
                 }}>
-                  <span style={{ fontSize: 12, color: C.textPrimary }}>{s.name}</span>
+                  <span style={{ fontSize: 13, color: C.textPrimary }}>{s.name}</span>
                   <Badge bg={s.bg} color={s.color}>{s.level}</Badge>
                 </div>
               ))}
@@ -231,59 +224,32 @@ export default function Dashboard() {
         </div>
 
         {/* Bottom row: week forecast bands + AI insight */}
-        <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1.2fr)", gap: 16 }}>
-
-          {/* 30-day bands */}
-          <div style={{
-            background: C.surfaceWhite, border: `0.5px solid ${C.borderLight}`,
-            borderRadius: 12, padding: 20,
-          }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: C.textPrimary, marginBottom: 3 }}>
-              30-day demand outlook
-            </div>
-            <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 16 }}>
-              Weekly demand forecast for June 2026
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {weekBands.map((w) => (
-                <div key={w.label} style={{
-                  display: "flex", alignItems: "center", justifyContent: "space-between",
-                  background: w.bg, border: `0.5px solid ${C.borderLight}`,
-                  borderRadius: 9, padding: "12px 16px",
-                }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: w.color, textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                    {w.label}
-                  </div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: w.color }}>{w.value}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-
+        <div style={{ display: "flex", gap: 16 }}>
+          
           {/* AI insight */}
           <div style={{
-            background: C.forestGreen, borderRadius: 12, padding: 22,
-            display: "flex", flexDirection: "column",
+            background: C.teaGreen, borderRadius: 12, padding: 22,
+            display: "flex", flexDirection: "column", flex: 1,
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 12 }}>
               <svg width="15" height="15" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                <circle cx="7" cy="7" r="6" stroke={C.teaGreen} strokeWidth="1.3"/>
-                <path d="M7 5v4M7 4v.5" stroke={C.teaGreen} strokeWidth="1.3" strokeLinecap="round"/>
+                <circle cx="7" cy="7" r="6" stroke={C.forestGreen} strokeWidth="1.3"/>
+                <path d="M7 5v4M7 4v.5" stroke={C.forestGreen} strokeWidth="1.3" strokeLinecap="round"/>
               </svg>
-              <span style={{ fontSize: 10, fontWeight: 700, color: C.teaGreen, textTransform: "uppercase", letterSpacing: "0.09em" }}>
-                AI insight — June 2026
+              <span style={{ fontSize: 15, fontWeight: 1000, color: C.forestGreen, textTransform: "uppercase", letterSpacing: "0.09em" }}>
+                Insight based on current forecast data and demand signals
               </span>
             </div>
-            <p style={{ fontSize: 13, color: "#d8edd0", lineHeight: 1.8, margin: 0, flex: 1 }}>
+            <p style={{ fontSize: 14, color: "#294d1b", lineHeight: 1.8, margin: 1, flex: 1, fontWeight: 400, textAlign: "justify", paddingRight: 10 }}>
               Elevated food CPI and rising unemployment are the primary drivers of above-average
               demand this month. The AISH disbursement on June 3rd is expected to briefly reduce
               walk-ins mid-week. Donation inflows remain positive but may not fully offset
               projected demand — the supply-demand gap warrants attention in the first two weeks.
             </p>
             <div style={{
-              marginTop: 16, paddingTop: 14,
+              marginTop: 14, paddingTop: 14,
               borderTop: "0.5px solid rgba(255,255,255,0.12)",
-              fontSize: 11, color: "rgba(208,239,177,0.6)",
+              fontSize: 14, color: "rgba(43, 67, 18, 0.6)"
             }}>
               Based on XGBoost + Prophet model · synthetic trend data · not operational figures
             </div>

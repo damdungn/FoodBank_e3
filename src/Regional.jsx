@@ -107,9 +107,9 @@ function Panel({ children, style = {} }) {
 
 function SectionTitle({ title, sub }) {
   return (
-    <div style={{ marginBottom: 14 }}>
-      <div style={{ fontSize: 13, fontWeight: 600, color: C.textPrimary }}>{title}</div>
-      {sub && <div style={{ fontSize: 11, color: C.textMuted, marginTop: 2 }}>{sub}</div>}
+    <div style={{ marginBottom: 18 }}>
+      <div style={{ fontSize: 15, fontWeight: 600, color: C.textPrimary }}>{title}</div>
+      {sub && <div style={{ fontSize: 13, color: C.textMuted, marginTop: 2 }}>{sub}</div>}
     </div>
   );
 }
@@ -321,7 +321,7 @@ export default function Regional() {
       <header style={{ padding: "32px 28px 0", background: C.pageBg, flexShrink: 0 }}>
         <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 16 }}>
           <div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: C.forestGreen, marginBottom: 4 }}>
+            <div style={{ fontSize: 25, fontWeight: 700, color: C.forestGreen, marginBottom: 4 }}>
               Regional model
             </div>
             <div style={{ fontSize: 13, color: C.textMuted }}>
@@ -343,7 +343,7 @@ export default function Regional() {
               display: "flex", alignItems: "center", gap: 7,
               padding: "7px 14px", borderRadius: 8,
               background: C.surfaceWhite, border: `0.5px solid ${C.borderLight}`,
-              fontSize: 12,
+              fontSize: 13,
             }}>
               <div style={{ width: 7, height: 7, borderRadius: "50%", background: C.jungleTeal }} />
               <span style={{ color: C.textSecondary }}>Model healthy · </span>
@@ -360,7 +360,7 @@ export default function Regional() {
         }}>
           <i className="ti ti-link" style={{ fontSize: 16, color: provSignal.color, marginTop: 1, flexShrink: 0 }} aria-hidden="true" />
           <div>
-            <div style={{ fontSize: 12, fontWeight: 700, color: provSignal.color, marginBottom: 3 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: provSignal.color, marginBottom: 3 }}>
               Provincial connection · {provSignal.status}
             </div>
             <div style={{ fontSize: 12, color: "#a03020", lineHeight: 1.6 }}>{provSignal.message}</div>
@@ -372,7 +372,7 @@ export default function Regional() {
         <div style={{ display: "flex", gap: 2, borderBottom: `1px solid ${C.borderLight}` }}>
           {tabs.map((t) => (
             <button key={t.key} onClick={() => setActiveTab(t.key)} style={{
-              padding: "8px 18px", fontSize: 13, cursor: "pointer",
+              padding: "8px 18px", fontSize: 14, cursor: "pointer",
               border: "none", background: "none", fontFamily: "inherit",
               color: activeTab === t.key ? C.forestGreen : C.textMuted,
               fontWeight: activeTab === t.key ? 600 : 400,
@@ -478,7 +478,6 @@ export default function Regional() {
                   <CartesianGrid strokeDasharray="3 3" stroke={C.teaGreen} vertical={false} />
                   <XAxis dataKey="day" tick={{ fontSize: 11, fill: C.textMuted }} axisLine={false} tickLine={false} />
                   <YAxis domain={[70, 140]} tick={{ fontSize: 11, fill: C.textMuted }} axisLine={false} tickLine={false} />
-                  <Tooltip content={<ChartTooltip />} />
                   <ReferenceLine y={100} stroke={C.wheat} strokeDasharray="4 2" />
                   <Bar dataKey="index" name="Avg demand index" radius={[4, 4, 0, 0]} barSize={28}
                     fill={C.jungleTeal}
@@ -552,7 +551,7 @@ export default function Regional() {
 
             {/* Provincial connection detail */}
             <Panel>
-              <SectionTitle title="Provincial ↔ Regional connection" sub="How this model's output feeds back to provincial allocation" />
+              <SectionTitle title="Provincial + Regional connection" sub="How this model's output feeds back to provincial allocation" />
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {[
                   { step: "1", label: "Regional model runs daily", detail: "Client demand forecasted 7 days ahead (daily) and 4 weeks ahead (weekly)", color: C.jungleTeal },
@@ -571,8 +570,8 @@ export default function Regional() {
                       justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#fff",
                     }}>{s.step}</div>
                     <div>
-                      <div style={{ fontSize: 12, fontWeight: 600, color: C.textPrimary, marginBottom: 2 }}>{s.label}</div>
-                      <div style={{ fontSize: 12, color: C.textSecondary, lineHeight: 1.5 }}>{s.detail}</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: C.textPrimary, marginBottom: 2, textAlign: "left" }}>{s.label}</div>
+                      <div style={{ fontSize: 13, color: C.textSecondary, lineHeight: 1.5 }}>{s.detail}</div>
                     </div>
                   </div>
                 ))}
@@ -588,10 +587,10 @@ export default function Regional() {
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0,1fr))", gap: 14 }}>
               {modelStats.map((s) => (
                 <div key={s.label} style={{
-                  background: C.surfaceWhite, border: `0.5px solid ${C.borderLight}`,
+                  background: C.surfaceGreen, border: `0.5px solid ${C.borderLight}`,
                   borderRadius: 12, padding: "14px 16px",
                 }}>
-                  <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 6 }}>{s.label}</div>
+                  <div style={{ fontSize: 13, color: C.textSecondary, marginBottom: 6 }}>{s.label}</div>
                   <div style={{ fontSize: 15, fontWeight: 600, color: C.textPrimary, lineHeight: 1.3 }}>{s.value}</div>
                 </div>
               ))}

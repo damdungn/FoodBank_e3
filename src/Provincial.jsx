@@ -64,8 +64,8 @@ const catColor = { economic: C.jungleTeal, social: C.dustyDenim, calendar: C.lig
 function SectionTitle({ title, sub }) {
   return (
     <div style={{ marginBottom: 14 }}>
-      <div style={{ fontSize: 13, fontWeight: 600, color: C.textPrimary }}>{title}</div>
-      {sub && <div style={{ fontSize: 11, color: C.textMuted, marginTop: 2 }}>{sub}</div>}
+      <div style={{ fontSize: 18, fontWeight: 600, color: C.textPrimary }}>{title}</div>
+      {sub && <div style={{ fontSize: 13, color: C.textMuted, marginTop: 2 }}>{sub}</div>}
     </div>
   );
 }
@@ -221,7 +221,7 @@ export default function Provincial() {
       <header style={{ padding: "32px 28px 0", background: C.pageBg, flexShrink: 0 }}>
         <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 20 }}>
           <div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: C.forestGreen, marginBottom: 4 }}>
+            <div style={{ fontSize: 25, fontWeight: 700, color: C.forestGreen, marginBottom: 4 }}>
               Provincial model
             </div>
             <div style={{ fontSize: 13, color: C.textMuted }}>
@@ -232,8 +232,8 @@ export default function Provincial() {
           <div style={{
             display: "flex", alignItems: "center", gap: 7,
             padding: "7px 14px", borderRadius: 8,
-            background: C.surfaceWhite, border: `0.5px solid ${C.borderLight}`,
-            fontSize: 12,
+            background: "#e2ffec", color: "#1a8b20", border: "0.5px solid #ace890",
+            fontSize: 13,
           }}>
             <div style={{ width: 7, height: 7, borderRadius: "50%", background: C.jungleTeal }} />
             <span style={{ color: C.textSecondary }}>Model healthy · </span>
@@ -248,7 +248,7 @@ export default function Provincial() {
               key={t.key}
               onClick={() => setActiveTab(t.key)}
               style={{
-                padding: "8px 18px", fontSize: 13, cursor: "pointer",
+                padding: "8px 18px", fontSize: 14, cursor: "pointer",
                 border: "none", background: "none",
                 color: activeTab === t.key ? C.forestGreen : C.textMuted,
                 fontWeight: activeTab === t.key ? 600 : 400,
@@ -273,7 +273,7 @@ export default function Provincial() {
             {/* Stat row */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0,1fr))", gap: 14 }}>
               {[
-                { label: "Inbound trend",    value: "+12%",    sub: "vs last month",   accent: C.jungleTeal, badgeBg: C.teaGreen,  badgeColor: C.forestGreen },
+                { label: "Inbound trend",    value: `+${((historyData[5]['inbound'] - historyData[4]['inbound']) / historyData[5]['inbound'] * 100).toFixed(1)}%`,    sub: "vs last month",   accent: C.jungleTeal, badgeBg: C.teaGreen,  badgeColor: C.forestGreen },
                 { label: "Outbound signal",  value: "Elevated",sub: "next 30 days",    accent: "#c0622a",    badgeBg: "#fdecea",   badgeColor: "#8b2e1a", small: true },
                 { label: "Forecast MAE",     value: "4.2 pts", sub: "mean abs. error", accent: C.dustyDenim, badgeBg: "#ddeaf8",   badgeColor: "#2d5a9e" },
                 { label: "Supply-demand gap",value: "Moderate",sub: "needs attention", accent: C.lightGold,  badgeBg: "#fdf6d8",   badgeColor: "#7a6010", small: true },
@@ -291,15 +291,15 @@ export default function Provincial() {
 
             {/* Main chart */}
             <Panel>
-              <SectionTitle
+              <SectionTitle 
                 title="Inbound donations vs outbound allocation — indexed history + forecast"
                 sub="Indexed to baseline (100 = monthly avg) · actual Jan–Jun, forecast Jul–Sep · no raw volumes shown"
               />
               <ResponsiveContainer width="100%" height={230}>
                 <ComposedChart data={historyData} margin={{ top: 4, right: 16, bottom: 0, left: -20 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke={C.teaGreen} />
-                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: C.textMuted }} axisLine={false} tickLine={false} />
-                  <YAxis domain={[85, 135]} tick={{ fontSize: 11, fill: C.textMuted }} axisLine={false} tickLine={false} />
+                  <XAxis dataKey="date" tick={{ fontSize: 12, fill: C.textMuted }} axisLine={false} tickLine={false} />
+                  <YAxis domain={[85, 135]} tick={{ fontSize: 12, fill: C.textMuted }} axisLine={false} tickLine={false} />
                   <Tooltip content={<ChartTooltip />} />
                   <ReferenceLine y={100} stroke={C.wheat} strokeDasharray="4 2" label={{ value: "baseline", position: "insideTopLeft", fontSize: 10, fill: C.textMuted }} />
                   <Line type="monotone" dataKey="inbound"   name="Inbound (actual)"  stroke={C.jungleTeal} strokeWidth={2.5} dot={{ r: 3 }} connectNulls={false} />
@@ -339,8 +339,8 @@ export default function Provincial() {
                     background: C.surfaceGreen, border: `0.5px solid ${C.borderLight}`,
                   }}>
                     <div>
-                      <div style={{ fontSize: 12, color: C.textPrimary, fontWeight: 500 }}>{s.name}</div>
-                      <div style={{ fontSize: 11, color: C.textMuted, marginTop: 2 }}>{s.note}</div>
+                      <div style={{ fontSize: 14, color: C.textPrimary, fontWeight: 500, textAlign: "left" }}>{s.name}</div>
+                      <div style={{ fontSize: 12, color: C.textMuted, marginTop: 2, textAlign: "left" }}>{s.note}</div>
                     </div>
                     <Badge bg={s.bg} color={s.color}>{s.level}</Badge>
                   </div>
@@ -358,10 +358,10 @@ export default function Provincial() {
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0,1fr))", gap: 14 }}>
               {modelStats.map((s) => (
                 <div key={s.label} style={{
-                  background: C.surfaceWhite, border: `0.5px solid ${C.borderLight}`,
+                  background: C.surfaceGreen, border: `0.5px solid ${C.borderLight}`,
                   borderRadius: 12, padding: "14px 16px",
                 }}>
-                  <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 6 }}>{s.label}</div>
+                  <div style={{ fontSize: 13, color: C.textSecondary, marginBottom: 6 }}>{s.label}</div>
                   <div style={{ fontSize: 17, fontWeight: 600, color: C.textPrimary }}>{s.value}</div>
                 </div>
               ))}
@@ -382,7 +382,6 @@ export default function Provincial() {
                   <CartesianGrid strokeDasharray="3 3" stroke={C.teaGreen} horizontal={false} />
                   <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11, fill: C.textMuted }} axisLine={false} tickLine={false} />
                   <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: C.textSecondary }} axisLine={false} tickLine={false} width={100} />
-                  <Tooltip content={<ChartTooltip />} />
                   <Bar dataKey="importance" name="Importance %" radius={[0, 4, 4, 0]} barSize={14}
                     fill={C.jungleTeal}
                     label={{ position: "right", fontSize: 11, fill: C.textMuted, formatter: v => `${v}%` }}
