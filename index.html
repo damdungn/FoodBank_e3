@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FoodBank AI · Provincial Hub</title>
+
+    <!-- Tabler Icons webfont -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"
+    />
+
+    <!-- DM Sans (clean, readable, non-generic) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      *, *::before, *::after { box-sizing: border-box; }
+      html, body, #root {
+        margin: 0; padding: 0;
+        height: 100%;
+        font-family: 'DM Sans', system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      /* Scrollbar styling */
+      ::-webkit-scrollbar { width: 5px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: #d3d1c7; border-radius: 3px; }
+      ::-webkit-scrollbar-thumb:hover { background: #b4b2a9; }
+
+      /* Loading dots animation */
+      @keyframes blink { 0%,80%,100%{opacity:0} 40%{opacity:1} }
+      .dots span { animation: blink 1.4s infinite both; }
+      .dots span:nth-child(2) { animation-delay:.2s; }
+      .dots span:nth-child(3) { animation-delay:.4s; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
