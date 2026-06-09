@@ -383,7 +383,15 @@ export default function App() {
       </aside>
 
       {/* ── Page content ───────────────────────────────────────── */}
-      <main style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+      {/* ── Page content ───────────────────────────────────────── */}
+      <main style={{ 
+        flex: 1, 
+        display: "flex", 
+        flexDirection: "column", 
+        overflow: "hidden",
+        width: "100%",          // Explicitly ask it to take up the remaining width
+        alignItems: "stretch"   // Forces children components to span the full width
+      }}>
         {renderPage()}
       </main>
 
