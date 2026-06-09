@@ -59,22 +59,27 @@ body {
   padding: 0;
 }
 
+/* Ensure the html and body elements take up 100% of the screen space */
 html, body, #root {
-  height: 100%;
   margin: 0;
   padding: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #fbfcf6;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  overflow: hidden;
 }
 
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
+/* Clear box sizing globally to prevent container padding blowouts */
+*, *::before, *::after {
   box-sizing: border-box;
+}
+
+/* Vite template override (if applicable) */
+#root {
+  display: block;
+  max-width: none;
+  text-align: left;
 }
 
 h1,
