@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   ComposedChart, LineChart, BarChart,
-  Line, Bar, Area, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer, ReferenceLine, Legend,
+  Line, Bar, XAxis, YAxis, CartesianGrid,
+  Tooltip, ResponsiveContainer,
 } from "recharts";
 
 const C = {
@@ -21,43 +21,20 @@ const C = {
   textMuted:    "#7a9485",
 };
 
-// ── Mock data ─────────────────────────────────────────────────────────────────
+const LEVEL_STYLE = {
+  High:   { bg: "#fdecea", color: "#8b2e1a" },
+  Medium: { bg: "#fdf6d8", color: "#7a6010" },
+  Low:    { bg: "#f2f9ec", color: "#4a6355" },
+};
 
-const historyData = [
-  { date: "Jan",  inbound: 98,  outbound: 95,  predicted: 96  },
-  { date: "Feb",  inbound: 104, outbound: 100, predicted: 102 },
-  { date: "Mar",  inbound: 101, outbound: 103, predicted: 101 },
-  { date: "Apr",  inbound: 107, outbound: 108, predicted: 109 },
-  { date: "May",  inbound: 112, outbound: 110, predicted: 112 },
-  { date: "Jun",  inbound: 116, outbound: 118, predicted: 120 },
-  { date: "Jul",  inbound: null, outbound: null, predicted: 122 },
-  { date: "Aug",  inbound: null, outbound: null, predicted: 115 },
-  { date: "Sep",  inbound: null, outbound: null, predicted: 108 },
-];
-
-const featureData = [
-  { name: "CPI food",          importance: 88, category: "economic" },
-  { name: "Unemployment rate", importance: 74, category: "economic" },
-  { name: "AISH caseload",     importance: 61, category: "social"   },
-  { name: "School in session", importance: 43, category: "calendar" },
-  { name: "CCB dates",         importance: 38, category: "calendar" },
-  { name: "Mean temperature",  importance: 27, category: "weather"  },
-  { name: "Net migration",     importance: 22, category: "social"   },
-  { name: "Stat holidays",     importance: 18, category: "calendar" },
-  { name: "GST dates",         importance: 15, category: "calendar" },
-  { name: "Snow on ground",    importance: 11, category: "weather"  },
-];
-
-const modelStats = [
-  { label: "MAE (mean abs. error)", value: "4.2 pts" },
-  { label: "RMSE",                  value: "5.8 pts" },
-  { label: "Last retrained",        value: "Jun 1, 2026" },
-  { label: "Training window",       value: "2021 – May 2026" },
-  { label: "Features used",         value: "34 variables" },
-  { label: "Forecast horizon",      value: "90 days" },
-];
-
-const catColor = { economic: C.jungleTeal, social: C.dustyDenim, calendar: C.lightGold, weather: C.wheat };
+const catColor = {
+  economic:       C.jungleTeal,
+  social:         C.dustyDenim,
+  calendar:       C.lightGold,
+  weather:        C.wheat,
+  autoregressive: "#a889cc",
+  other:          C.textMuted,
+};
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
@@ -102,7 +79,8 @@ const ChartTooltip = ({ active, payload, label }) => {
       <div style={{ fontWeight: 600, color: C.teaGreen, marginBottom: 4 }}>{label}</div>
       {payload.map((p) => p.value != null && (
         <div key={p.name} style={{ display: "flex", justifyContent: "space-between", gap: 16, opacity: 0.9 }}>
-          <span>{p.name}</span><span style={{ fontWeight: 600 }}>{p.value}</span>
+          <span>{p.name}</span>
+          <span style={{ fontWeight: 600 }}>{(p.value / 1000).toFixed(1)}K lbs</span>
         </div>
       ))}
     </div>
@@ -119,16 +97,15 @@ function DataInputForm() {
   const [submitted, setSubmitted] = useState(false);
 
   const fields = [
-    { key: "date",         label: "Date",              type: "date",   placeholder: ""        },
-    { key: "inbound",      label: "Inbound (index)",   type: "number", placeholder: "e.g. 108" },
-    { key: "outbound",     label: "Outbound (index)",  type: "number", placeholder: "e.g. 112" },
-    { key: "cpi_food",     label: "CPI food index",    type: "number", placeholder: "e.g. 163.2" },
-    { key: "unemployment", label: "Unemployment rate", type: "number", placeholder: "e.g. 7.4" },
-    { key: "mean_temp",    label: "Mean temp (°C)",    type: "number", placeholder: "e.g. 14.2" },
+    { key: "date",         label: "Date",              type: "date",   placeholder: ""         },
+    { key: "inbound",      label: "Inbound (lbs)",     type: "number", placeholder: "e.g. 280000" },
+    { key: "outbound",     label: "Outbound (lbs)",    type: "number", placeholder: "e.g. 310000" },
+    { key: "cpi_food",     label: "CPI food index",    type: "number", placeholder: "e.g. 163.2"  },
+    { key: "unemployment", label: "Unemployment rate", type: "number", placeholder: "e.g. 7.4"    },
+    { key: "mean_temp",    label: "Mean temp (°C)",    type: "number", placeholder: "e.g. 14.2"   },
   ];
 
   function handleSubmit() {
-    // In production: POST to FastAPI backend
     console.log("New data row:", form);
     setSubmitted(true);
     setTimeout(() => setSubmitted(false), 3000);
@@ -145,10 +122,9 @@ function DataInputForm() {
   return (
     <Panel>
       <SectionTitle
-        title="Add daily data row"
+        title="Add monthly data row"
         sub="Staff input — new rows are queued for the next model run"
       />
-
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0,1fr))", gap: 12, marginBottom: 12 }}>
         {fields.map((f) => (
           <div key={f.key}>
@@ -165,18 +141,16 @@ function DataInputForm() {
           </div>
         ))}
       </div>
-
       <div style={{ marginBottom: 14 }}>
         <div style={{ fontSize: 11, color: C.textSecondary, marginBottom: 4, fontWeight: 500 }}>Notes (optional)</div>
         <textarea
           value={form.notes}
           onChange={e => setForm(prev => ({ ...prev, notes: e.target.value }))}
-          placeholder="Any context for this day — holiday, special event, data anomaly..."
+          placeholder="Any context for this month — unusual donation event, data anomaly..."
           rows={2}
           style={{ ...inputStyle, resize: "vertical", lineHeight: 1.5 }}
         />
       </div>
-
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <button
           onClick={handleSubmit}
@@ -207,12 +181,69 @@ function DataInputForm() {
 
 export default function Provincial() {
   const [activeTab, setActiveTab] = useState("overview");
+
+  const [historyData, setHistoryData] = useState([]);
+  const [featureData, setFeatureData] = useState([]);
+  const [modelStats,  setModelStats]  = useState([]);
+  const [signals,     setSignals]     = useState([]);
+  const [confidence,  setConfidence]  = useState(null);
+  const [gapForecast, setGapForecast] = useState([]);
+  const [loading,     setLoading]     = useState(true);
+
+  useEffect(() => {
+    Promise.all([
+      fetch("/api/provincial/history").then(r => r.json()),
+      fetch("/api/provincial/features").then(r => r.json()),
+      fetch("/api/provincial/metrics").then(r => r.json()),
+      fetch("/api/signals").then(r => r.json()),
+      fetch("/api/model_summary").then(r => r.json()),
+      fetch("/api/gap").then(r => r.json()),
+    ])
+      .then(([hist, feats, metrics, sigs, summary, gap]) => {
+        setHistoryData(hist.historyData ?? []);
+        setFeatureData(feats.featureData ?? []);
+        setModelStats(metrics.modelStats ?? []);
+        setSignals(sigs.signals ?? []);
+        setConfidence(summary);
+        setGapForecast(gap.forecastGap ?? []);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
   const tabs = [
-    { key: "overview",    label: "Overview"    },
-    { key: "model",       label: "Model detail" },
-    { key: "allocation",  label: "Allocation"  },
-    { key: "input",       label: "Data input"  },
+    { key: "overview",   label: "Overview"     },
+    { key: "model",      label: "Model detail" },
+    { key: "allocation", label: "Allocation"   },
+    { key: "input",      label: "Data input"   },
   ];
+
+  // Stat card derivations
+  const actualRows = historyData.filter(d => d.inbound !== null);
+  const lastTwo    = actualRows.slice(-2);
+  const pctIn = lastTwo.length === 2
+    ? ((lastTwo[1].inbound - lastTwo[0].inbound) / (lastTwo[0].inbound || 1) * 100).toFixed(1)
+    : null;
+
+  const topLevel = signals.find(s => s.level === "High") ? "High"
+    : signals.find(s => s.level === "Medium") ? "Medium"
+    : "Low";
+  const demandLabel = { High: "Elevated", Medium: "Moderate", Low: "Stable" }[topLevel] ?? "—";
+  const demandStyle = LEVEL_STYLE[topLevel] ?? LEVEL_STYLE.Low;
+
+  const maeValue = modelStats.find(s => s.label === "MAE (LBS_In)")?.value ?? "N/A";
+
+  const topGapAlert = gapForecast[0]?.alert ?? "OK";
+  const gapLabel    = { Critical: "Critical", Warning: "Warning", Watch: "Watch", OK: "Balanced" }[topGapAlert] ?? "—";
+  const gapStyle    = topGapAlert === "Critical" ? LEVEL_STYLE.High
+    : topGapAlert === "Warning" ? LEVEL_STYLE.Medium
+    : LEVEL_STYLE.Low;
+
+  const confPct   = confidence?.confidence_pct ?? "—";
+  const confLabel = confidence?.confidence_label ?? "confidence";
+
+  // Keep last 18 rows of history + forecast for chart clarity
+  const chartData = historyData.length > 20 ? historyData.slice(-20) : historyData;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", background: C.pageBg, overflow: "hidden" }}>
@@ -237,7 +268,9 @@ export default function Provincial() {
           }}>
             <div style={{ width: 7, height: 7, borderRadius: "50%", background: C.jungleTeal }} />
             <span style={{ color: C.textSecondary }}>Model health: </span>
-            <span style={{ fontWeight: 600, color: C.forestGreen }}>84% confidence</span>
+            <span style={{ fontWeight: 600, color: C.forestGreen }}>
+              {confPct}% {confLabel} confidence
+            </span>
           </div>
         </div>
 
@@ -266,217 +299,248 @@ export default function Provincial() {
       {/* Content */}
       <div style={{ flex: 1, overflowY: "auto", padding: "24px 28px 32px" }}>
 
-        {/* ── OVERVIEW TAB ── */}
-        {activeTab === "overview" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        {loading ? (
+          <div style={{ textAlign: "center", padding: "60px 0", color: C.textMuted, fontSize: 13 }}>
+            Loading model data…
+          </div>
+        ) : (
+          <>
+            {/* ── OVERVIEW TAB ── */}
+            {activeTab === "overview" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
 
-            {/* Stat row */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0,1fr))", gap: 14 }}>
-              {[
-                { label: "Inbound trend",    value: `+${((historyData[5]['inbound'] - historyData[4]['inbound']) / historyData[5]['inbound'] * 100).toFixed(1)}%`,    sub: "vs last month",   accent: C.jungleTeal, badgeBg: C.teaGreen,  badgeColor: C.forestGreen },
-                { label: "Outbound signal",  value: "Elevated",sub: "next 30 days",    accent: "#c0622a",    badgeBg: "#fdecea",   badgeColor: "#8b2e1a", small: true },
-                { label: "Forecast MAE",     value: "4.2 pts", sub: "mean abs. error", accent: C.dustyDenim, badgeBg: "#ddeaf8",   badgeColor: "#2d5a9e" },
-                { label: "Supply-demand gap",value: "Moderate",sub: "needs attention", accent: C.lightGold,  badgeBg: "#fdf6d8",   badgeColor: "#7a6010", small: true },
-              ].map((s) => (
-                <div key={s.label} style={{
-                  background: C.surfaceWhite, border: `0.5px solid ${C.borderLight}`,
-                  borderTop: `3px solid ${s.accent}`, borderRadius: 12, padding: "14px 16px",
-                }}>
-                  <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 6 }}>{s.label}</div>
-                  <div style={{ fontSize: s.small ? 16 : 22, fontWeight: 600, color: C.textPrimary, marginBottom: 6 }}>{s.value}</div>
-                  <Badge bg={s.badgeBg} color={s.badgeColor}>{s.sub}</Badge>
-                </div>
-              ))}
-            </div>
-
-            {/* Main chart */}
-            <Panel>
-              <SectionTitle 
-                title="Inbound donations vs outbound allocation — indexed history + forecast"
-                sub="Indexed to baseline (100 = monthly avg) · actual Jan–Jun, forecast Jul–Sep · no raw volumes shown"
-              />
-              <ResponsiveContainer width="100%" height={230}>
-                <ComposedChart data={historyData} margin={{ top: 4, right: 16, bottom: 0, left: -20 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={C.teaGreen} />
-                  <XAxis dataKey="date" tick={{ fontSize: 12, fill: C.textMuted }} axisLine={false} tickLine={false} />
-                  <YAxis domain={[85, 135]} tick={{ fontSize: 12, fill: C.textMuted }} axisLine={false} tickLine={false} />
-                  <Tooltip content={<ChartTooltip />} />
-                  <ReferenceLine y={100} stroke={C.wheat} strokeDasharray="4 2" label={{ value: "baseline", position: "insideTopLeft", fontSize: 10, fill: C.textMuted }} />
-                  <Line type="monotone" dataKey="inbound"   name="Inbound (actual)"  stroke={C.jungleTeal} strokeWidth={2.5} dot={{ r: 3 }} connectNulls={false} />
-                  <Line type="monotone" dataKey="outbound"  name="Outbound (actual)" stroke={C.wheat}      strokeWidth={2.5} dot={{ r: 3 }} strokeDasharray="5 3" connectNulls={false} />
-                  <Line type="monotone" dataKey="predicted" name="Model forecast"    stroke={C.dustyDenim} strokeWidth={2}   dot={{ r: 3 }} strokeDasharray="7 4" connectNulls />
-                </ComposedChart>
-              </ResponsiveContainer>
-              <div style={{ display: "flex", gap: 20, marginTop: 10 }}>
-                {[
-                  { color: C.jungleTeal, label: "Inbound (actual)"  },
-                  { color: C.wheat,      label: "Outbound (actual)" },
-                  { color: C.dustyDenim, label: "Model forecast"    },
-                ].map(({ color, label }) => (
-                  <span key={label} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: C.textMuted }}>
-                    <span style={{ width: 10, height: 3, background: color, display: "inline-block", borderRadius: 2 }} />
-                    {label}
-                  </span>
-                ))}
-              </div>
-            </Panel>
-
-            {/* Demand signals */}
-            <Panel>
-              <SectionTitle title="Active demand signals" sub="Key drivers identified by the model this month" />
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0,1fr))", gap: 8 }}>
-                {[
-                  { name: "CPI food index elevated",  level: "High",   bg: "#fdecea", color: "#8b2e1a", note: "163.2 — highest since 2022" },
-                  { name: "Unemployment rising",      level: "High",   bg: "#fdecea", color: "#8b2e1a", note: "7.4% province-wide (+0.3 MoM)" },
-                  { name: "AISH disbursement week",   level: "Medium", bg: "#fdf6d8", color: "#7a6010", note: "Jun 3 — mid-week dip expected" },
-                  { name: "School in session",        level: "Medium", bg: "#fdf6d8", color: "#7a6010", note: "Increases family visits" },
-                  { name: "No stat holidays",         level: "Low",    bg: C.surfaceGreen, color: C.textSecondary, note: "Neutral effect" },
-                  { name: "Mild temperature forecast",level: "Low",    bg: C.surfaceGreen, color: C.textSecondary, note: "~15°C avg — no weather spike" },
-                ].map((s) => (
-                  <div key={s.name} style={{
-                    display: "flex", alignItems: "center", justifyContent: "space-between",
-                    padding: "10px 12px", borderRadius: 8,
-                    background: C.surfaceGreen, border: `0.5px solid ${C.borderLight}`,
-                  }}>
-                    <div>
-                      <div style={{ fontSize: 14, color: C.textPrimary, fontWeight: 500, textAlign: "left" }}>{s.name}</div>
-                      <div style={{ fontSize: 12, color: C.textMuted, marginTop: 2, textAlign: "left" }}>{s.note}</div>
+                {/* Stat row */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0,1fr))", gap: 14 }}>
+                  {[
+                    {
+                      label: "Inbound trend",
+                      value: pctIn !== null ? `${parseFloat(pctIn) >= 0 ? "+" : ""}${pctIn}%` : "N/A",
+                      sub: "vs last month", accent: C.jungleTeal,
+                      badgeBg: C.teaGreen, badgeColor: C.forestGreen,
+                    },
+                    {
+                      label: "Outbound signal", value: demandLabel, sub: "next 30 days",
+                      accent: "#c0622a", badgeBg: demandStyle.bg, badgeColor: demandStyle.color, small: true,
+                    },
+                    {
+                      label: "Forecast MAE", value: maeValue, sub: "mean abs. error",
+                      accent: C.dustyDenim, badgeBg: "#ddeaf8", badgeColor: "#2d5a9e",
+                    },
+                    {
+                      label: "Supply-demand gap", value: gapLabel, sub: "3-month outlook",
+                      accent: C.lightGold, badgeBg: gapStyle.bg, badgeColor: gapStyle.color, small: true,
+                    },
+                  ].map((s) => (
+                    <div key={s.label} style={{
+                      background: C.surfaceWhite, border: `0.5px solid ${C.borderLight}`,
+                      borderTop: `3px solid ${s.accent}`, borderRadius: 12, padding: "14px 16px",
+                    }}>
+                      <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 6 }}>{s.label}</div>
+                      <div style={{ fontSize: s.small ? 16 : 18, fontWeight: 600, color: C.textPrimary, marginBottom: 6 }}>{s.value}</div>
+                      <Badge bg={s.badgeBg} color={s.badgeColor}>{s.sub}</Badge>
                     </div>
-                    <Badge bg={s.bg} color={s.color}>{s.level}</Badge>
-                  </div>
-                ))}
-              </div>
-            </Panel>
-          </div>
-        )}
-
-        {/* ── MODEL DETAIL TAB ── */}
-        {activeTab === "model" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-
-            {/* Model stats */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0,1fr))", gap: 14 }}>
-              {modelStats.map((s) => (
-                <div key={s.label} style={{
-                  background: C.surfaceGreen, border: `0.5px solid ${C.borderLight}`,
-                  borderRadius: 12, padding: "14px 16px",
-                }}>
-                  <div style={{ fontSize: 13, color: C.textSecondary, marginBottom: 6 }}>{s.label}</div>
-                  <div style={{ fontSize: 17, fontWeight: 600, color: C.textPrimary }}>{s.value}</div>
+                  ))}
                 </div>
-              ))}
-            </div>
 
-            {/* Feature importance chart */}
-            <Panel>
-              <SectionTitle
-                title="Feature importance (XGBoost)"
-                sub="Relative contribution of each variable to the forecast · colour = category"
-              />
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart
-                  data={featureData}
-                  layout="vertical"
-                  margin={{ top: 4, right: 40, bottom: 0, left: 100 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke={C.teaGreen} horizontal={false} />
-                  <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11, fill: C.textMuted }} axisLine={false} tickLine={false} />
-                  <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: C.textSecondary }} axisLine={false} tickLine={false} width={100} />
-                  <Bar dataKey="importance" name="Importance %" radius={[0, 4, 4, 0]} barSize={14}
-                    fill={C.jungleTeal}
-                    label={{ position: "right", fontSize: 11, fill: C.textMuted, formatter: v => `${v}%` }}
+                {/* Main chart */}
+                <Panel>
+                  <SectionTitle
+                    title="Inbound donations vs outbound allocation — history + 3-month forecast"
+                    sub="Monthly lbs totals · solid = actual, dashed = model fit / forecast"
                   />
-                </BarChart>
-              </ResponsiveContainer>
-
-              {/* Category legend */}
-              <div style={{ display: "flex", gap: 16, marginTop: 12, flexWrap: "wrap" }}>
-                {Object.entries(catColor).map(([cat, color]) => (
-                  <span key={cat} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: C.textMuted }}>
-                    <span style={{ width: 10, height: 10, background: color, display: "inline-block", borderRadius: 2 }} />
-                    {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                  </span>
-                ))}
-              </div>
-            </Panel>
-
-            {/* Actual vs predicted accuracy */}
-            <Panel>
-              <SectionTitle
-                title="Actual vs predicted — model accuracy (Jan–Jun 2026)"
-                sub="Closer lines = better model fit · gap = prediction error"
-              />
-              <ResponsiveContainer width="100%" height={200}>
-                <LineChart data={historyData.filter(d => d.outbound)} margin={{ top: 4, right: 16, bottom: 0, left: -20 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={C.teaGreen} />
-                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: C.textMuted }} axisLine={false} tickLine={false} />
-                  <YAxis domain={[85, 125]} tick={{ fontSize: 11, fill: C.textMuted }} axisLine={false} tickLine={false} />
-                  <Tooltip content={<ChartTooltip />} />
-                  <Line type="monotone" dataKey="outbound"  name="Actual"    stroke={C.jungleTeal} strokeWidth={2.5} dot={{ r: 3 }} />
-                  <Line type="monotone" dataKey="predicted" name="Predicted" stroke={C.dustyDenim} strokeWidth={2}   dot={{ r: 3 }} strokeDasharray="5 3" />
-                </LineChart>
-              </ResponsiveContainer>
-            </Panel>
-          </div>
-        )}
-
-        {/* ── ALLOCATION TAB ── */}
-        {activeTab === "allocation" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-
-            <Panel>
-              <SectionTitle
-                title="Regional allocation index"
-                sub="Coming soon: interactive tool to plan allocation across the province based on regional forecasts, inventory levels, and local demand signals"
-              />
-            </Panel>
-
-          </div>
-        )}
-
-        {/* ── DATA INPUT TAB ── */}
-        {activeTab === "input" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <DataInputForm />
-
-            {/* Recent entries table */}
-            <Panel>
-              <SectionTitle title="Recent staff entries" sub="Last 5 manually submitted rows" />
-              <div style={{ overflowX: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
-                  <thead>
-                    <tr style={{ borderBottom: `1px solid ${C.borderLight}` }}>
-                      {["Date", "Inbound", "Outbound", "CPI food", "Unemployment", "Temp", "Notes", "By"].map(h => (
-                        <th key={h} style={{ padding: "8px 10px", textAlign: "left", color: C.textMuted, fontWeight: 600 }}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
+                  <ResponsiveContainer width="100%" height={230}>
+                    <ComposedChart data={chartData} margin={{ top: 4, right: 16, bottom: 0, left: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke={C.teaGreen} />
+                      <XAxis dataKey="date" tick={{ fontSize: 11, fill: C.textMuted }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
+                      <YAxis
+                        domain={["auto", "auto"]}
+                        tickFormatter={v => `${(v / 1000).toFixed(0)}K`}
+                        tick={{ fontSize: 11, fill: C.textMuted }} axisLine={false} tickLine={false} width={45}
+                      />
+                      <Tooltip content={<ChartTooltip />} />
+                      <Line type="monotone" dataKey="inbound"   name="Inbound (actual)"  stroke={C.jungleTeal} strokeWidth={2.5} dot={false} connectNulls={false} />
+                      <Line type="monotone" dataKey="outbound"  name="Outbound (actual)" stroke={C.wheat}      strokeWidth={2.5} dot={false} strokeDasharray="5 3" connectNulls={false} />
+                      <Line type="monotone" dataKey="predicted" name="Model forecast"    stroke={C.dustyDenim} strokeWidth={2}   dot={{ r: 3 }} strokeDasharray="7 4" connectNulls />
+                    </ComposedChart>
+                  </ResponsiveContainer>
+                  <div style={{ display: "flex", gap: 20, marginTop: 10 }}>
                     {[
-                      { date: "Jun 6", inbound: 122, outbound: 119, cpi: 163.2, unemp: 7.4, temp: 14.2, notes: "Friday rush", by: "Staff" },
-                      { date: "Jun 5", inbound: 118, outbound: 115, cpi: 163.2, unemp: 7.4, temp: 13.8, notes: "",             by: "Staff" },
-                      { date: "Jun 4", inbound: 95,  outbound: 92,  cpi: 163.2, unemp: 7.4, temp: 11.1, notes: "AISH week",   by: "Staff" },
-                      { date: "Jun 3", inbound: 92,  outbound: 89,  cpi: 163.2, unemp: 7.4, temp: 10.5, notes: "AISH day",    by: "Staff" },
-                      { date: "Jun 2", inbound: 108, outbound: 105, cpi: 162.8, unemp: 7.4, temp: 12.3, notes: "",             by: "Staff" },
-                    ].map((row, i) => (
-                      <tr key={i} style={{ borderBottom: `0.5px solid ${C.borderLight}`, background: i % 2 === 0 ? C.surfaceGreen : C.surfaceWhite }}>
-                        <td style={{ padding: "8px 10px", color: C.textPrimary, fontWeight: 500 }}>{row.date}</td>
-                        <td style={{ padding: "8px 10px", color: C.textSecondary }}>{row.inbound}</td>
-                        <td style={{ padding: "8px 10px", color: C.textSecondary }}>{row.outbound}</td>
-                        <td style={{ padding: "8px 10px", color: C.textSecondary }}>{row.cpi}</td>
-                        <td style={{ padding: "8px 10px", color: C.textSecondary }}>{row.unemp}%</td>
-                        <td style={{ padding: "8px 10px", color: C.textSecondary }}>{row.temp}°C</td>
-                        <td style={{ padding: "8px 10px", color: C.textMuted, fontStyle: row.notes ? "normal" : "italic" }}>{row.notes || "—"}</td>
-                        <td style={{ padding: "8px 10px", color: C.textMuted }}>{row.by}</td>
-                      </tr>
+                      { color: C.jungleTeal, label: "Inbound (actual)"  },
+                      { color: C.wheat,      label: "Outbound (actual)" },
+                      { color: C.dustyDenim, label: "Model forecast"    },
+                    ].map(({ color, label }) => (
+                      <span key={label} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: C.textMuted }}>
+                        <span style={{ width: 10, height: 3, background: color, display: "inline-block", borderRadius: 2 }} />
+                        {label}
+                      </span>
                     ))}
-                  </tbody>
-                </table>
-              </div>
-            </Panel>
-          </div>
-        )}
+                  </div>
+                </Panel>
 
+                {/* Demand signals */}
+                <Panel>
+                  <SectionTitle title="Active demand signals" sub="Key drivers identified by the model this month" />
+                  {signals.length === 0 ? (
+                    <div style={{ fontSize: 13, color: C.textMuted, textAlign: "center", padding: "16px 0" }}>
+                      No active demand signals detected
+                    </div>
+                  ) : (
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0,1fr))", gap: 8 }}>
+                      {signals.map((s) => {
+                        const sty = LEVEL_STYLE[s.level] ?? LEVEL_STYLE.Low;
+                        return (
+                          <div key={s.name} style={{
+                            display: "flex", alignItems: "center", justifyContent: "space-between",
+                            padding: "10px 12px", borderRadius: 8,
+                            background: C.surfaceGreen, border: `0.5px solid ${C.borderLight}`,
+                          }}>
+                            <div style={{ fontSize: 14, color: C.textPrimary, fontWeight: 500, textAlign: "left" }}>{s.name}</div>
+                            <Badge bg={sty.bg} color={sty.color}>{s.level}</Badge>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </Panel>
+              </div>
+            )}
+
+            {/* ── MODEL DETAIL TAB ── */}
+            {activeTab === "model" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+
+                {/* Model stats */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0,1fr))", gap: 14 }}>
+                  {modelStats.map((s) => (
+                    <div key={s.label} style={{
+                      background: C.surfaceGreen, border: `0.5px solid ${C.borderLight}`,
+                      borderRadius: 12, padding: "14px 16px",
+                    }}>
+                      <div style={{ fontSize: 13, color: C.textSecondary, marginBottom: 6 }}>{s.label}</div>
+                      <div style={{ fontSize: 17, fontWeight: 600, color: C.textPrimary }}>{s.value}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Feature importance chart */}
+                <Panel>
+                  <SectionTitle
+                    title="Feature importance (XGBoost — LBS_In residuals)"
+                    sub="Relative contribution of each variable to the forecast · colour = category"
+                  />
+                  {featureData.length === 0 ? (
+                    <div style={{ fontSize: 13, color: C.textMuted, textAlign: "center", padding: "20px 0" }}>
+                      No feature data available
+                    </div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height={Math.max(280, featureData.length * 22)}>
+                      <BarChart
+                        data={featureData}
+                        layout="vertical"
+                        margin={{ top: 4, right: 50, bottom: 0, left: 120 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" stroke={C.teaGreen} horizontal={false} />
+                        <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11, fill: C.textMuted }} axisLine={false} tickLine={false} />
+                        <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: C.textSecondary }} axisLine={false} tickLine={false} width={120} />
+                        <Bar
+                          dataKey="importance" name="Importance %" radius={[0, 4, 4, 0]} barSize={14}
+                          fill={C.jungleTeal}
+                          label={{ position: "right", fontSize: 11, fill: C.textMuted, formatter: v => `${v}%` }}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
+
+                  {/* Category legend */}
+                  <div style={{ display: "flex", gap: 16, marginTop: 12, flexWrap: "wrap" }}>
+                    {Object.entries(catColor).map(([cat, color]) => (
+                      <span key={cat} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: C.textMuted }}>
+                        <span style={{ width: 10, height: 10, background: color, display: "inline-block", borderRadius: 2 }} />
+                        {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                      </span>
+                    ))}
+                  </div>
+                </Panel>
+
+                {/* Actual vs predicted chart */}
+                <Panel>
+                  <SectionTitle
+                    title="Actual vs model fit — in-sample accuracy"
+                    sub="Closer lines = better model fit · monthly lbs"
+                  />
+                  <ResponsiveContainer width="100%" height={200}>
+                    <LineChart
+                      data={historyData.filter(d => d.outbound !== null).slice(-18)}
+                      margin={{ top: 4, right: 16, bottom: 0, left: 0 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke={C.teaGreen} />
+                      <XAxis dataKey="date" tick={{ fontSize: 11, fill: C.textMuted }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
+                      <YAxis
+                        domain={["auto", "auto"]}
+                        tickFormatter={v => `${(v / 1000).toFixed(0)}K`}
+                        tick={{ fontSize: 11, fill: C.textMuted }} axisLine={false} tickLine={false} width={45}
+                      />
+                      <Tooltip content={<ChartTooltip />} />
+                      <Line type="monotone" dataKey="outbound"  name="Actual"    stroke={C.jungleTeal} strokeWidth={2.5} dot={false} />
+                      <Line type="monotone" dataKey="predicted" name="Predicted" stroke={C.dustyDenim} strokeWidth={2}   dot={false} strokeDasharray="5 3" />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </Panel>
+              </div>
+            )}
+
+            {/* ── ALLOCATION TAB ── */}
+            {activeTab === "allocation" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                <Panel>
+                  <SectionTitle
+                    title="Regional allocation index"
+                    sub="Coming soon: interactive tool to plan allocation across the province based on regional forecasts, inventory levels, and local demand signals"
+                  />
+                </Panel>
+              </div>
+            )}
+
+            {/* ── DATA INPUT TAB ── */}
+            {activeTab === "input" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                <DataInputForm />
+
+                {/* Recent entries table */}
+                <Panel>
+                  <SectionTitle title="Recent staff entries" sub="Last 5 manually submitted rows" />
+                  <div style={{ overflowX: "auto" }}>
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+                      <thead>
+                        <tr style={{ borderBottom: `1px solid ${C.borderLight}` }}>
+                          {["Date", "Inbound", "Outbound", "CPI food", "Unemployment", "Temp", "Notes", "By"].map(h => (
+                            <th key={h} style={{ padding: "8px 10px", textAlign: "left", color: C.textMuted, fontWeight: 600 }}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {[
+                          { date: "May 2026", inbound: "TBD", outbound: "TBD", cpi: 163.2, unemp: 7.4, temp: 14.2, notes: "Awaiting close", by: "System" },
+                        ].map((row, i) => (
+                          <tr key={i} style={{ borderBottom: `0.5px solid ${C.borderLight}`, background: i % 2 === 0 ? C.surfaceGreen : C.surfaceWhite }}>
+                            <td style={{ padding: "8px 10px", color: C.textPrimary, fontWeight: 500 }}>{row.date}</td>
+                            <td style={{ padding: "8px 10px", color: C.textSecondary }}>{row.inbound}</td>
+                            <td style={{ padding: "8px 10px", color: C.textSecondary }}>{row.outbound}</td>
+                            <td style={{ padding: "8px 10px", color: C.textSecondary }}>{row.cpi}</td>
+                            <td style={{ padding: "8px 10px", color: C.textSecondary }}>{row.unemp}%</td>
+                            <td style={{ padding: "8px 10px", color: C.textSecondary }}>{row.temp}°C</td>
+                            <td style={{ padding: "8px 10px", color: C.textMuted, fontStyle: row.notes ? "normal" : "italic" }}>{row.notes || "—"}</td>
+                            <td style={{ padding: "8px 10px", color: C.textMuted }}>{row.by}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </Panel>
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
   );

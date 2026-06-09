@@ -23,3 +23,11 @@ dist-ssr
 *.sln
 *.sw?
 .env
+
+# Claude Code
+.claude/
+
+# Python backend
+backend/.venv/
+backend/data/*.csv
+backend/models/

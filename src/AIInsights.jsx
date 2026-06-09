@@ -15,49 +15,75 @@ const C = {
   textPrimary:  "#1a2e22",
   textSecondary:"#4a6355",
   textMuted:    "#7a9485",
-  sidebarBorder: "#247250"
+  sidebarBorder: "#247250",
 };
 
-const SYSTEM_PROMPT = `You are the AI analyst for FEEDS (Forecasting Engine for Estimating Demand and Supply), an early-warning system for the Edmonton Food Bank provincial hub in Alberta, Canada.
+function buildSystemPrompt(summary, gapData) {
+  const confPct   = summary?.confidence_pct ?? "N/A";
+  const confLabel = summary?.confidence_label ?? "unknown";
+  const mIn       = summary?.targets?.LBS_In  ?? {};
+  const mOut      = summary?.targets?.LBS_Out ?? {};
+  const gapStats  = gapData?.gapStats ?? {};
+
+  const gapLines = (gapData?.forecastGap ?? [])
+    .map(f => {
+      const sign = f.Gap_forecast >= 0 ? "+" : "";
+      return `  - ${f.month}: ${f.alert} (gap ${sign}${Math.round(f.Gap_forecast / 1000)}K lbs)`;
+    })
+    .join("\n") || "  - No forecast available";
+
+  const r2InPct  = Math.round(Math.max(0, mIn.r2  ?? 0) * 100);
+  const r2OutPct = Math.round(Math.max(0, mOut.r2 ?? 0) * 100);
+
+  return `You are the AI analyst for FEEDS (Forecasting Engine for Estimating Demand and Supply), an early-warning system for the Edmonton Food Bank provincial hub in Alberta, Canada.
 
 You are publicly accessible — you help clients, researchers, staff, and the general public understand food bank demand forecasts. Keep answers clear and jargon-free for general audiences, but provide depth when asked.
 
 You have access to two model outputs:
 
-MODEL 1 — Provincial (XGBoost + Prophet):
-- Predicts provincial inbound donations and outbound allocation to regional food banks
-- Daily data from 2021 to May 2026
-- Features: CPI (food, shelter, all-items), unemployment rate, net migration, AISH caseload, CCB/GST/CPP/OAS payment dates, school calendar, weather (mean/min/max temp, precipitation, snow), stat/religious/cultural holidays, Ramadan, COVID periods, tax season, tuition deadlines, ACWB/ACFB/NLDB disbursements
-- Current confidence: 84%
+MODEL 1 — Provincial (Holt-Winters + XGBoost hybrid):
+- Predicts provincial inbound donations (LBS_In) and outbound distribution (LBS_Out) — monthly totals in lbs
+- Monthly data aggregated from daily records: Jan 2022 – May 2026
+- Features used: CPI (food, shelter, all-items), unemployment rate, net migration, AISH caseload, CCB/GST/CPP/OAS payment days per month, school calendar, weather (mean temp, precipitation, snow on ground), stat/religious holidays, Ramadan, exam season, ACWB/ACFB disbursements
+- Architecture: Holt-Winters handles trend + seasonality; XGBoost models the external economic/calendar shocks on top
+- Prediction confidence (LBS_Out — more reliable): ${confPct}% (${confLabel}) — explains ${r2OutPct}% of month-to-month variation in outbound distribution. Typical error: ±${mOut.smape ?? "?"}%.
+- Prediction confidence (LBS_In — donations): ${r2InPct}% — donations are inherently irregular; use as a directional signal, not a precise target. Typical error: ±${mIn.smape ?? "?"}%.
+- 80% prediction intervals are attached to every forecast (there is genuine uncertainty — the model is honest about this)
 
-MODEL 2 — Regional (XGBoost + Prophet):
-- Predicts client-level demand at Edmonton regional food bank (outbound = real client visits)
-- Daily and weekly forecasts
-- Same external features as Model 1, with stronger weight on AISH caseload and CCB dates at the individual visit level
-- Current confidence: 81%
+MODEL 2 — Regional (not yet available):
+- Will predict client-level demand at Edmonton regional food bank
+- Awaiting regional dataset before training
 
-Current June 2026 snapshot:
-- Provincial demand signal: Elevated (next 30 days)
-- Donation trend: +12% vs last month
-- Supply-demand gap: Moderate
-- Top provincial factors: CPI food (88%), unemployment rate (74%), AISH caseload (61%), school in session (43%), CCB dates (38%), mean temperature (27%)
-- 30-day outlook: Week 1–2 at +14% above avg, Week 3 at +8%, Week 4 near baseline
-- Regional this week: Busy (index 124) · next week: Busy (index 119)
-- Provincial allocation flag: Edmonton quota recommended +10–15% for Jun 9–21
+3-month gap forecast (LBS_In − LBS_Out):
+${gapLines}
+  - Positive = surplus (donations > distribution); Negative = shortfall (demand > supply)
+
+Historical gap context:
+- Mean monthly gap: ${Math.round((gapStats.mean_gap ?? 0) / 1000)}K lbs (${(gapStats.mean_gap ?? 0) < 0 ? "chronic deficit" : "surplus"})
+- ${gapStats.pct_deficit ?? "?"}% of months historically run a supply deficit
+- Warning threshold: gap below ${Math.round((gapStats.warn_threshold ?? 0) / 1000)}K lbs/month
+- Critical threshold: gap below ${Math.round((gapStats.critical_threshold ?? 0) / 1000)}K lbs/month
+
+Model improvement opportunities (honest limitations):
+${(summary?.improvement_paths ?? []).map(p => `  - ${p}`).join("\n")}
 
 Guidelines:
 - Be concise and practical
 - Use bullet points for recommendations
-- For clients asking about visiting: give plain-language advice (busy days, quieter times)
+- For clients asking about visiting: give plain-language advice (busy months, quieter periods; note this is a monthly model — daily visit patterns are not available yet)
 - Never fabricate specific numbers not listed above — say "not available in current model output" instead
-- Flag if a question is outside your scope`;
+- Flag if a question is outside your scope
+- Be honest about model uncertainty — 80% intervals mean 20% of outcomes fall outside them`;
+}
+
+const DEFAULT_SYSTEM_PROMPT = buildSystemPrompt(null, null);
 
 const SUGGESTED = [
-  "Is it a good time to visit this week?",
-  "Why is demand elevated in June?",
-  "What days are usually the busiest?",
-  "How does AISH disbursement affect visit numbers?",
-  "What's driving the forecast this month?",
+  "Is demand expected to be high next month?",
+  "What's driving the supply-demand gap?",
+  "How confident is the forecast?",
+  "How does AISH disbursement affect food bank demand?",
+  "What would improve the model accuracy?",
   "How are the two models connected?",
 ];
 
@@ -97,7 +123,7 @@ function AssistantBubble({ text, loading }) {
       </div>
       <div style={{
         maxWidth: "80%",
-        background: "#d8ffdd",
+        background: "#d8ffddb0",
         border: `0.5px solid ${C.borderLight}`,
         borderRadius: "3px 12px 12px 12px",
         padding: "11px 15px",
@@ -131,12 +157,28 @@ export default function AIInsights() {
   const [messages, setMessages] = useState([
     {
       role: "assistant",
-      content: "Hi! I'm the FEEDS AI analyst. I can help anyone — clients, researchers, or staff — understand food bank demand forecasts and what's driving them this month.\n\nWhat would you like to know?",
+      content: "Hi! I'm the FEEDS AI analyst. I can help anyone — clients, researchers, or staff — understand food bank demand forecasts and what's driving them.\n\nWhat would you like to know?",
     },
   ]);
-  const [input,   setInput]   = useState("");
-  const [loading, setLoading] = useState(false);
+  const [input,        setInput]        = useState("");
+  const [loading,      setLoading]      = useState(false);
+  const [systemPrompt, setSystemPrompt] = useState(DEFAULT_SYSTEM_PROMPT);
+  const [confPct,      setConfPct]      = useState(null);
+  const [confLabel,    setConfLabel]    = useState(null);
   const bottomRef = useRef(null);
+
+  useEffect(() => {
+    Promise.all([
+      fetch("/api/model_summary").then(r => r.json()),
+      fetch("/api/gap").then(r => r.json()),
+    ])
+      .then(([summary, gapData]) => {
+        setSystemPrompt(buildSystemPrompt(summary, gapData));
+        setConfPct(summary?.confidence_pct ?? null);
+        setConfLabel(summary?.confidence_label ?? null);
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -158,7 +200,7 @@ export default function AIInsights() {
         body: JSON.stringify({
           model: "claude-sonnet-4-20250514",
           max_tokens: 1000,
-          system: SYSTEM_PROMPT,
+          system: systemPrompt,
           messages: newMessages.map(m => ({ role: m.role, content: m.content })),
         }),
       });
@@ -171,6 +213,8 @@ export default function AIInsights() {
       setLoading(false);
     }
   }
+
+  const pillConf = confPct !== null ? `${confPct}% confidence` : "loading…";
 
   return (
     <div style={{
@@ -204,9 +248,21 @@ export default function AIInsights() {
         {/* Model context pills */}
         <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
           {[
-            { icon: "building", label: "Provincial model", detail: "84% confidence", color: C.jungleTeal, bg: C.surfaceGreen },
-            { icon: "map-2",    label: "Regional model",   detail: "81% confidence", color: "#5588c7",    bg:C.surfaceBlue },
-            { icon: "calendar", label: "June 2026",        detail: "Current period", color: C.textSecondary, bg: C.surfaceRed },
+            {
+              icon: "building", label: "Provincial model",
+              detail: pillConf,
+              color: C.jungleTeal, bg: C.surfaceGreen,
+            },
+            {
+              icon: "map-2", label: "Regional model",
+              detail: "not yet trained",
+              color: "#5588c7", bg: C.surfaceBlue,
+            },
+            {
+              icon: "calendar", label: "Jun 2026",
+              detail: "Current period",
+              color: C.textSecondary, bg: C.surfaceRed,
+            },
           ].map(p => (
             <div key={p.label} style={{
               display: "flex", alignItems: "center", gap: 7,
@@ -224,10 +280,7 @@ export default function AIInsights() {
 
       {/* Suggested prompts — only on first load */}
       {messages.length === 1 && (
-        <div style={{
-          padding: "0 28px 18px",
-          flexShrink: 0,
-        }}>
+        <div style={{ padding: "0 28px 18px", flexShrink: 0 }}>
           <div style={{ fontSize: 13, color: C.textMuted, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.07em" }}>
             Suggested questions
           </div>
@@ -279,7 +332,7 @@ export default function AIInsights() {
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === "Enter" && !e.shiftKey && send()}
-            placeholder="Ask about demand, forecasts, busy days, or what's driving signals…"
+            placeholder="Ask about demand, forecasts, supply gaps, or what's driving signals…"
             style={{
               flex: 1, padding: "10px 15px", fontSize: 13,
               border: `1px solid ${C.borderLight}`, borderRadius: 10,
@@ -306,7 +359,7 @@ export default function AIInsights() {
           </button>
         </div>
         <div style={{ fontSize: 11, color: C.textMuted, marginTop: 8 }}>
-          Responses are based on model forecasts and synthetic trend data · not raw operational figures
+          Responses are grounded in live model data · monthly forecasts only · not raw operational figures
         </div>
       </div>
 
