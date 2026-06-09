@@ -345,8 +345,8 @@ export default function Regional() {
               background: C.surfaceWhite, border: `0.5px solid ${C.borderLight}`,
               fontSize: 13,
             }}>
-              <div style={{ width: 7, height: 7, borderRadius: "50%", background: C.jungleTeal }} />
-              <span style={{ color: C.textSecondary }}>Model healthy · </span>
+              <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#e2ffec", border: "0.5px solid #ace890", }} />
+              <span style={{ color: C.textSecondary }}>Model health: </span>
               <span style={{ fontWeight: 600, color: C.forestGreen }}>81% confidence</span>
             </div>
           </div>

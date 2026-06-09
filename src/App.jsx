@@ -47,6 +47,7 @@ const NAV = [
     section: "Coming soon",
     items: [
       { icon: "file-text", label: "Reports", page: "reports", disabled: true },
+      { icon: "file-text", label: "Inventory Checkup", page: "reports", disabled: true },
     ],
   },
 ];
@@ -144,7 +145,7 @@ function PasswordModal({ targetPage, onSuccess, onClose }) {
         <button
           onClick={attempt}
           style={{
-            width: "100%", padding: "10px", fontSize: 14, fontWeight: 600,
+            width: "100%", padding: "10px", fontSize: 15, fontWeight: 600,
             background: isProvincial ? "#224433" : "#5588c7",
             color: isProvincial ? "#d0efb1" : "#fff",
             border: "none", borderRadius: 8, cursor: "pointer",
@@ -266,7 +267,7 @@ export default function App() {
             <div key={sec.section} style={{ marginBottom: 6 }}>
 
               <div style={{
-                fontSize: 11, fontWeight: 600, color: C.sectionLabel,
+                fontSize: 13, fontWeight: 600, color: C.sectionLabel,
                 letterSpacing: "0.09em", textTransform: "uppercase",
                 padding: "10px 8px 5px",
               }}>
@@ -290,7 +291,7 @@ export default function App() {
                       display: "flex", alignItems: "center", justifyContent: "space-between",
                       width: "100%", padding: "8px 10px",
                       borderRadius: 8, marginBottom: 2,
-                      fontSize: 14, cursor: disabled ? "default" : "pointer",
+                      fontSize: 15, cursor: disabled ? "default" : "pointer",
                       border: "none",
                       background: active ? C.activeItemBg : "transparent",
                       color: disabled ? C.lockedText : active ? C.activeItemText : C.inactiveText,
@@ -337,10 +338,10 @@ export default function App() {
                   background: "rgba(255,255,255,0.06)", borderRadius: 6,
                 }}>
                   <i className="ti ti-shield-check" style={{ fontSize: 12, color: C.teaGreen }} aria-hidden="true" />
-                  <span style={{ fontSize: 11, color: C.teaGreen, flex: 1 }}>Provincial unlocked</span>
+                  <span style={{ fontSize: 13, color: C.teaGreen, flex: 1 }}>Provincial unlocked</span>
                   <button
                     onClick={() => handleLock("provincial")}
-                    style={{ fontSize: 10, color: C.lockedText, background: "none", border: "none", cursor: "pointer", textDecoration: "underline", fontFamily: "inherit" }}
+                    style={{ fontSize: 12, color: C.lockedText, background: "none", border: "none", cursor: "pointer", textDecoration: "underline", fontFamily: "inherit" }}
                   >
                     Lock
                   </button>
@@ -353,10 +354,10 @@ export default function App() {
                   background: "rgba(255,255,255,0.06)", borderRadius: 6,
                 }}>
                   <i className="ti ti-shield-check" style={{ fontSize: 12, color: "#9ab8e8" }} aria-hidden="true" />
-                  <span style={{ fontSize: 11, color: "#9ab8e8", flex: 1 }}>Regional unlocked</span>
+                  <span style={{ fontSize: 13, color: "#9ab8e8", flex: 1 }}>Regional unlocked</span>
                   <button
                     onClick={() => handleLock("regional")}
-                    style={{ fontSize: 10, color: C.lockedText, background: "none", border: "none", cursor: "pointer", textDecoration: "underline", fontFamily: "inherit" }}
+                    style={{ fontSize: 13, color: C.lockedText, background: "none", border: "none", cursor: "pointer", textDecoration: "underline", fontFamily: "inherit" }}
                   >
                     Lock
                   </button>

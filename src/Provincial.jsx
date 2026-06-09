@@ -236,7 +236,7 @@ export default function Provincial() {
             fontSize: 13,
           }}>
             <div style={{ width: 7, height: 7, borderRadius: "50%", background: C.jungleTeal }} />
-            <span style={{ color: C.textSecondary }}>Model healthy · </span>
+            <span style={{ color: C.textSecondary }}>Model health: </span>
             <span style={{ fontWeight: 600, color: C.forestGreen }}>84% confidence</span>
           </div>
         </div>
