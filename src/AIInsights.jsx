@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect } from "react";
+import ReactMarkdown from "react-markdown";
+import { API_BASE } from "./config";
 
 const C = {
   forestGreen:  "#224433",
@@ -127,7 +129,7 @@ function AssistantBubble({ text, loading }) {
         padding: "11px 15px",
         fontSize: 14, lineHeight: 1.75,
         color: C.textPrimary,
-        whiteSpace: "pre-wrap", textAlign: "justify", wordBreak: "break-word",
+        wordBreak: "break-word",
       }}>
         {loading ? (
           <span style={{ color: C.textMuted }}>
@@ -143,7 +145,28 @@ function AssistantBubble({ text, loading }) {
               ))}
             </span>
           </span>
-        ) : text}
+        ) : (
+          <ReactMarkdown
+            components={{
+              p:      ({ children }) => <p style={{ margin: "0 0 8px" }}>{children}</p>,
+              ul:     ({ children }) => <ul style={{ margin: "4px 0 8px", paddingLeft: 20 }}>{children}</ul>,
+              ol:     ({ children }) => <ol style={{ margin: "4px 0 8px", paddingLeft: 20 }}>{children}</ol>,
+              li:     ({ children }) => <li style={{ marginBottom: 3 }}>{children}</li>,
+              strong: ({ children }) => <strong style={{ color: C.forestGreen }}>{children}</strong>,
+              em:     ({ children }) => <em style={{ color: C.textSecondary }}>{children}</em>,
+              code:   ({ children }) => (
+                <code style={{
+                  background: "#e8f5e2", borderRadius: 4,
+                  padding: "1px 5px", fontSize: 12, fontFamily: "monospace",
+                }}>{children}</code>
+              ),
+              h3: ({ children }) => <p style={{ fontWeight: 700, color: C.forestGreen, margin: "8px 0 4px" }}>{children}</p>,
+              h4: ({ children }) => <p style={{ fontWeight: 600, color: C.textSecondary, margin: "6px 0 3px" }}>{children}</p>,
+            }}
+          >
+            {text}
+          </ReactMarkdown>
+        )}
       </div>
     </div>
   );
@@ -167,8 +190,8 @@ export default function AIInsights() {
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/model_summary").then(r => r.json()),
-      fetch("/api/gap").then(r => r.json()),
+      fetch(`${API_BASE}/api/model_summary`).then(r => r.json()),
+      fetch(`${API_BASE}/api/gap`).then(r => r.json()),
     ])
       .then(([summary, gapData]) => {
         setSystemPrompt(buildSystemPrompt(summary, gapData));
@@ -192,21 +215,19 @@ export default function AIInsights() {
     setLoading(true);
 
     try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
+      const res = await fetch(`${API_BASE}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1000,
-          system: systemPrompt,
+          systemPrompt,
           messages: newMessages.map(m => ({ role: m.role, content: m.content })),
         }),
       });
       const data = await res.json();
-      const reply = data.content?.map(b => b.text || "").join("") || "Sorry, I couldn't generate a response.";
-      setMessages(prev => [...prev, { role: "assistant", content: reply }]);
-    } catch {
-      setMessages(prev => [...prev, { role: "assistant", content: "Error reaching the AI service. Please try again." }]);
+      if (!res.ok) throw new Error(data.detail || "Server error");
+      setMessages(prev => [...prev, { role: "assistant", content: data.reply }]);
+    } catch (err) {
+      setMessages(prev => [...prev, { role: "assistant", content: `Error: ${err.message}` }]);
     } finally {
       setLoading(false);
     }

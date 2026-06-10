@@ -4,6 +4,7 @@ import ClientOutlook from "./ClientOutlook";
 import Provincial    from "./Provincial";
 import Regional      from "./Regional";
 import AIInsights    from "./AIInsights";
+import AboutFeeds    from "./AboutFeeds";
 
 const C = {
   sidebarBg:      "#224433",
@@ -21,7 +22,8 @@ const C = {
 const PAGE_AUTH = {
   "dashboard":     null,
   "client-outlook":null,
-  "ai-insights":   null,          // public — shows model outputs only
+  "ai-insights":   null,
+  "about-feeds":   null,
   "provincial":    "VITE_PROVINCIAL_PASS",
   "regional":      "VITE_REGIONAL_PASS",
   "reports":       null,
@@ -34,6 +36,7 @@ const NAV = [
       { icon: "layout-dashboard", label: "Dashboard",       page: "dashboard"      },
       { icon: "map-pin",          label: "Client outlook",  page: "client-outlook" },
       { icon: "brain",            label: "AI insights",     page: "ai-insights"    },
+      { icon: "info-circle",     label: "About FEEDS",     page: "about-feeds"    },
     ],
   },
   {
@@ -226,9 +229,10 @@ export default function App() {
 
   function renderPage() {
     switch (page) {
-      case "dashboard":     return <Dashboard />;
+      case "dashboard":     return <Dashboard onNavigate={p => handleNavClick({ page: p })} />;
       case "client-outlook":return <ClientOutlook />;
       case "ai-insights":   return <AIInsights />;
+      case "about-feeds":   return <AboutFeeds />;
       case "provincial":    return <Provincial />;
       case "regional":      return <Regional />;
       default:              return <Placeholder title={NAV.flatMap(s => s.items).find(i => i.page === page)?.label || page} />;

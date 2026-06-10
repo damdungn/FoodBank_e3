@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { API_BASE } from "./config";
 import {
   ComposedChart, LineChart, BarChart,
   Line, Bar, Cell, XAxis, YAxis, CartesianGrid,
@@ -192,12 +193,12 @@ export default function Provincial() {
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/provincial/history").then(r => r.json()),
-      fetch("/api/provincial/features").then(r => r.json()),
-      fetch("/api/provincial/metrics").then(r => r.json()),
-      fetch("/api/signals").then(r => r.json()),
-      fetch("/api/model_summary").then(r => r.json()),
-      fetch("/api/gap").then(r => r.json()),
+      fetch(`${API_BASE}/api/provincial/history`).then(r => r.json()),
+      fetch(`${API_BASE}/api/provincial/features`).then(r => r.json()),
+      fetch(`${API_BASE}/api/provincial/metrics`).then(r => r.json()),
+      fetch(`${API_BASE}/api/signals`).then(r => r.json()),
+      fetch(`${API_BASE}/api/model_summary`).then(r => r.json()),
+      fetch(`${API_BASE}/api/gap`).then(r => r.json()),
     ])
       .then(([hist, feats, metrics, sigs, summary, gap]) => {
         setHistoryData(hist.historyData ?? []);

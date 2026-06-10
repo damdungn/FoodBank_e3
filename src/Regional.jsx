@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
-  ComposedChart, AreaChart, LineChart, BarChart,
+  ComposedChart, BarChart,
   Line, Bar, Area, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer, ReferenceLine,
+  Tooltip, ResponsiveContainer, ReferenceArea,
 } from "recharts";
 
 const C = {
@@ -21,76 +21,72 @@ const C = {
   textMuted:    "#7a9485",
 };
 
+// ── Food bank registry ────────────────────────────────────────────────────────
+// Add a new entry here when a dataset arrives. `ready: false` shows the button
+// as "coming soon" and skips the API fetch until flipped to true.
+const FOOD_BANKS = [
+  {
+    key:      "rdfb",
+    label:    "Red Deer Community FB",
+    subtitle: "Prophet model · 15-year training window (2011–2026)",
+    ready:    true,
+    api: {
+      forecast: "/api/regional/forecast",
+      features: "/api/regional/features",
+      metrics:  "/api/regional/metrics",
+    },
+  },
+  {
+    key:      "edmonton",
+    label:    "Edmonton Campus FB",
+    subtitle: "Dataset received · May 2023 – Apr 2026 · daily granularity · pending model integration",
+    ready:    false,
+    dataset: {
+      period:      "May 1, 2023 – April 30, 2026",
+      granularity: "Daily",
+      metrics: [
+        { icon: "users",          label: "Visits",           desc: "Number of visits per day" },
+        { icon: "user-check",     label: "People per visit", desc: "Household size at each visit" },
+        { icon: "weight",         label: "Food distributed", desc: "Pounds of food per visit" },
+        { icon: "heart-handshake",label: "Donations",        desc: "Total pounds donated (aggregated)" },
+      ],
+      plannedTabs: [
+        "Daily visit trend & forecast",
+        "Food weight distributed over time",
+        "Donation vs demand gap",
+        "Seasonal visit patterns",
+      ],
+    },
+    api: {
+      forecast: "/api/edmonton/forecast",
+      features: "/api/edmonton/features",
+      metrics:  "/api/edmonton/metrics",
+    },
+  },
+];
+
 // ── Mock data ─────────────────────────────────────────────────────────────────
 
-// Daily — last 7 actual + 7 forecast
-const dailyData = [
-  { day: "May 30", actual: 102, forecast: null, lower: null, upper: null },
-  { day: "Jun 2",  actual: 108, forecast: null, lower: null, upper: null },
-  { day: "Jun 3",  actual: 91,  forecast: null, lower: null, upper: null }, // AISH dip
-  { day: "Jun 4",  actual: 94,  forecast: null, lower: null, upper: null },
-  { day: "Jun 5",  actual: 118, forecast: null, lower: null, upper: null },
-  { day: "Jun 6",  actual: 123, forecast: null, lower: null, upper: null },
-  { day: "Jun 7",  actual: 105, forecast: null, lower: null, upper: null },
-  { day: "Jun 8",  actual: null, forecast: 88,  lower: 80,  upper: 96  },
-  { day: "Jun 9",  actual: null, forecast: 126, lower: 114, upper: 138 },
-  { day: "Jun 10", actual: null, forecast: 120, lower: 108, upper: 132 },
-  { day: "Jun 11", actual: null, forecast: 113, lower: 101, upper: 125 },
-  { day: "Jun 12", actual: null, forecast: 129, lower: 116, upper: 142 },
-  { day: "Jun 13", actual: null, forecast: 132, lower: 118, upper: 146 },
-  { day: "Jun 14", actual: null, forecast: 107, lower: 95,  upper: 119 },
-];
-
-// Weekly — 6 actual + 4 forecast
-const weeklyData = [
-  { week: "Apr 28", actual: 96,  forecast: null },
-  { week: "May 5",  actual: 99,  forecast: null },
-  { week: "May 12", actual: 103, forecast: null },
-  { week: "May 19", actual: 108, forecast: null },
-  { week: "May 26", actual: 112, forecast: null },
-  { week: "Jun 2",  actual: 118, forecast: null },
-  { week: "Jun 9",  actual: null, forecast: 124 },
-  { week: "Jun 16", actual: null, forecast: 119 },
-  { week: "Jun 23", actual: null, forecast: 111 },
-  { week: "Jun 30", actual: null, forecast: 104 },
-];
-
-// Provincial connection signal
-const provSignal = {
-  status: "Flagged",
-  message: "Regional client demand forecast (+24% above avg next week) has triggered a provincial allocation review. Edmonton quota recommended to increase by 10–15% for Jun 9–21 shipments.",
-  triggeredAt: "Jun 7, 2026 · automated",
-  color: "#8b2e1a", bg: "#fdecea", border: "#e8a090",
-};
-
+// Fallback data (used only if API is unreachable)
 const featureData = [
-  { name: "CPI food",          importance: 85 },
-  { name: "Unemployment rate", importance: 71 },
-  { name: "AISH caseload",     importance: 66 },
-  { name: "CCB dates",         importance: 52 },
-  { name: "School in session", importance: 44 },
-  { name: "Mean temperature",  importance: 31 },
-  { name: "GST dates",         importance: 22 },
-  { name: "Snow on ground",    importance: 14 },
+  { name: "Edmonton AISH caseload", importance: 58.9 },
+  { name: "Single AISH total",      importance: 18.1 },
+  { name: "CPI All-items",          importance: 14.7 },
+  { name: "CPI Food",               importance: 4.2  },
+  { name: "School in session",      importance: 4.0  },
 ];
 
 const modelStats = [
-  { label: "MAE (daily)",        value: "5.1 pts"        },
-  { label: "RMSE (daily)",       value: "7.3 pts"        },
-  { label: "Weekly MAE",         value: "3.8 pts"        },
-  { label: "Last retrained",     value: "Jun 1, 2026"    },
-  { label: "Training window",    value: "Regional FB data (pending full dataset)" },
-  { label: "Forecast horizon",   value: "30 days daily · 90 days weekly" },
+  { label: "MAE (in-sample)",  value: "59 hampers/month"          },
+  { label: "MAPE (in-sample)", value: "10.8%"                     },
+  { label: "CV MAE",           value: "118 hampers/month"         },
+  { label: "CV MAPE",          value: "17.7%"                     },
+  { label: "Training months",  value: "185"                       },
+  { label: "Training window",  value: "2011-01-01 → 2026-05-01"  },
+  { label: "Model type",       value: "Prophet + economic regressors" },
+  { label: "Forecast horizon", value: "12 months"                 },
+  { label: "Generated",        value: "2026-06-09"                },
 ];
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-function getBusyness(index) {
-  if (index >= 125) return { label: "Very busy", color: "#8b2e1a", bar: "#c0622a", pct: 95 };
-  if (index >= 110) return { label: "Busy",      color: "#7a4010", bar: "#d07030", pct: 72 };
-  if (index >= 95)  return { label: "Moderate",  color: "#7a6010", bar: C.lightGold, pct: 52 };
-  return               { label: "Quiet",      color: C.forestGreen, bar: C.jungleTeal, pct: 28 };
-}
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
@@ -114,16 +110,6 @@ function SectionTitle({ title, sub }) {
   );
 }
 
-function Badge({ children, bg, color }) {
-  return (
-    <span style={{
-      display: "inline-block", padding: "2px 9px", borderRadius: 20,
-      fontSize: 11, fontWeight: 500, background: bg, color,
-    }}>
-      {children}
-    </span>
-  );
-}
 
 const ChartTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
@@ -139,6 +125,37 @@ const ChartTooltip = ({ active, payload, label }) => {
           <span style={{ fontWeight: 600 }}>{p.value}</span>
         </div>
       ))}
+    </div>
+  );
+};
+
+const HamperTooltip = ({ active, payload, label }) => {
+  if (!active || !payload?.length) return null;
+  const yhat  = payload.find(p => p.dataKey === "yhat");
+  const lower = payload[0]?.payload?.lower;
+  const upper = payload[0]?.payload?.upper;
+  const isGap = payload[0]?.payload?.afbGap === 1;
+  return (
+    <div style={{
+      background: C.forestGreen, border: `1px solid ${C.jungleTeal}`,
+      borderRadius: 8, padding: "8px 13px", fontSize: 12, color: "#fff",
+    }}>
+      <div style={{ fontWeight: 600, color: C.teaGreen, marginBottom: 4 }}>{label}</div>
+      {yhat && (
+        <div style={{ opacity: 0.9 }}>
+          Forecast: <strong>{yhat.value?.toLocaleString()}</strong> hampers
+        </div>
+      )}
+      {lower != null && upper != null && (
+        <div style={{ opacity: 0.7, fontSize: 11, marginTop: 2 }}>
+          80% CI: {lower.toLocaleString()} – {upper.toLocaleString()}
+        </div>
+      )}
+      {isGap && (
+        <div style={{ marginTop: 4, color: "#f09070", fontSize: 11 }}>
+          ⚠ AFB supply gap month
+        </div>
+      )}
     </div>
   );
 };
@@ -251,125 +268,118 @@ function DataInputForm() {
   );
 }
 
-// ── Recent entries table ──────────────────────────────────────────────────────
-
-function RecentEntries() {
-  const rows = [
-    { date: "Jun 6", visits: 341, households: 218, cpi: 163.2, unemp: 7.4, temp: 14.2, aish: false, ccb: false, notes: "Friday — very busy" },
-    { date: "Jun 5", visits: 318, households: 201, cpi: 163.2, unemp: 7.4, temp: 13.8, aish: false, ccb: false, notes: "" },
-    { date: "Jun 4", visits: 264, households: 172, cpi: 163.2, unemp: 7.4, temp: 11.1, aish: true,  ccb: false, notes: "AISH week — quieter" },
-    { date: "Jun 3", visits: 249, households: 160, cpi: 163.2, unemp: 7.4, temp: 10.5, aish: true,  ccb: false, notes: "AISH disbursement day" },
-    { date: "Jun 2", visits: 295, households: 188, cpi: 162.8, unemp: 7.4, temp: 12.3, aish: false, ccb: false, notes: "" },
-  ];
-
-  return (
-    <Panel>
-      <SectionTitle title="Recent staff entries" sub="Last 5 manually submitted regional rows" />
-      <div style={{ overflowX: "auto" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
-          <thead>
-            <tr style={{ borderBottom: `1px solid ${C.borderLight}` }}>
-              {["Date","Visits","Households","CPI food","Unemp.","Temp","AISH wk","CCB wk","Notes"].map(h => (
-                <th key={h} style={{ padding: "8px 10px", textAlign: "left", color: C.textMuted, fontWeight: 600, whiteSpace: "nowrap" }}>{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r, i) => (
-              <tr key={i} style={{ borderBottom: `0.5px solid ${C.borderLight}`, background: i % 2 === 0 ? C.surfaceGreen : C.surfaceWhite }}>
-                <td style={{ padding: "8px 10px", fontWeight: 500, color: C.textPrimary }}>{r.date}</td>
-                <td style={{ padding: "8px 10px", color: C.textSecondary }}>{r.visits}</td>
-                <td style={{ padding: "8px 10px", color: C.textSecondary }}>{r.households}</td>
-                <td style={{ padding: "8px 10px", color: C.textSecondary }}>{r.cpi}</td>
-                <td style={{ padding: "8px 10px", color: C.textSecondary }}>{r.unemp}%</td>
-                <td style={{ padding: "8px 10px", color: C.textSecondary }}>{r.temp}°C</td>
-                <td style={{ padding: "8px 10px" }}>
-                  <span style={{ fontSize: 11, color: r.aish ? C.jungleTeal : C.textMuted }}>{r.aish ? "✓" : "—"}</span>
-                </td>
-                <td style={{ padding: "8px 10px" }}>
-                  <span style={{ fontSize: 11, color: r.ccb ? C.jungleTeal : C.textMuted }}>{r.ccb ? "✓" : "—"}</span>
-                </td>
-                <td style={{ padding: "8px 10px", color: C.textMuted, fontStyle: r.notes ? "normal" : "italic" }}>{r.notes || "—"}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </Panel>
-  );
-}
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function Regional() {
-  const [activeTab, setActiveTab] = useState("daily");
+  const [activeTab,  setActiveTab]  = useState("hamper");
+  const [selectedFB, setSelectedFB] = useState("rdfb");
+
+  const [forecast, setForecast] = useState(null);
+  const [features, setFeatures] = useState(null);
+  const [metrics,  setMetrics]  = useState(null);
+
+  useEffect(() => {
+    const fb = FOOD_BANKS.find(b => b.key === selectedFB);
+    if (!fb?.ready) return;          // "coming soon" banks — skip fetch
+    setForecast(null);
+    setFeatures(null);
+    setMetrics(null);
+    const BASE = (import.meta.env.VITE_API_URL ?? "");
+    const get  = url => fetch(url).then(r => r.ok ? r.json() : null).catch(() => null);
+    Promise.all([
+      get(`${BASE}${fb.api.forecast}`),
+      get(`${BASE}${fb.api.features}`),
+      get(`${BASE}${fb.api.metrics}`),
+    ]).then(([fc, feat, met]) => {
+      if (fc)   setForecast(fc);
+      if (feat) setFeatures(feat);
+      if (met)  setMetrics(met);
+    });
+  }, [selectedFB]);
+
+  // Derived values for hamper tab
+  const forecastRows = forecast?.forecast ?? [];
+  const gapMonths    = forecastRows.filter(r => r.afbGap === 1).map(r => r.month);
+  const meanYhat     = forecastRows.length
+    ? Math.round(forecastRows.reduce((s, r) => s + r.yhat, 0) / forecastRows.length)
+    : 0;
+  const peakRow      = forecastRows.length
+    ? forecastRows.reduce((best, r) => r.yhat > best.yhat ? r : best)
+    : null;
+  const seasonality  = forecast?.seasonality ?? {};
+  const chartData    = forecastRows.map(r => ({
+    month:   r.month,
+    yhat:    r.yhat,
+    lower:   r.lower,
+    upper:   r.upper,
+    bandBot: r.lower,
+    band:    r.upper - r.lower,
+    afbGap:  r.afbGap,
+  }));
+
+  const fbReady = FOOD_BANKS.find(b => b.key === selectedFB)?.ready ?? false;
 
   const tabs = [
-    { key: "daily",  label: "Daily forecast"  },
-    { key: "weekly", label: "Weekly forecast" },
+    { key: "hamper", label: "Hamper forecast" },
     { key: "model",  label: "Model detail"    },
-    { key: "input",  label: "Data input"      },
+    { key: "input",  label: "About & data"    },
   ];
-
-  const thisWeekBusy  = getBusyness(124);
-  const nextWeekBusy  = getBusyness(119);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", background: C.pageBg, overflow: "hidden" }}>
 
       {/* Header */}
       <header style={{ padding: "32px 28px 0", background: C.pageBg, flexShrink: 0 }}>
-        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 16 }}>
-          <div>
-            <div style={{ fontSize: 25, fontWeight: 700, color: C.forestGreen, marginBottom: 4 }}>
-              Regional model
-            </div>
-            <div style={{ fontSize: 13, color: C.textMuted }}>
-              Model 2 · Edmonton regional FB · predicts daily &amp; weekly client demand · outbound = real client visits
-            </div>
+        <div style={{ marginBottom: 16 }}>
+          {/* Food bank selector */}
+          <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
+            {FOOD_BANKS.map(fb => (
+              <button
+                key={fb.key}
+                onClick={() => fb.ready && setSelectedFB(fb.key)}
+                disabled={!fb.ready}
+                style={{
+                  padding: "5px 14px", borderRadius: 20, fontSize: 13, cursor: fb.ready ? "pointer" : "default",
+                  border: `1.5px solid ${selectedFB === fb.key ? C.jungleTeal : C.borderLight}`,
+                  background: selectedFB === fb.key ? C.jungleTeal : fb.ready ? C.surfaceWhite : C.surfaceGreen,
+                  color: selectedFB === fb.key ? "#fff" : fb.ready ? C.textPrimary : C.textMuted,
+                  fontFamily: "inherit", fontWeight: selectedFB === fb.key ? 600 : 400,
+                  opacity: fb.ready ? 1 : 0.65,
+                  display: "flex", alignItems: "center", gap: 6,
+                }}
+              >
+                {fb.label}
+                {!fb.ready && (
+                  <span style={{
+                    fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 8,
+                    background: C.lightGold, color: C.forestGreen, letterSpacing: "0.04em",
+                  }}>
+                    SOON
+                  </span>
+                )}
+              </button>
+            ))}
           </div>
-          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-            {/* Provincial link status */}
-            <div style={{
-              display: "flex", alignItems: "center", gap: 7,
-              padding: "7px 12px", borderRadius: 8,
-              background: "#fdecea", border: "0.5px solid #e8a090",
-              fontSize: 12,
-            }}>
-              <i className="ti ti-alert-triangle" style={{ fontSize: 13, color: "#8b2e1a" }} aria-hidden="true" />
-              <span style={{ color: "#8b2e1a", fontWeight: 600 }}>Provincial flagged</span>
-            </div>
-            <div style={{
-              display: "flex", alignItems: "center", gap: 7,
-              padding: "7px 14px", borderRadius: 8,
-              background: C.surfaceWhite, border: `0.5px solid ${C.borderLight}`,
-              fontSize: 13,
-            }}>
-              <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#e2ffec", border: "0.5px solid #ace890", }} />
-              <span style={{ color: C.textSecondary }}>Model health: </span>
-              <span style={{ fontWeight: 600, color: C.forestGreen }}>81% confidence</span>
-            </div>
-          </div>
+
+          {/* Dynamic title + subtitle */}
+          {(() => {
+            const fb = FOOD_BANKS.find(b => b.key === selectedFB);
+            return (
+              <>
+                <div style={{ fontSize: 25, fontWeight: 700, color: C.forestGreen, marginBottom: 4 }}>
+                  {fb.label}
+                </div>
+                <div style={{ fontSize: 13, color: C.textMuted }}>
+                  {fb.subtitle}
+                </div>
+              </>
+            );
+          })()}
         </div>
 
-        {/* Provincial connection alert */}
-        <div style={{
-          display: "flex", gap: 12, alignItems: "flex-start",
-          padding: "12px 16px", borderRadius: 10, marginBottom: 16,
-          background: provSignal.bg, border: `0.5px solid ${provSignal.border}`,
-        }}>
-          <i className="ti ti-link" style={{ fontSize: 16, color: provSignal.color, marginTop: 1, flexShrink: 0 }} aria-hidden="true" />
-          <div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: provSignal.color, marginBottom: 3 }}>
-              Provincial connection · {provSignal.status}
-            </div>
-            <div style={{ fontSize: 12, color: "#a03020", lineHeight: 1.6 }}>{provSignal.message}</div>
-            <div style={{ fontSize: 11, color: "#c06050", marginTop: 4 }}>Triggered: {provSignal.triggeredAt}</div>
-          </div>
-        </div>
-
-        {/* Tabs */}
-        <div style={{ display: "flex", gap: 2, borderBottom: `1px solid ${C.borderLight}` }}>
+        {/* Tabs — hidden when selected FB isn't ready yet */}
+        <div style={{ display: fbReady ? "flex" : "none", gap: 2, borderBottom: `1px solid ${C.borderLight}` }}>
           {tabs.map((t) => (
             <button key={t.key} onClick={() => setActiveTab(t.key)} style={{
               padding: "8px 18px", fontSize: 14, cursor: "pointer",
@@ -388,204 +398,244 @@ export default function Regional() {
       {/* Content */}
       <div style={{ flex: 1, overflowY: "auto", padding: "24px 28px 32px" }}>
 
-        {/* ── DAILY TAB ── */}
-        {activeTab === "daily" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        {/* ── COMING SOON PLACEHOLDER (shown when selected FB is not ready) ── */}
+        {!fbReady && (() => {
+          const fb = FOOD_BANKS.find(b => b.key === selectedFB);
+          const ds = fb?.dataset;
+          return (
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
 
-            {/* Busyness cards */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0,1fr))", gap: 14 }}>
-              {[
-                { title: "Today (Jun 8)", index: 88,  busy: getBusyness(88),  sub: "Sunday — quieter day" },
-                { title: "Tomorrow (Jun 9)", index: 126, busy: getBusyness(126), sub: "Monday — high expected" },
-                { title: "This week peak", index: 132, busy: getBusyness(132), sub: "Fri Jun 13 — busiest day" },
-              ].map((c) => (
-                <div key={c.title} style={{
-                  background: C.surfaceWhite, border: `0.5px solid ${C.borderLight}`,
-                  borderTop: `3px solid ${c.busy.bar}`, borderRadius: 12, padding: "16px 18px",
-                }}>
-                  <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 6 }}>{c.title}</div>
-                  <div style={{ fontSize: 20, fontWeight: 700, color: C.textPrimary, marginBottom: 3 }}>{c.busy.label}</div>
-                  <div style={{ fontSize: 12, color: C.textSecondary, marginBottom: 12 }}>{c.sub}</div>
-                  <div style={{ height: 6, background: C.teaGreen, borderRadius: 3, overflow: "hidden", marginBottom: 5 }}>
-                    <div style={{ height: "100%", width: `${c.busy.pct}%`, background: c.busy.bar, borderRadius: 3 }} />
+              {/* Status banner */}
+              <div style={{
+                background: "#fffbeb", border: `1px solid ${C.lightGold}`,
+                borderRadius: 12, padding: "18px 22px",
+                display: "flex", alignItems: "flex-start", gap: 14,
+              }}>
+                <i className="ti ti-clock-hour-4" style={{ fontSize: 22, color: "#b45309", marginTop: 2 }} />
+                <div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: "#92400e", marginBottom: 4 }}>
+                    Dataset received — model integration pending
                   </div>
-                  <div style={{ fontSize: 11, color: C.textMuted }}>Index {c.index} · baseline 100</div>
+                  <div style={{ fontSize: 13, color: "#a16207", lineHeight: 1.6 }}>
+                    The Edmonton Campus Food Bank dataset is in hand and covers <strong>{ds?.period}</strong>.
+                    Forecasting tabs will appear here once the model is trained and the backend endpoints are wired up.
+                  </div>
                 </div>
-              ))}
-            </div>
-
-            {/* Daily chart with CI band */}
-            <Panel>
-              <SectionTitle
-                title="Daily client demand — actual + 7-day forecast"
-                sub="Demand index (100 = avg day) · shaded = 90% confidence interval · outbound = real client visits"
-              />
-              <ResponsiveContainer width="100%" height={230}>
-                <ComposedChart data={dailyData} margin={{ top: 4, right: 16, bottom: 0, left: -20 }}>
-                  <defs>
-                    <linearGradient id="actualGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  stopColor={C.jungleTeal} stopOpacity={0.2} />
-                      <stop offset="95%" stopColor={C.jungleTeal} stopOpacity={0.02} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke={C.teaGreen} />
-                  <XAxis dataKey="day" tick={{ fontSize: 10, fill: C.textMuted }} axisLine={false} tickLine={false} />
-                  <YAxis domain={[70, 155]} tick={{ fontSize: 11, fill: C.textMuted }} axisLine={false} tickLine={false} />
-                  <Tooltip content={<ChartTooltip />} />
-                  <ReferenceLine y={100} stroke={C.wheat} strokeDasharray="4 2" label={{ value: "avg", position: "insideTopLeft", fontSize: 10, fill: C.textMuted }} />
-                  <ReferenceLine y={120} stroke="#e8a090" strokeDasharray="3 3" label={{ value: "busy", position: "insideTopLeft", fontSize: 10, fill: "#c0622a" }} />
-                  {/* CI band */}
-                  <Area type="monotone" dataKey="upper" name="CI band" stroke="none" fill="#ddeaf8" fillOpacity={0.5} legendType="none" connectNulls />
-                  <Area type="monotone" dataKey="lower" name="CI band" stroke="none" fill={C.surfaceWhite} fillOpacity={1} legendType="none" connectNulls />
-                  {/* Lines */}
-                  <Line type="monotone" dataKey="actual"   name="Actual (client visits)"  stroke={C.jungleTeal} strokeWidth={2.5} dot={{ r: 3.5 }} connectNulls={false} />
-                  <Line type="monotone" dataKey="forecast" name="Forecast"                stroke={C.dustyDenim} strokeWidth={2}   dot={{ r: 3 }} strokeDasharray="5 3" connectNulls />
-                </ComposedChart>
-              </ResponsiveContainer>
-              <div style={{ display: "flex", gap: 18, marginTop: 10 }}>
-                {[
-                  { color: C.jungleTeal, label: "Actual client visits" },
-                  { color: C.dustyDenim, label: "Forecast"             },
-                  { color: "#ddeaf8",    label: "90% CI",  square: true },
-                ].map(({ color, label, square }) => (
-                  <span key={label} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: C.textMuted }}>
-                    <span style={{ width: 10, height: square ? 10 : 3, background: color, display: "inline-block", borderRadius: square ? 2 : 2, border: square ? `1px solid ${C.borderLight}` : "none" }} />
-                    {label}
-                  </span>
-                ))}
               </div>
-            </Panel>
 
-            {/* Day-of-week pattern */}
-            <Panel>
-              <SectionTitle
-                title="Day-of-week demand pattern"
-                sub="Average demand index by weekday — based on historical regional data"
-              />
-              <ResponsiveContainer width="100%" height={160}>
-                <BarChart
-                  data={[
-                    { day: "Mon", index: 118 },
-                    { day: "Tue", index: 108 },
-                    { day: "Wed", index: 102 },
-                    { day: "Thu", index: 112 },
-                    { day: "Fri", index: 128 },
-                    { day: "Sat", index: 96  },
-                    { day: "Sun", index: 82  },
-                  ]}
-                  margin={{ top: 4, right: 16, bottom: 0, left: -20 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke={C.teaGreen} vertical={false} />
-                  <XAxis dataKey="day" tick={{ fontSize: 11, fill: C.textMuted }} axisLine={false} tickLine={false} />
-                  <YAxis domain={[70, 140]} tick={{ fontSize: 11, fill: C.textMuted }} axisLine={false} tickLine={false} />
-                  <ReferenceLine y={100} stroke={C.wheat} strokeDasharray="4 2" />
-                  <Bar dataKey="index" name="Avg demand index" radius={[4, 4, 0, 0]} barSize={28}
-                    fill={C.jungleTeal}
-                    label={{ position: "top", fontSize: 10, fill: C.textMuted }}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </Panel>
-          </div>
-        )}
-
-        {/* ── WEEKLY TAB ── */}
-        {activeTab === "weekly" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-
-            {/* Weekly stat cards */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0,1fr))", gap: 14 }}>
-              {[
-                { label: "This week forecast", value: thisWeekBusy.label, sub: "Jun 9–14",   accent: thisWeekBusy.bar, badgeBg: "#fdecea", badgeColor: "#8b2e1a", badge: "Index 124" },
-                { label: "Next week forecast",  value: nextWeekBusy.label, sub: "Jun 16–21",  accent: "#d07030",        badgeBg: "#fdf0e0", badgeColor: "#7a4010", badge: "Index 119" },
-                { label: "4-week trend",        value: "+18%",             sub: "vs 4 wks ago", accent: C.dustyDenim,   badgeBg: "#ddeaf8", badgeColor: "#2d5a9e", badge: "Rising"   },
-                { label: "Prov. alert status",  value: "Flagged",          sub: "quota review",  accent: "#c0622a",     badgeBg: "#fdecea", badgeColor: "#8b2e1a", badge: "Action needed" },
-              ].map((s) => (
-                <div key={s.label} style={{
-                  background: C.surfaceWhite, border: `0.5px solid ${C.borderLight}`,
-                  borderTop: `3px solid ${s.accent}`, borderRadius: 12, padding: "14px 16px",
-                }}>
-                  <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 6 }}>{s.label}</div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: C.textPrimary, marginBottom: 3 }}>{s.value}</div>
-                  <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 8 }}>{s.sub}</div>
-                  <Badge bg={s.badgeBg} color={s.badgeColor}>{s.badge}</Badge>
+              {/* Dataset overview */}
+              <div style={{
+                background: C.surfaceWhite, border: `0.5px solid ${C.borderLight}`,
+                borderRadius: 12, padding: "20px 22px",
+              }}>
+                <div style={{ fontSize: 15, fontWeight: 700, color: C.textPrimary, marginBottom: 4 }}>Dataset overview</div>
+                <div style={{ fontSize: 13, color: C.textMuted, marginBottom: 18 }}>
+                  {ds?.period} · {ds?.granularity} records · aggregated non-identifying operational metrics
                 </div>
-              ))}
-            </div>
-
-            {/* Weekly trend chart */}
-            <Panel>
-              <SectionTitle
-                title="Weekly client demand — 6-week history + 4-week forecast"
-                sub="Demand index · actual weeks solid · forecast weeks dashed · 100 = weekly average"
-              />
-              <ResponsiveContainer width="100%" height={220}>
-                <ComposedChart data={weeklyData} margin={{ top: 4, right: 16, bottom: 0, left: -20 }}>
-                  <defs>
-                    <linearGradient id="weekGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  stopColor={C.jungleTeal} stopOpacity={0.2} />
-                      <stop offset="95%" stopColor={C.jungleTeal} stopOpacity={0.02} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke={C.teaGreen} />
-                  <XAxis dataKey="week" tick={{ fontSize: 10, fill: C.textMuted }} axisLine={false} tickLine={false} />
-                  <YAxis domain={[85, 135]} tick={{ fontSize: 11, fill: C.textMuted }} axisLine={false} tickLine={false} />
-                  <Tooltip content={<ChartTooltip />} />
-                  <ReferenceLine y={100} stroke={C.wheat} strokeDasharray="4 2" label={{ value: "baseline", position: "insideTopLeft", fontSize: 10, fill: C.textMuted }} />
-                  <Area type="monotone" dataKey="actual"   name="Actual (weekly)"   stroke={C.jungleTeal} strokeWidth={2.5} fill="url(#weekGrad)" dot={{ r: 4, fill: C.jungleTeal }} connectNulls={false} />
-                  <Line type="monotone" dataKey="forecast" name="Forecast (weekly)"  stroke={C.dustyDenim} strokeWidth={2}   dot={{ r: 3.5, fill: C.dustyDenim }} strokeDasharray="6 4" connectNulls />
-                </ComposedChart>
-              </ResponsiveContainer>
-              <div style={{ display: "flex", gap: 18, marginTop: 10 }}>
-                {[
-                  { color: C.jungleTeal, label: "Actual (weekly)"   },
-                  { color: C.dustyDenim, label: "Forecast (weekly)" },
-                ].map(({ color, label }) => (
-                  <span key={label} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: C.textMuted }}>
-                    <span style={{ width: 10, height: 3, background: color, display: "inline-block", borderRadius: 2 }} />
-                    {label}
-                  </span>
-                ))}
-              </div>
-            </Panel>
-
-            {/* Provincial connection detail */}
-            <Panel>
-              <SectionTitle title="Provincial + Regional connection" sub="How this model's output feeds back to provincial allocation" />
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {[
-                  { step: "1", label: "Regional model runs daily", detail: "Client demand forecasted 7 days ahead (daily) and 4 weeks ahead (weekly)", color: C.jungleTeal },
-                  { step: "2", label: "Threshold check", detail: "If weekly forecast exceeds +15% above baseline → provincial flag triggered automatically", color: C.dustyDenim },
-                  { step: "3", label: "Provincial model notified", detail: "Edmonton's quota weight adjusted in provincial allocation model for next shipment cycle", color: C.lightGold },
-                  { step: "4", label: "Staff review & confirm", detail: "Staff in Provincial → Allocation tab review the recommended adjustment before confirming", color: C.wheat },
-                ].map((s) => (
-                  <div key={s.step} style={{
-                    display: "flex", gap: 14, alignItems: "flex-start",
-                    padding: "12px 14px", borderRadius: 9,
-                    background: C.surfaceGreen, border: `0.5px solid ${C.borderLight}`,
-                  }}>
-                    <div style={{
-                      width: 26, height: 26, borderRadius: "50%", flexShrink: 0,
-                      background: s.color, display: "flex", alignItems: "center",
-                      justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#fff",
-                    }}>{s.step}</div>
-                    <div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: C.textPrimary, marginBottom: 2, textAlign: "left" }}>{s.label}</div>
-                      <div style={{ fontSize: 13, color: C.textSecondary, lineHeight: 1.5 }}>{s.detail}</div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                  {ds?.metrics.map(m => (
+                    <div key={m.label} style={{
+                      display: "flex", gap: 12, alignItems: "flex-start",
+                      background: C.surfaceGreen, borderRadius: 10, padding: "12px 14px",
+                    }}>
+                      <div style={{
+                        width: 34, height: 34, borderRadius: 8, flexShrink: 0,
+                        background: C.surfaceWhite, border: `0.5px solid ${C.borderLight}`,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                      }}>
+                        <i className={`ti ti-${m.icon}`} style={{ fontSize: 15, color: C.jungleTeal }} />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: C.textPrimary }}>{m.label}</div>
+                        <div style={{ fontSize: 12, color: C.textMuted, marginTop: 2 }}>{m.desc}</div>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </Panel>
+
+              {/* Planned tabs */}
+              <div style={{
+                background: C.surfaceWhite, border: `0.5px solid ${C.borderLight}`,
+                borderRadius: 12, padding: "20px 22px",
+              }}>
+                <div style={{ fontSize: 15, fontWeight: 700, color: C.textPrimary, marginBottom: 4 }}>Planned analysis</div>
+                <div style={{ fontSize: 13, color: C.textMuted, marginBottom: 16 }}>
+                  Tabs that will be available once the model is integrated
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {ds?.plannedTabs.map((t, i) => (
+                    <div key={i} style={{
+                      display: "flex", alignItems: "center", gap: 10,
+                      padding: "10px 14px", borderRadius: 8,
+                      background: C.surfaceGreen, border: `0.5px solid ${C.borderLight}`,
+                    }}>
+                      <div style={{
+                        width: 20, height: 20, borderRadius: "50%", flexShrink: 0,
+                        border: `1.5px dashed ${C.textMuted}`,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        fontSize: 10, color: C.textMuted, fontWeight: 600,
+                      }}>
+                        {i + 1}
+                      </div>
+                      <div style={{ fontSize: 13, color: C.textSecondary }}>{t}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+          );
+        })()}
+
+        {/* ── HAMPER FORECAST TAB ── */}
+        {fbReady && activeTab === "hamper" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            {!forecast ? (
+              <Panel>
+                <div style={{ padding: "40px 0", textAlign: "center" }}>
+                  <i className="ti ti-database-off" style={{ fontSize: 28, color: C.textMuted, display: "block", marginBottom: 10 }} />
+                  <div style={{ fontSize: 13, color: C.textMuted }}>
+                    Forecast not available — ensure the backend is running and{" "}
+                    <code style={{ background: C.surfaceGreen, padding: "1px 5px", borderRadius: 4 }}>rdfb_forecast.json</code>{" "}
+                    is in{" "}
+                    <code style={{ background: C.surfaceGreen, padding: "1px 5px", borderRadius: 4 }}>backend/data/</code>.
+                  </div>
+                </div>
+              </Panel>
+            ) : (
+              <>
+                {/* Summary cards */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0,1fr))", gap: 14 }}>
+                  {[
+                    {
+                      label:  "Avg forecast",
+                      value:  `${meanYhat.toLocaleString()} hampers`,
+                      sub:    "per month · next 12 months",
+                      accent: C.jungleTeal,
+                    },
+                    {
+                      label:  "AFB gap months",
+                      value:  `${gapMonths.length} / ${forecastRows.length}`,
+                      sub:    "provincial supply gap overlap",
+                      accent: "#c0622a",
+                    },
+                    {
+                      label:  "Peak demand month",
+                      value:  peakRow?.month ?? "—",
+                      sub:    peakRow ? `${peakRow.yhat.toLocaleString()} hampers forecast` : "",
+                      accent: "#d07030",
+                    },
+                    {
+                      label:  "CV MAPE",
+                      value:  metrics?.modelStats?.find(s => s.label === "CV MAPE")?.value ?? "17.7%",
+                      sub:    "cross-validated forecast error",
+                      accent: C.dustyDenim,
+                    },
+                  ].map(s => (
+                    <div key={s.label} style={{
+                      background: C.surfaceWhite, border: `0.5px solid ${C.borderLight}`,
+                      borderTop: `3px solid ${s.accent}`, borderRadius: 12, padding: "14px 16px",
+                    }}>
+                      <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 6 }}>{s.label}</div>
+                      <div style={{ fontSize: 18, fontWeight: 700, color: C.textPrimary, marginBottom: 3 }}>{s.value}</div>
+                      <div style={{ fontSize: 11, color: C.textMuted }}>{s.sub}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* 12-month forecast chart */}
+                <Panel>
+                  <SectionTitle
+                    title="12-month hamper demand forecast — Red Deer FB"
+                    sub="Prophet model · 80% prediction interval · red shading = AFB provincial supply gap months"
+                  />
+                  <ResponsiveContainer width="100%" height={240}>
+                    <ComposedChart data={chartData} margin={{ top: 4, right: 16, bottom: 0, left: 10 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke={C.teaGreen} />
+                      <XAxis dataKey="month" tick={{ fontSize: 10, fill: C.textMuted }} axisLine={false} tickLine={false} />
+                      <YAxis
+                        tick={{ fontSize: 11, fill: C.textMuted }} axisLine={false} tickLine={false}
+                        tickFormatter={v => v.toLocaleString()} domain={["auto", "auto"]}
+                      />
+                      <Tooltip content={<HamperTooltip />} />
+                      {/* CI band — stacked so gap shading renders on top */}
+                      <Area type="monotone" dataKey="bandBot" stackId="ci" stroke="none" fill="transparent" legendType="none" />
+                      <Area type="monotone" dataKey="band"    stackId="ci" stroke="none" fill="#ddeaf8" fillOpacity={0.6} legendType="none" />
+                      {/* AFB gap month shading */}
+                      {gapMonths.map(m => (
+                        <ReferenceArea key={m} x1={m} x2={m} fill="#fdecea" fillOpacity={0.65} />
+                      ))}
+                      {/* Forecast line */}
+                      <Line
+                        type="monotone" dataKey="yhat" name="Forecast (hampers/month)"
+                        stroke={C.jungleTeal} strokeWidth={2.5}
+                        dot={{ r: 4, fill: C.jungleTeal }}
+                      />
+                    </ComposedChart>
+                  </ResponsiveContainer>
+                  <div style={{ display: "flex", gap: 18, marginTop: 10 }}>
+                    {[
+                      { color: C.jungleTeal, label: "Forecast hampers/month", line: true  },
+                      { color: "#ddeaf8",    label: "80% confidence interval", square: true },
+                      { color: "#fdecea",    label: "AFB supply gap month",    square: true },
+                    ].map(({ color, label, line, square }) => (
+                      <span key={label} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: C.textMuted }}>
+                        <span style={{
+                          width: 10, height: line ? 3 : 10,
+                          background: color, display: "inline-block",
+                          borderRadius: 2, border: square ? `1px solid ${C.borderLight}` : "none",
+                        }} />
+                        {label}
+                      </span>
+                    ))}
+                  </div>
+                </Panel>
+
+                {/* Seasonality + about */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                  <Panel>
+                    <SectionTitle title="Historical seasonality" sub="Based on 15 years of Red Deer FB data (2011–2026)" />
+                    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                      {[
+                        { label: "Peak months",     months: seasonality.peakMonths,   color: "#c0622a"   },
+                        { label: "Quietest months", months: seasonality.troughMonths, color: C.jungleTeal },
+                      ].map(row => (
+                        <div key={row.label} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                          <div style={{ width: 8, height: 8, borderRadius: "50%", background: row.color, flexShrink: 0, marginTop: 5 }} />
+                          <div style={{ fontSize: 13, color: C.textSecondary }}>
+                            <strong style={{ color: C.textPrimary }}>{row.label}:</strong>{" "}
+                            {(row.months ?? []).join(", ") || "—"}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </Panel>
+                  <Panel>
+                    <SectionTitle title="About this forecast" sub="" />
+                    <div style={{ fontSize: 12, color: C.textSecondary, lineHeight: 1.7 }}>
+                      Trained on 185 months of Red Deer FB data using Prophet with provincial
+                      economic regressors (AISH caseload, CPI, school calendar). Features were
+                      selected via SHAP analysis on the AFB provincial model — the same drivers
+                      predict both provincial outbound and regional hamper demand.
+                      <br /><br />
+                      <strong style={{ color: C.textPrimary }}>Red shading</strong> marks months
+                      where the AFB model forecasts a provincial supply gap — high regional demand
+                      coinciding with constrained supply.
+                    </div>
+                  </Panel>
+                </div>
+              </>
+            )}
           </div>
         )}
 
         {/* ── MODEL DETAIL TAB ── */}
-        {activeTab === "model" && (
+        {fbReady && activeTab === "model" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0,1fr))", gap: 14 }}>
-              {modelStats.map((s) => (
+              {(metrics?.modelStats ?? modelStats).map((s) => (
                 <div key={s.label} style={{
                   background: C.surfaceGreen, border: `0.5px solid ${C.borderLight}`,
                   borderRadius: 12, padding: "14px 16px",
@@ -599,11 +649,11 @@ export default function Regional() {
             {/* Feature importance */}
             <Panel>
               <SectionTitle
-                title="Feature importance — regional model (XGBoost)"
-                sub="Variables driving client-level demand prediction · differs from provincial model"
+                title="Feature importance — regional model (Prophet + SHAP)"
+                sub="SHAP values from AFB model applied to RDFB · same economic drivers, regional target"
               />
               <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={featureData} layout="vertical" margin={{ top: 4, right: 50, bottom: 0, left: 110 }}>
+                <BarChart data={features?.featureData ?? featureData} layout="vertical" margin={{ top: 4, right: 50, bottom: 0, left: 110 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke={C.teaGreen} horizontal={false} />
                   <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11, fill: C.textMuted }} axisLine={false} tickLine={false} />
                   <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: C.textSecondary }} axisLine={false} tickLine={false} width={110} />
@@ -618,47 +668,169 @@ export default function Regional() {
                 background: C.surfaceGreen, borderRadius: 8, border: `0.5px solid ${C.borderLight}`,
                 fontSize: 12, color: C.textSecondary, lineHeight: 1.6,
               }}>
-                <strong style={{ color: C.textPrimary }}>Note:</strong> Regional model uses dusty denim bars to distinguish from the provincial model's
-                teal bars. AISH caseload and CCB dates carry higher relative importance here because
-                they directly predict individual client visit timing at the regional level.
+                <strong style={{ color: C.textPrimary }}>Note:</strong> SHAP importances are derived from the AFB provincial model and validated
+                against Red Deer FB hamper data. Edmonton AISH caseload is the dominant driver (SHAP 104),
+                followed by single AISH total, CPI, and school calendar.
               </div>
             </Panel>
 
-            {/* Actual vs predicted */}
+            {/* In-sample accuracy summary */}
             <Panel>
               <SectionTitle
-                title="Actual vs predicted — regional model accuracy (weekly, Apr–Jun 2026)"
-                sub="Closer lines = better fit · gap = prediction error · synthetic data reflecting realistic patterns"
+                title="In-sample model accuracy"
+                sub="Measured on 185 months of training data (2011–2026)"
               />
-              <ResponsiveContainer width="100%" height={190}>
-                <LineChart
-                  data={[
-                    { week: "Apr 28", actual: 96,  predicted: 98  },
-                    { week: "May 5",  actual: 99,  predicted: 101 },
-                    { week: "May 12", actual: 103, predicted: 102 },
-                    { week: "May 19", actual: 108, predicted: 106 },
-                    { week: "May 26", actual: 112, predicted: 114 },
-                    { week: "Jun 2",  actual: 118, predicted: 116 },
-                  ]}
-                  margin={{ top: 4, right: 16, bottom: 0, left: -20 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke={C.teaGreen} />
-                  <XAxis dataKey="week" tick={{ fontSize: 11, fill: C.textMuted }} axisLine={false} tickLine={false} />
-                  <YAxis domain={[88, 128]} tick={{ fontSize: 11, fill: C.textMuted }} axisLine={false} tickLine={false} />
-                  <Tooltip content={<ChartTooltip />} />
-                  <Line type="monotone" dataKey="actual"    name="Actual"    stroke={C.jungleTeal} strokeWidth={2.5} dot={{ r: 3.5 }} />
-                  <Line type="monotone" dataKey="predicted" name="Predicted" stroke={C.dustyDenim} strokeWidth={2}   dot={{ r: 3 }} strokeDasharray="5 3" />
-                </LineChart>
-              </ResponsiveContainer>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+                {[
+                  { label: "In-sample MAE",  value: "59 hampers/month", sub: "8.6% of monthly mean"  },
+                  { label: "In-sample MAPE", value: "10.8%",            sub: "typical forecast error" },
+                  { label: "CV MAE",         value: "118 hampers/month", sub: "honest out-of-sample"  },
+                  { label: "CV MAPE",        value: "17.7%",            sub: "6-month horizon"        },
+                ].map(s => (
+                  <div key={s.label} style={{
+                    padding: "12px 14px", borderRadius: 9,
+                    background: C.surfaceGreen, border: `0.5px solid ${C.borderLight}`,
+                  }}>
+                    <div style={{ fontSize: 12, color: C.textSecondary, marginBottom: 4 }}>{s.label}</div>
+                    <div style={{ fontSize: 18, fontWeight: 700, color: C.textPrimary }}>{s.value}</div>
+                    <div style={{ fontSize: 11, color: C.textMuted, marginTop: 2 }}>{s.sub}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{
+                marginTop: 14, padding: "10px 14px",
+                background: C.surfaceGreen, borderRadius: 8, border: `0.5px solid ${C.borderLight}`,
+                fontSize: 12, color: C.textSecondary, lineHeight: 1.6,
+              }}>
+                Cross-validation used a 3-year initial window, retraining every 6 months with a 6-month
+                forecast horizon. CV MAPE of 17.7% is the honest out-of-sample accuracy — in-sample
+                MAPE (10.8%) reflects fit on training data.
+              </div>
             </Panel>
           </div>
         )}
 
-        {/* ── DATA INPUT TAB ── */}
-        {activeTab === "input" && (
+        {/* ── ABOUT & DATA TAB ── */}
+        {fbReady && activeTab === "input" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+
+            {/* Edmonton / Red Deer connection */}
+            <Panel>
+              <SectionTitle
+                title="Food bank network — where Red Deer fits"
+                sub="How this model connects to the broader Alberta food bank system"
+              />
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+                {[
+                  {
+                    icon: "building-warehouse",
+                    label: "AFB (provincial)",
+                    status: "Live model",
+                    statusColor: C.jungleTeal,
+                    detail: "Forecasts provincial inbound / outbound lbs. SHAP analysis identified the economic features used in both models.",
+                    border: C.jungleTeal,
+                  },
+                  {
+                    icon: "map-pin",
+                    label: "Red Deer Community FB",
+                    status: "This model",
+                    statusColor: C.dustyDenim,
+                    detail: "Prophet model trained on 185 months of hamper data. Uses same AISH / CPI features validated at provincial level.",
+                    border: C.dustyDenim,
+                  },
+                  {
+                    icon: "school",
+                    label: "Edmonton Campus FB",
+                    status: "Pending dataset",
+                    statusColor: C.textMuted,
+                    detail: "Same model architecture ready to deploy. Waiting on historical hamper data. Will use identical feature pipeline once available.",
+                    border: C.borderLight,
+                  },
+                ].map(fb => (
+                  <div key={fb.label} style={{
+                    padding: "14px 16px", borderRadius: 10,
+                    background: C.surfaceGreen, border: `1.5px solid ${fb.border}`,
+                  }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                      <i className={`ti ti-${fb.icon}`} style={{ fontSize: 16, color: fb.statusColor }} aria-hidden="true" />
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: C.textPrimary }}>{fb.label}</div>
+                        <div style={{ fontSize: 11, color: fb.statusColor, fontWeight: 500 }}>{fb.status}</div>
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 12, color: C.textSecondary, lineHeight: 1.6 }}>{fb.detail}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{
+                marginTop: 14, padding: "10px 14px",
+                background: C.surfaceWhite, borderRadius: 8, border: `0.5px solid ${C.borderLight}`,
+                fontSize: 12, color: C.textSecondary, lineHeight: 1.6,
+              }}>
+                <strong style={{ color: C.textPrimary }}>The connection:</strong> AFB forecasts provincial supply.
+                Both Red Deer and Edmonton FBs are downstream consumers of that supply, and both face demand
+                driven by the same provincial economic signals (AISH caseload, CPI, school calendar).
+                When AFB signals a supply gap, it affects all regional FBs — that's why the gap overlay
+                on the Hamper forecast tab is meaningful for Red Deer operations.
+              </div>
+            </Panel>
+
+            {/* What gets unlocked with donation data */}
+            <Panel>
+              <SectionTitle
+                title="What opens up with Red Deer donation data (2011–2026)"
+                sub="Planned additions once inbound donation history is available"
+              />
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {[
+                  {
+                    icon: "trending-up",
+                    label: "Donation trend forecast",
+                    detail: "Same Prophet pipeline applied to inbound donations. Shows whether donations are keeping pace with rising hamper demand.",
+                    ready: false,
+                  },
+                  {
+                    icon: "circle-minus",
+                    label: "Red Deer supply-demand gap",
+                    detail: "Hampers needed minus donations received, forecasted monthly. Mirrors the AFB gap model but at the regional level — enables local donor alerts.",
+                    ready: false,
+                  },
+                  {
+                    icon: "chart-line",
+                    label: "Actual vs predicted chart",
+                    detail: "In-sample fit chart using real historical data. Currently replaced by accuracy summary stats.",
+                    ready: false,
+                  },
+                  {
+                    icon: "calendar-stats",
+                    label: "Seasonal donation pattern",
+                    detail: "Which months historically receive more donations vs which months see demand spikes — supports campaign planning.",
+                    ready: false,
+                  },
+                ].map(item => (
+                  <div key={item.label} style={{
+                    display: "flex", gap: 12, alignItems: "flex-start",
+                    padding: "12px 14px", borderRadius: 9,
+                    background: C.surfaceGreen, border: `0.5px solid ${C.borderLight}`,
+                  }}>
+                    <div style={{
+                      width: 30, height: 30, borderRadius: 8, flexShrink: 0,
+                      background: C.surfaceWhite, border: `0.5px solid ${C.borderLight}`,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                    }}>
+                      <i className={`ti ti-${item.icon}`} style={{ fontSize: 14, color: C.textMuted }} aria-hidden="true" />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: C.textPrimary, marginBottom: 2 }}>{item.label}</div>
+                      <div style={{ fontSize: 12, color: C.textSecondary, lineHeight: 1.5 }}>{item.detail}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Panel>
+
+            {/* Data input form */}
             <DataInputForm />
-            <RecentEntries />
           </div>
         )}
 

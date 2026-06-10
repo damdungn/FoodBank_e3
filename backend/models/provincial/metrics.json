@@ -1,0 +1,30 @@
+{
+  "in": {
+    "mae": 76873.0,
+    "rmse": 99991.0,
+    "r2": 0.0102,
+    "smape": 46.0,
+    "rel_mae_pct": 97.9,
+    "mean_actual": 198789.0,
+    "n_test": 14,
+    "granularity": "monthly"
+  },
+  "out": {
+    "mae": 107772.0,
+    "rmse": 132657.0,
+    "r2": -0.4572,
+    "smape": 45.9,
+    "rel_mae_pct": 65.8,
+    "mean_actual": 276410.0,
+    "n_test": 14,
+    "granularity": "monthly"
+  },
+  "ensemble": {
+    "train_acc": 0.7142857142857143,
+    "val_acc": 0.7857142857142857,
+    "train_f1": 0.8333333333333333,
+    "val_f1": 0.88,
+    "val_recall": 1.0,
+    "auc": 0.6363636363636364
+  }
+}
