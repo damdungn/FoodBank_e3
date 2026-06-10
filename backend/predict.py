@@ -1,10 +1,11 @@
 """
-Load trained models and generate monthly forecasts.
+Load trained ensemble models and generate monthly forecasts.
 
-Hybrid inference:
-  1. Holt-Winters forecasts the trend + seasonal baseline
-  2. XGBoost predicts the residual (external economic/calendar effect)
-  3. Final = HW_forecast + XGBoost_residual
+Inference:
+  1. Prophet models produce continuous LBS_In, LBS_Out forecasts and net flow direction
+  2. LightGBM classifies gap/surplus probability from 6-month rolling lag history
+  3. Ensemble (50/50) gap probability drives alert levels
+  4. Prophet 80% prediction intervals are passed through for each target
 """
 
 import json
@@ -14,10 +15,7 @@ import pandas as pd
 from pathlib import Path
 from typing import Optional
 
-from preprocess import (
-    load_data, aggregate_monthly,
-    TARGET_COLS, RESIDUAL_FEATURE_COLS,
-)
+from preprocess import load_data, aggregate_monthly
 
 PROVINCIAL_DIR = Path(__file__).parent / "models" / "provincial"
 REGIONAL_DIR   = Path(__file__).parent / "models" / "regional"
@@ -33,16 +31,14 @@ ALERT_LABELS = {
 # ── Loaders ───────────────────────────────────────────────────────────────────
 
 def load_models(model_dir: Path = PROVINCIAL_DIR) -> dict:
-    """Returns {target: {'hw': fitted_hw, 'xgb': xgb_model}}."""
+    """Returns ensemble model dict with prophet_net, prophet_lbs_in, prophet_lbs_out, lgbm."""
+    keys   = ["prophet_net", "prophet_lbs_in", "prophet_lbs_out", "lgbm"]
+    fnames = ["prophet_net.pkl", "prophet_lbs_in.pkl", "prophet_lbs_out.pkl", "lgbm_model.pkl"]
     models = {}
-    for target in TARGET_COLS:
-        hw_path  = model_dir / f"hw_{target.lower()}.pkl"
-        xgb_path = model_dir / f"xgb_{target.lower()}.pkl"
-        if hw_path.exists() and xgb_path.exists():
-            models[target] = {
-                "hw":  joblib.load(hw_path),
-                "xgb": joblib.load(xgb_path),
-            }
+    for key, fname in zip(keys, fnames):
+        p = model_dir / fname
+        if p.exists():
+            models[key] = joblib.load(p)
     return models
 
 
@@ -66,12 +62,44 @@ def load_gap_stats(model_dir: Path = PROVINCIAL_DIR) -> dict:
     return json.load(open(p)) if p.exists() else {}
 
 
+def _load_config(model_dir: Path = PROVINCIAL_DIR) -> dict:
+    p = model_dir / "forecast_config.json"
+    return json.load(open(p)) if p.exists() else {}
+
+
 def models_are_trained(model_dir: Path = PROVINCIAL_DIR) -> bool:
-    return all(
-        (model_dir / f"hw_{t.lower()}.pkl").exists() and
-        (model_dir / f"xgb_{t.lower()}.pkl").exists()
-        for t in TARGET_COLS
-    )
+    required = [
+        "prophet_net.pkl", "prophet_lbs_in.pkl",
+        "prophet_lbs_out.pkl", "lgbm_model.pkl",
+    ]
+    return all((model_dir / f).exists() for f in required)
+
+
+# ── Internal helpers ──────────────────────────────────────────────────────────
+
+def _prophet_predict(model, data: pd.DataFrame, top_features: list) -> pd.DataFrame:
+    df_p = data[["Date"]].rename(columns={"Date": "ds"})
+    for col in top_features:
+        if col in data.columns:
+            df_p[col] = data[col].values
+    return model.predict(df_p)
+
+
+def _alert_level(
+    ensemble_gap_prob: float,
+    threshold: float,
+    gap: float,
+    gap_stats: dict,
+) -> str:
+    # Probability below adaptive threshold → model predicts surplus
+    if ensemble_gap_prob < threshold:
+        return "OK"
+    # Model predicts gap → severity by dollar amount
+    if gap < gap_stats.get("critical_threshold", -999999):
+        return "Critical"
+    if gap < gap_stats.get("warn_threshold", 0):
+        return "Warning"
+    return "Watch"
 
 
 # ── Historical in-sample predictions ─────────────────────────────────────────
@@ -81,114 +109,24 @@ def predict_historical(
     models: dict,
     feature_cols: dict,
 ) -> pd.DataFrame:
-    """Return df_monthly with *_pred columns added."""
+    """Return df_monthly with LBS_In_pred and LBS_Out_pred columns added."""
+    def _regressors(model, fallback):
+        if hasattr(model, "extra_regressors"):
+            return list(model.extra_regressors.keys())
+        return fallback
+
+    fallback = (feature_cols or {}).get("LBS_In", [])
     out = df_monthly[["Date", "LBS_In", "LBS_Out"]].copy()
-    for target, m in models.items():
-        hw_preds    = m["hw"].fittedvalues.clip(0)
-        xgb_resids  = m["xgb"].predict(df_monthly[feature_cols[target]])
-        out[f"{target}_pred"] = (hw_preds + xgb_resids).clip(0)
+    out["LBS_In_pred"]  = np.maximum(
+        _prophet_predict(models["prophet_lbs_in"],  df_monthly, _regressors(models["prophet_lbs_in"],  fallback))["yhat"].values, 0
+    )
+    out["LBS_Out_pred"] = np.maximum(
+        _prophet_predict(models["prophet_lbs_out"], df_monthly, _regressors(models["prophet_lbs_out"], fallback))["yhat"].values, 0
+    )
     return out
 
 
 # ── Future forecast ───────────────────────────────────────────────────────────
-
-def _build_future_rows(df_monthly: pd.DataFrame, months: int) -> pd.DataFrame:
-    """
-    Build feature rows for the next `months` calendar months.
-    Economic cols: carry forward last known value.
-    Weather + calendar: climatological monthly mean from history.
-    """
-    last_date    = df_monthly["Date"].max()
-    future_dates = pd.date_range(
-        last_date + pd.DateOffset(months=1), periods=months, freq="MS"
-    )
-    future = pd.DataFrame({"Date": future_dates})
-    future["month_of_year"] = future["Date"].dt.month
-    future["quarter"]       = future["Date"].dt.quarter
-
-    econ_cols = [
-        "Unemployment_Rate", "CPI_Food", "CPI_Shelter", "CPI_All_items",
-        "Net_Migration", "AISH_TOTAL", "EDMONTON_AISH_CASELOAD",
-    ]
-    last = df_monthly.iloc[-1]
-    for col in econ_cols:
-        if col in df_monthly.columns:
-            future[col] = float(last[col])
-
-    wx_cal = [
-        "Mean_Temp", "Total_Precip", "Snow_on_Grnd",
-        "n_holidays", "n_stat", "n_gst", "n_ccb", "n_school", "n_tax",
-        "n_acwb", "n_acfb", "n_cdb", "n_cpp", "n_oas",
-        "n_ramadan", "n_exam", "n_intl",
-    ]
-    available = [c for c in wx_cal if c in df_monthly.columns]
-    climate   = df_monthly.groupby("month_of_year")[available].mean()
-    for col in available:
-        future[col] = future["month_of_year"].map(climate[col])
-
-    for col in RESIDUAL_FEATURE_COLS:
-        if col not in future.columns:
-            future[col] = 0.0
-
-    return future.fillna(0)
-
-
-def _alert_level(gap: float, gap_stats: dict) -> str:
-    if gap < gap_stats.get("critical_threshold", -999999):
-        return "Critical"
-    if gap < gap_stats.get("warn_threshold", 0):
-        return "Warning"
-    if gap < 0:
-        return "Watch"
-    return "OK"
-
-
-def _hw_prediction_intervals(
-    hw_fitted,
-    steps: int,
-    xgb_residual_std: float,
-    n_sim: int = 500,
-    interval: float = 0.80,
-) -> tuple[np.ndarray, np.ndarray]:
-    """
-    Simulate `n_sim` paths from the Holt-Winters model to get empirical
-    prediction intervals.  XGBoost residual uncertainty is added in quadrature.
-
-    Returns (lower, upper) arrays of length `steps` at the given interval width.
-    """
-    import warnings
-    alpha = (1 - interval) / 2
-    try:
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            sims = hw_fitted.simulate(
-                nsimulations=steps,
-                repetitions=n_sim,
-                error="add",
-            ).clip(0)           # shape: (steps, n_sim)
-        lower = np.percentile(sims, alpha * 100,        axis=1)
-        upper = np.percentile(sims, (1 - alpha) * 100,  axis=1)
-    except Exception:
-        # Fallback: use sMAPE-based symmetric interval if simulation fails
-        point = hw_fitted.forecast(steps).values.clip(0)
-        margin = point * xgb_residual_std
-        lower, upper = (point - margin).clip(0), point + margin
-
-    return lower, upper
-
-
-def _residual_std(df_monthly: pd.DataFrame, models: dict, feature_cols: dict) -> dict:
-    """Compute in-sample XGBoost residual standard deviation per target."""
-    stds = {}
-    for target, m in models.items():
-        hw_in = m["hw"].fittedvalues.clip(0)
-        actual = df_monthly[target].values
-        xgb_resids = m["xgb"].predict(df_monthly[feature_cols[target]])
-        hybrid = (hw_in + xgb_resids).clip(0)
-        errors = actual - hybrid
-        stds[target] = float(np.std(errors) / (np.mean(actual) + 1e-8))
-    return stds
-
 
 def forecast_monthly(
     df_monthly: pd.DataFrame,
@@ -197,73 +135,135 @@ def forecast_monthly(
     months: int = 3,
 ) -> list[dict]:
     """
-    Forecast the next `months` months using Holt-Winters + XGBoost hybrid.
+    Forecast the next `months` months using Prophet + LightGBM ensemble.
 
     Returns list of dicts with:
-      month, LBS_In_forecast, LBS_Out_forecast, Gap_forecast, alert
-      LBS_In_lower/upper, LBS_Out_lower/upper  ← 80% prediction intervals
-      confidence_pct                            ← model R² as plain-English %
+      period, month
+      LBS_In_forecast, LBS_In_lower, LBS_In_upper
+      LBS_Out_forecast, LBS_Out_lower, LBS_Out_upper
+      Gap_forecast, alert, confidence_pct
     """
-    gap_stats  = load_gap_stats()
-    metrics    = load_metrics()
-    future     = _build_future_rows(df_monthly, months)
-    resid_stds = _residual_std(df_monthly, models, feature_cols)
+    config    = _load_config()
+    gap_stats = load_gap_stats()
+    metrics   = load_metrics()
 
-    hw_forecasts   = {}
-    hw_lower       = {}
-    hw_upper       = {}
-    for target, m in models.items():
-        hw_forecasts[target] = m["hw"].forecast(steps=months).clip(0)
-        lo, hi = _hw_prediction_intervals(
-            m["hw"], months, resid_stds.get(target, 0.3)
-        )
-        hw_lower[target] = lo
-        hw_upper[target] = hi
+    # FIX 1: Dynamically extract the exact regressors the Prophet models expect
+    if "prophet_net" in models and hasattr(models["prophet_net"], "extra_regressors"):
+        prophet_regressors = list(models["prophet_net"].extra_regressors.keys())
+    else:
+        prophet_regressors = config.get("top_features", (feature_cols or {}).get("LBS_In", []))
+
+    lookback     = int(config.get("lookback", 6))
+
+    future_dates = pd.date_range(
+        df_monthly["Date"].max() + pd.DateOffset(months=1),
+        periods=months,
+        freq="MS",
+    )
+
+    # Seed rolling windows from the tail of historical data
+    rolling_in  = list(df_monthly["LBS_In"].tail(lookback).values)
+    rolling_out = list(df_monthly["LBS_Out"].tail(lookback).values)
+    rolling_net = list((df_monthly["LBS_In"] - df_monthly["LBS_Out"]).tail(lookback).values)
+
+    # Adaptive threshold: ensemble probability above this → predicted gap
+    threshold = float(config.get("threshold", 0.5))
 
     results = []
-    for i in range(months):
-        row_date = future["Date"].iloc[i]
-        row_X    = future.iloc[[i]]
+    for date in future_dates:
+        # Build single-row Prophet input, ensuring ALL expected regressors are filled
+        df_p = pd.DataFrame({"ds": [date]})
+        for col in prophet_regressors:
+            if col in df_monthly.columns:
+                df_p[col] = df_monthly[col].iloc[-1]
+            else:
+                df_p[col] = 0.0  # Fallback zero-fill prevents Prophet from crashing if column is missing
 
-        preds = {}
-        lower = {}
-        upper = {}
-        for target, m in models.items():
-            hw_pt  = float(hw_forecasts[target][i])
-            xgb_adj = float(m["xgb"].predict(row_X[feature_cols[target]])[0])
-            pt = max(0.0, hw_pt + xgb_adj)
-            preds[target] = pt
+        # Prophet point forecasts + 80% intervals
+        fcst_net = models["prophet_net"].predict(df_p)
+        fcst_in  = models["prophet_lbs_in"].predict(df_p)
+        fcst_out = models["prophet_lbs_out"].predict(df_p)
 
-            # Shift the interval by the XGBoost adjustment
-            lo = max(0.0, float(hw_lower[target][i]) + xgb_adj)
-            hi = max(0.0, float(hw_upper[target][i]) + xgb_adj)
-            lower[target] = min(lo, pt)
-            upper[target] = max(hi, pt)
+        net_pred      = float(fcst_net["yhat"].iloc[0])
+        lbs_in_pred   = max(float(fcst_in["yhat"].iloc[0]),  0.0)
+        lbs_out_pred  = max(float(fcst_out["yhat"].iloc[0]), 0.0)
 
-        lbs_in  = preds["LBS_In"]
-        lbs_out = preds["LBS_Out"]
-        gap     = lbs_in - lbs_out
+        in_lower  = max(float(fcst_in["yhat_lower"].iloc[0]),  0.0)
+        in_upper  = max(float(fcst_in["yhat_upper"].iloc[0]),  0.0)
+        out_lower = max(float(fcst_out["yhat_lower"].iloc[0]), 0.0)
+        out_upper = max(float(fcst_out["yhat_upper"].iloc[0]), 0.0)
 
-        # Directional confidence: R² of the more reliable target (LBS_Out)
-        r2_out = metrics.get("LBS_Out", {}).get("r2", 0)
-        conf   = round(max(0.0, min(1.0, r2_out)) * 100, 0)
+        # Ensemble gap probability (50/50 Prophet + LightGBM)
+        prophet_gap_prob  = float(1 / (1 + np.exp(net_pred / 30000)))
+        
+        # FIX 2: Dynamically calculate all 14 engineered features for LightGBM (Total: 32 features)
+        net_3mo_avg = float(np.mean(rolling_net[-3:]))
+        net_6mo_avg = float(np.mean(rolling_net[-6:]))
+        net_3mo_std = float(np.std(rolling_net[-3:], ddof=1)) if len(rolling_net) >= 2 else 0.0
+        net_6mo_std = float(np.std(rolling_net[-6:], ddof=1)) if len(rolling_net) >= 2 else 0.0
+
+        in_momentum  = float((rolling_in[-1] - rolling_in[-2]) / (rolling_in[-2] + 1e-9)) if len(rolling_in) >= 2 else 0.0
+        out_momentum = float((rolling_out[-1] - rolling_out[-2]) / (rolling_out[-2] + 1e-9)) if len(rolling_out) >= 2 else 0.0
+
+        net_delta        = float(rolling_net[-1] - rolling_net[-2]) if len(rolling_net) >= 2 else 0.0
+        net_acceleration = float(net_delta - (rolling_net[-2] - rolling_net[-3])) if len(rolling_net) >= 3 else 0.0
+
+        demand_supply_ratio = float(rolling_out[-1] / (rolling_in[-1] + 1))
+
+        deficit_streak = 0
+        for val in reversed(rolling_net):
+            if val < 0:
+                deficit_streak += 1
+            else:
+                break
+
+        month_num = date.month
+        month_sin = float(np.sin(2 * np.pi * month_num / 12))
+        month_cos = float(np.cos(2 * np.pi * month_num / 12))
+
+        pressure_index       = float(df_monthly["pressure_index"].iloc[-1] if "pressure_index" in df_monthly.columns else 0.0)
+        forecast_uncertainty = float(net_6mo_std / (abs(net_6mo_avg) + 1))
+
+        # Reconstruct the exact 32-element array shape required by LightGBM
+        lag_block = np.array(rolling_in + rolling_out + rolling_net)
+        engineered_block = np.array([
+            net_3mo_avg, net_6mo_avg, net_3mo_std, net_6mo_std,
+            in_momentum, out_momentum, net_delta, net_acceleration,
+            demand_supply_ratio, deficit_streak, month_sin, month_cos,
+            pressure_index, forecast_uncertainty
+        ])
+        
+        lags = np.concatenate([lag_block, engineered_block]).reshape(1, -1)
+        
+        lgbm_gap_prob     = float(models["lgbm"].predict_proba(lags)[0, 1])
+        ensemble_gap_prob = 0.50 * prophet_gap_prob + 0.50 * lgbm_gap_prob
+        surplus_prob      = 1.0 - ensemble_gap_prob
+
+        gap   = lbs_in_pred - lbs_out_pred
+        alert = _alert_level(ensemble_gap_prob, threshold, gap, gap_stats)
+        conf  = int(round((ensemble_gap_prob if alert != "OK" else surplus_prob) * 100))
 
         results.append({
-            "period":            row_date.strftime("%Y-%m"),
-            "month":             row_date.strftime("%b %Y"),
-            "LBS_In_forecast":   round(lbs_in,  0),
-            "LBS_In_lower":      round(lower["LBS_In"],  0),
-            "LBS_In_upper":      round(upper["LBS_In"],  0),
-            "LBS_Out_forecast":  round(lbs_out, 0),
-            "LBS_Out_lower":     round(lower["LBS_Out"], 0),
-            "LBS_Out_upper":     round(upper["LBS_Out"], 0),
-            "Gap_forecast":      round(gap,     0),
-            "alert":             _alert_level(gap, gap_stats),
-            "confidence_pct":    int(conf),   # based on LBS_Out R²
+            "period":            date.strftime("%Y-%m"),
+            "month":             date.strftime("%b %Y"),
+            "LBS_In_forecast":   round(lbs_in_pred,  0),
+            "LBS_In_lower":      round(min(in_lower,  lbs_in_pred),  0),
+            "LBS_In_upper":      round(max(in_upper,  lbs_in_pred),  0),
+            "LBS_Out_forecast":  round(lbs_out_pred, 0),
+            "LBS_Out_lower":     round(min(out_lower, lbs_out_pred), 0),
+            "LBS_Out_upper":     round(max(out_upper, lbs_out_pred), 0),
+            "Gap_forecast":      round(gap, 0),
+            "alert":             alert,
+            "confidence_pct":    conf,
+            "gap_prob":          round(ensemble_gap_prob, 4),
         })
 
+        # Advance rolling windows with this step's predictions
+        rolling_in  = rolling_in[1:]  + [lbs_in_pred]
+        rolling_out = rolling_out[1:] + [lbs_out_pred]
+        rolling_net = rolling_net[1:] + [lbs_in_pred - lbs_out_pred]
+        
     return results
-
 
 def alert_message(alert: str, gap: float) -> str:
     sign = "+" if gap >= 0 else ""

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import {
   ComposedChart, LineChart, BarChart,
-  Line, Bar, XAxis, YAxis, CartesianGrid,
+  Line, Bar, Cell, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer,
 } from "recharts";
 
@@ -24,7 +24,7 @@ const C = {
 const LEVEL_STYLE = {
   High:   { bg: "#fdecea", color: "#8b2e1a" },
   Medium: { bg: "#fdf6d8", color: "#7a6010" },
-  Low:    { bg: "#f2f9ec", color: "#4a6355" },
+  Low:    { bg: "#b8ddb0", color: "#1e4d2b" },
 };
 
 const catColor = {
@@ -231,7 +231,7 @@ export default function Provincial() {
   const demandLabel = { High: "Elevated", Medium: "Moderate", Low: "Stable" }[topLevel] ?? "—";
   const demandStyle = LEVEL_STYLE[topLevel] ?? LEVEL_STYLE.Low;
 
-  const maeValue = modelStats.find(s => s.label === "MAE (LBS_In)")?.value ?? "N/A";
+  const detectionRate = modelStats.find(s => s.label === "Shortfall detection accuracy")?.value ?? "N/A";
 
   const topGapAlert = gapForecast[0]?.alert ?? "OK";
   const gapLabel    = { Critical: "Critical", Warning: "Warning", Watch: "Watch", OK: "Balanced" }[topGapAlert] ?? "—";
@@ -269,7 +269,7 @@ export default function Provincial() {
             <div style={{ width: 7, height: 7, borderRadius: "50%", background: C.jungleTeal }} />
             <span style={{ color: C.textSecondary }}>Model health: </span>
             <span style={{ fontWeight: 600, color: C.forestGreen }}>
-              {confPct}% {confLabel} confidence
+              {confidence ? `${confPct}% ${confLabel} confidence` : "—"}
             </span>
           </div>
         </div>
@@ -323,7 +323,7 @@ export default function Provincial() {
                       accent: "#c0622a", badgeBg: demandStyle.bg, badgeColor: demandStyle.color, small: true,
                     },
                     {
-                      label: "Forecast MAE", value: maeValue, sub: "mean abs. error",
+                      label: "Shortfall detection", value: detectionRate, sub: "of deficit months caught",
                       accent: C.dustyDenim, badgeBg: "#ddeaf8", badgeColor: "#2d5a9e",
                     },
                     {
@@ -341,6 +341,65 @@ export default function Provincial() {
                     </div>
                   ))}
                 </div>
+
+                {/* 3-month gap forecast */}
+                {gapForecast.length > 0 && (
+                  <Panel>
+                    <SectionTitle
+                      title="3-month supply-demand outlook"
+                      sub="AI forecast with 80% confidence range"
+                    />
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0,1fr))", gap: 12 }}>
+                      {gapForecast.map((row) => {
+                        const isGap  = row.Gap_forecast < 0;
+                        const isCrit = row.alert === "Critical";
+                        const isWarn = row.alert === "Warning";
+                        const accentColor = isCrit ? "#e8a090" : isWarn ? "#d4c060" : isGap ? "#c9d8e8" : "#ace890";
+                        const badgeBg     = isCrit ? "#fdecea" : isWarn ? "#fdf6d8" : isGap ? "#ddeaf8" : "#e2ffec";
+                        const badgeColor  = isCrit ? "#8b2e1a" : isWarn ? "#7a6010" : isGap ? "#2d5a9e" : "#1a8b20";
+                        const gapAbs = Math.abs(row.Gap_forecast);
+                        return (
+                          <div key={row.period} style={{
+                            border: `0.5px solid ${accentColor}`,
+                            borderTop: `3px solid ${accentColor}`,
+                            borderRadius: 10, padding: "14px 16px",
+                            background: C.surfaceGreen,
+                          }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                              <span style={{ fontSize: 14, fontWeight: 600, color: C.textPrimary }}>{row.month}</span>
+                              <span style={{
+                                fontSize: 11, fontWeight: 500, padding: "2px 8px", borderRadius: 20,
+                                background: badgeBg, color: badgeColor,
+                              }}>{row.alert}</span>
+                            </div>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
+                              <div>
+                                <div style={{ fontSize: 10, color: C.textMuted, marginBottom: 3 }}>Donations in</div>
+                                <div style={{ fontSize: 15, fontWeight: 700, color: C.jungleTeal }}>
+                                  {(row.LBS_In_forecast / 1000).toFixed(0)}K
+                                  <span style={{ fontSize: 11, fontWeight: 400, color: C.textMuted }}> lbs</span>
+                                </div>
+                              </div>
+                              <div>
+                                <div style={{ fontSize: 10, color: C.textMuted, marginBottom: 3 }}>Demand out</div>
+                                <div style={{ fontSize: 15, fontWeight: 700, color: "#c0622a" }}>
+                                  {(row.LBS_Out_forecast / 1000).toFixed(0)}K
+                                  <span style={{ fontSize: 11, fontWeight: 400, color: C.textMuted }}> lbs</span>
+                                </div>
+                              </div>
+                            </div>
+                            <div style={{ fontSize: 12, fontWeight: 600, color: isGap ? "#8b2e1a" : "#1a8b20" }}>
+                              {isGap ? "▼" : "▲"} {(gapAbs / 1000).toFixed(0)}K lbs {isGap ? "shortfall" : "surplus"}
+                            </div>
+                            <div style={{ fontSize: 10, color: C.textMuted, marginTop: 5 }}>
+                              {row.confidence_pct}% model confidence
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </Panel>
+                )}
 
                 {/* Main chart */}
                 <Panel>
@@ -409,6 +468,20 @@ export default function Provincial() {
             {activeTab === "model" && (
               <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
 
+                {/* Ensemble info banner */}
+                <div style={{
+                  background: "#e2ffec", border: "0.5px solid #ace890",
+                  borderRadius: 10, padding: "12px 16px",
+                  display: "flex", alignItems: "center", gap: 10,
+                }}>
+                  <div style={{ width: 8, height: 8, borderRadius: "50%", background: C.jungleTeal, flexShrink: 0 }} />
+                  <span style={{ fontSize: 13, color: C.textPrimary }}>
+                    <strong>How the forecast works:</strong> The model tracks long-term donation trends and seasonal
+                    patterns alongside external indicators like food prices, benefit caseloads, and temperature.
+                    It then predicts whether demand will outpace supply in the coming months.
+                  </span>
+                </div>
+
                 {/* Model stats */}
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0,1fr))", gap: 14 }}>
                   {modelStats.map((s) => (
@@ -422,11 +495,36 @@ export default function Provincial() {
                   ))}
                 </div>
 
+                {/* Gap classifier metrics */}
+                {confidence?.targets?.LBS_In?.gap_accuracy != null && (
+                  <Panel>
+                    <SectionTitle
+                      title="How well does the model detect shortfall months?"
+                      sub="Tested against months the model had never seen before"
+                    />
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0,1fr))", gap: 12 }}>
+                      {[
+                        { label: "Correct predictions", value: `${(confidence.targets.LBS_In.gap_accuracy * 100).toFixed(1)}%`, color: C.jungleTeal },
+                        { label: "Detection quality",   value: (confidence.targets.LBS_In.gap_f1 ?? "—").toString().substring(0, 5),       color: C.dustyDenim },
+                        { label: "Surplus months identified", value: `${((confidence.targets.LBS_In.gap_sur_recall ?? 0) * 100).toFixed(1)}%`, color: "#a889cc" },
+                      ].map((m) => (
+                        <div key={m.label} style={{
+                          background: C.surfaceGreen, border: `0.5px solid ${C.borderLight}`,
+                          borderRadius: 10, padding: "12px 16px",
+                        }}>
+                          <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 4 }}>{m.label}</div>
+                          <div style={{ fontSize: 22, fontWeight: 700, color: m.color }}>{m.value}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </Panel>
+                )}
+
                 {/* Feature importance chart */}
                 <Panel>
                   <SectionTitle
-                    title="Feature importance (XGBoost — LBS_In residuals)"
-                    sub="Relative contribution of each variable to the forecast · colour = category"
+                    title="What's driving the forecast?"
+                    sub="How much each external factor shapes the supply-demand outlook · colour = category"
                   />
                   {featureData.length === 0 ? (
                     <div style={{ fontSize: 13, color: C.textMuted, textAlign: "center", padding: "20px 0" }}>
@@ -446,16 +544,20 @@ export default function Provincial() {
                           dataKey="importance" name="Importance %" radius={[0, 4, 4, 0]} barSize={14}
                           fill={C.jungleTeal}
                           label={{ position: "right", fontSize: 11, fill: C.textMuted, formatter: v => `${v}%` }}
-                        />
+                        >
+                          {featureData.map((entry, i) => (
+                            <Cell key={`cell-${i}`} fill={catColor[entry.category] ?? C.textMuted} />
+                          ))}
+                        </Bar>
                       </BarChart>
                     </ResponsiveContainer>
                   )}
 
-                  {/* Category legend */}
+                  {/* Category legend — only show categories present in the current data */}
                   <div style={{ display: "flex", gap: 16, marginTop: 12, flexWrap: "wrap" }}>
-                    {Object.entries(catColor).map(([cat, color]) => (
+                    {[...new Set(featureData.map(d => d.category))].map((cat) => (
                       <span key={cat} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: C.textMuted }}>
-                        <span style={{ width: 10, height: 10, background: color, display: "inline-block", borderRadius: 2 }} />
+                        <span style={{ width: 10, height: 10, background: catColor[cat] ?? C.textMuted, display: "inline-block", borderRadius: 2 }} />
                         {cat.charAt(0).toUpperCase() + cat.slice(1)}
                       </span>
                     ))}
@@ -465,8 +567,8 @@ export default function Provincial() {
                 {/* Actual vs predicted chart */}
                 <Panel>
                   <SectionTitle
-                    title="Actual vs model fit — in-sample accuracy"
-                    sub="Closer lines = better model fit · monthly lbs"
+                    title="How closely the model tracks past data"
+                    sub="Solid = real data · dashed = what the model estimated"
                   />
                   <ResponsiveContainer width="100%" height={200}>
                     <LineChart
