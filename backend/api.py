@@ -91,16 +91,14 @@ def _require_prov():
 # ── Category labels ───────────────────────────────────────────────────────────
 
 _CAT = {
+    # Economic / cost-of-living
     "CPI_Food": "economic",        "CPI_All_items": "economic",
     "CPI_Shelter": "economic",     "Unemployment_Rate": "economic",
+    # Social / demographic
     "Net_Migration": "social",     "AISH_TOTAL": "social",
     "SINGLE_AISH_TOTAL": "social", "SINGLE_AISH_PARENT": "social",
     "EDMONTON_AISH_CASELOAD": "social",
-    "LBS_In_lag1": "autoregressive",  "LBS_In_lag2": "autoregressive",
-    "LBS_In_lag3": "autoregressive",  "LBS_In_lag12": "autoregressive",
-    "LBS_Out_lag1": "autoregressive", "LBS_Out_lag12": "autoregressive",
-    "LBS_In_roll3": "autoregressive", "LBS_Out_roll3": "autoregressive",
-    "Gap_lag1": "autoregressive",
+    # Calendar / benefit payments
     "School_In_Session": "calendar", "Tax_Season": "calendar",
     "n_gst": "calendar",   "n_ccb": "calendar",
     "n_holidays": "calendar", "n_stat": "calendar",
@@ -109,13 +107,37 @@ _CAT = {
     "n_oas": "calendar",   "n_ramadan": "calendar",
     "n_exam": "calendar",  "n_intl": "calendar",  "n_tax": "calendar",
     "month_of_year": "calendar", "quarter": "calendar",
+    "month_sin": "calendar",     "month_cos": "calendar",
+    # Weather
     "Mean_Temp": "weather",   "Total_Precip": "weather",
     "Snow_on_Grnd": "weather",
+    # Autoregressive lag features (LAG_FEATURE_NAMES from train.py)
+    **{f"LBS_In_lag{i}":  "autoregressive" for i in range(1, 7)},
+    **{f"LBS_Out_lag{i}": "autoregressive" for i in range(1, 7)},
+    **{f"net_lag{i}":     "autoregressive" for i in range(1, 7)},
+    "net_3mo_avg": "autoregressive",  "net_6mo_avg": "autoregressive",
+    "net_3mo_std": "autoregressive",  "net_6mo_std": "autoregressive",
+    "in_momentum": "autoregressive",  "out_momentum": "autoregressive",
+    "net_delta": "autoregressive",    "net_acceleration": "autoregressive",
+    "demand_supply_ratio": "autoregressive",
+    "deficit_streak": "autoregressive",
+    "pressure_index": "autoregressive",
+    "forecast_uncertainty": "autoregressive",
+    # Legacy names kept for backwards compatibility
+    "LBS_In_lag12": "autoregressive",  "LBS_Out_lag12": "autoregressive",
+    "LBS_In_roll3": "autoregressive",  "LBS_Out_roll3": "autoregressive",
+    "Gap_lag1": "autoregressive",
 }
 
 
 def _pretty(col: str) -> str:
     label_map = {
+        # External regressors — staff-readable names
+        "CPI_Food":      "Food price index",
+        "AISH_TOTAL":    "Income support caseload",
+        "Net_Migration": "Net migration",
+        "Mean_Temp":     "Average temperature",
+        # Legacy lag features
         "LBS_In_lag1": "Prev month inbound", "LBS_In_lag12": "Same month last year (in)",
         "LBS_Out_lag1": "Prev month outbound", "LBS_In_roll3": "3-month rolling avg (in)",
         "Gap_lag1": "Prev month gap", "month_of_year": "Month of year",
@@ -213,6 +235,12 @@ def signals():
 
     result = []
 
+    def sig(name, level, category, description, value=None):
+        entry = {"name": name, "level": level, "category": category, "description": description}
+        if value is not None:
+            entry["value"] = value
+        return entry
+
     # ── Economic ──────────────────────────────────────────────────────────────
     cpi_food    = float(last.get("CPI_Food",          0) or 0)
     cpi_shelter = float(last.get("CPI_Shelter",       0) or 0)
@@ -220,19 +248,31 @@ def signals():
     net_mig     = float(last.get("Net_Migration",     0) or 0)
 
     if cpi_food > 170:
-        result.append({"name": "CPI Food elevated",        "level": "High",   "value": f"{cpi_food:.0f}"})
+        result.append(sig("Food prices are high", "High", "economic",
+            "Grocery costs are well above normal — more households are likely to seek food bank support.",
+            f"Food price index: {cpi_food:.0f}"))
     elif cpi_food > 155:
-        result.append({"name": "CPI Food elevated",        "level": "Medium", "value": f"{cpi_food:.0f}"})
+        result.append(sig("Food prices are elevated", "Medium", "economic",
+            "Grocery costs are above average, which can strain tight household budgets.",
+            f"Food price index: {cpi_food:.0f}"))
 
     if cpi_shelter > 190:
-        result.append({"name": "CPI Shelter elevated",     "level": "High",   "value": f"{cpi_shelter:.0f}"})
+        result.append(sig("Housing costs are very high", "High", "economic",
+            "High rent and housing costs leave less money for food — a key driver of food bank demand.",
+            f"Shelter price index: {cpi_shelter:.0f}"))
     elif cpi_shelter > 175:
-        result.append({"name": "CPI Shelter elevated",     "level": "Medium", "value": f"{cpi_shelter:.0f}"})
+        result.append(sig("Housing costs are elevated", "Medium", "economic",
+            "Above-average housing costs may be squeezing household budgets.",
+            f"Shelter price index: {cpi_shelter:.0f}"))
 
     if unemp > 8:
-        result.append({"name": "Unemployment elevated",    "level": "High",   "value": f"{unemp:.1f}%"})
+        result.append(sig("Unemployment is high", "High", "economic",
+            "A high jobless rate directly increases the number of families needing food bank support.",
+            f"Unemployment rate: {unemp:.1f}%"))
     elif unemp > 6:
-        result.append({"name": "Unemployment rising",      "level": "Medium", "value": f"{unemp:.1f}%"})
+        result.append(sig("Unemployment is rising", "Medium", "economic",
+            "Unemployment trending upward — an early warning sign of growing food bank demand.",
+            f"Unemployment rate: {unemp:.1f}%"))
 
     if "AISH_TOTAL" in df_monthly.columns:
         aish_series = pd.to_numeric(df_monthly["AISH_TOTAL"], errors="coerce")
@@ -240,48 +280,67 @@ def signals():
         aish_mean   = float(aish_series.mean())
         if aish_now > 0 and aish_mean > 0:
             if aish_now > aish_mean * 1.05:
-                result.append({"name": "AISH caseload above average", "level": "High",   "value": f"{aish_now:,.0f}"})
+                result.append(sig("Income support caseload is elevated", "High", "social",
+                    "More people on income assistance than usual — this group relies heavily on food banks.",
+                    f"AISH caseload: {aish_now:,.0f}"))
             elif aish_now >= aish_mean * 0.97:
-                result.append({"name": "AISH caseload at average",    "level": "Medium", "value": f"{aish_now:,.0f}"})
+                result.append(sig("Income support caseload is normal", "Medium", "social",
+                    "AISH caseload is within its typical range.",
+                    f"AISH caseload: {aish_now:,.0f}"))
 
     if net_mig > 10000:
-        result.append({"name": "High net migration",       "level": "High",   "value": f"+{net_mig:,.0f}"})
+        result.append(sig("High migration into Alberta", "High", "social",
+            "Many newcomers arriving who may need food support while they settle.",
+            f"Net migration: +{net_mig:,.0f}"))
     elif net_mig > 5000:
-        result.append({"name": "Elevated net migration",   "level": "Medium", "value": f"+{net_mig:,.0f}"})
+        result.append(sig("Migration into Alberta is elevated", "Medium", "social",
+            "More newcomers than usual are arriving — some may seek food bank help.",
+            f"Net migration: +{net_mig:,.0f}"))
 
     # ── Benefits / calendar ───────────────────────────────────────────────────
     if int(last.get("GST_Dates", 0) or 0) or int(last.get("CCB_Dates", 0) or 0):
-        result.append({"name": "GST / CCB payment week",          "level": "Medium"})
+        result.append(sig("Government benefit payment week", "Medium", "calendar",
+            "GST/CCB cheques going out. Clients often visit the food bank around payment day."))
 
     if int(last.get("ACWB", 0) or 0) or int(last.get("ACFB", 0) or 0):
-        result.append({"name": "AISH / ACWB disbursement",        "level": "Medium"})
+        result.append(sig("Income support cheques going out", "Medium", "calendar",
+            "AISH and Alberta child benefit payments this week. Recipients often visit food banks around disbursement."))
 
     if int(last.get("CPP", 0) or 0) or int(last.get("OAS", 0) or 0):
-        result.append({"name": "CPP / OAS payment week",          "level": "Low"})
+        result.append(sig("Senior pension payment week", "Low", "calendar",
+            "CPP and OAS payments this week. Seniors may visit the food bank before or after payment day."))
 
     if int(last.get("Tax_Season", 0) or 0):
-        result.append({"name": "Tax season — filing pressure",    "level": "Low"})
+        result.append(sig("Tax season", "Low", "calendar",
+            "Tax filing period. Refund uncertainty can put pressure on tight budgets."))
 
     if int(last.get("Exam_Period", 0) or 0):
-        result.append({"name": "Student exam period",             "level": "Medium"})
+        result.append(sig("Student exam period", "Medium", "calendar",
+            "Exam period is underway. Academic stress can increase visits from student clients."))
 
     if int(last.get("Tuition_Payment_Deadline", 0) or 0):
-        result.append({"name": "Tuition payment deadline",        "level": "Medium"})
+        result.append(sig("Tuition payment deadline", "Medium", "calendar",
+            "Tuition deadlines this week. Student food bank visits tend to rise around this time."))
 
     if int(last.get("International_Arrival", 0) or 0):
-        result.append({"name": "International arrival period",    "level": "Medium"})
+        result.append(sig("International student arrivals", "Medium", "calendar",
+            "New international students arriving. Many need food support while they get settled."))
 
     if int(last.get("holiday_is_stat", 0) or 0):
-        result.append({"name": "Statutory holiday",               "level": "Medium"})
+        result.append(sig("Statutory holiday this week", "Medium", "calendar",
+            "Statutory holiday coming up. Some clients stock up or visit before the closure."))
 
     if int(last.get("holiday_is_ramadan", 0) or 0):
-        result.append({"name": "Ramadan",                         "level": "Low"})
+        result.append(sig("Ramadan", "Low", "calendar",
+            "Ramadan is underway. Muslim clients may have different visit patterns this month."))
 
     if int(last.get("School_In_Session", 0) or 0):
-        result.append({"name": "School in session",               "level": "Low"})
+        result.append(sig("School year is active", "Low", "calendar",
+            "School in session. Family visit patterns tend to be regular and predictable."))
 
     if not result:
-        result.append({"name": "No major demand signals",         "level": "Low"})
+        result.append(sig("No major demand signals", "Low", "other",
+            "Current economic and calendar indicators are all within normal ranges."))
 
     return {"signals": result}
 
@@ -365,15 +424,20 @@ def provincial_history():
 
 @app.get("/api/provincial/features")
 def provincial_features():
-    """Top-15 feature importances for LBS_In with category labels."""
+    """External regressor importances (Prophet additive contributions) with category labels."""
     _require_prov()
-    importance = load_feature_importance("LBS_In", PROVINCIAL_DIR)
+    # Prefer the Prophet regressor importance file (external economic/social/weather factors).
+    # Fall back to lag importances if the regressor file hasn't been generated yet.
+    reg_path = PROVINCIAL_DIR / "importance_regressors.json"
+    if reg_path.exists():
+        importance = json.load(open(reg_path))
+    else:
+        importance = load_feature_importance("LBS_In", PROVINCIAL_DIR)
+
     if not importance:
         return {"featureData": []}
 
-    top   = list(importance.items())[:15]
-    total = sum(v for _, v in top) or 1.0
-
+    total = sum(importance.values()) or 1.0
     return {
         "featureData": [
             {
@@ -381,7 +445,7 @@ def provincial_features():
                 "importance": round((val / total) * 100, 1),
                 "category":   _CAT.get(name, "other"),
             }
-            for name, val in top
+            for name, val in importance.items()
         ]
     }
 
@@ -390,26 +454,42 @@ def provincial_features():
 def provincial_metrics():
     """Model performance stats for the Provincial stats panel."""
     _require_prov()
-    metrics      = load_metrics(PROVINCIAL_DIR)
-    feature_cols = load_feature_cols(PROVINCIAL_DIR) or {}
-    df           = _monthly_df()
+    metrics = load_metrics(PROVINCIAL_DIR)
+    df      = _monthly_df()
 
-    m          = metrics.get("LBS_In", metrics.get("in", {}))
-    n_features = len(feature_cols.get("LBS_In", []))
+    m_ensemble = metrics.get("ensemble", {})
+    val_acc    = m_ensemble.get("val_acc", 0)
+    n_months   = len(df)
+
+    # Count external regressors from saved importance file
+    reg_path = PROVINCIAL_DIR / "importance_regressors.json"
+    n_regressors = len(json.load(open(reg_path))) if reg_path.exists() else 4
 
     stats = [
-        {"label": "MAE (LBS_In)",      "value": f"{m.get('mae', 'N/A'):,} lbs/month"},
-        {"label": "Relative MAE",       "value": f"{m.get('rel_mae_pct', 'N/A')} %"},
-        {"label": "sMAPE",              "value": f"{m.get('smape', 'N/A')} %"},
-        {"label": "R² score",           "value": str(m.get("r2", "N/A"))},
-        {"label": "Granularity",        "value": "Monthly totals"},
-        {"label": "Last retrained",     "value": datetime.now().strftime("%b %d, %Y")},
         {
-            "label": "Training window",
-            "value": f"{df['Date'].min().year} – {df['Date'].max().strftime('%b %Y')}",
+            "label": "Shortfall detection accuracy",
+            "value": f"{int(round(val_acc * 100))}%",
         },
-        {"label": "Features used",      "value": f"{n_features} variables"},
-        {"label": "Forecast horizon",   "value": "3 months"},
+        {
+            "label": "What the model predicts",
+            "value": "Monthly supply vs. demand direction",
+        },
+        {
+            "label": "Forecast horizon",
+            "value": "3 months ahead",
+        },
+        {
+            "label": "External indicators used",
+            "value": f"{n_regressors} (food prices, income support, migration, temperature)",
+        },
+        {
+            "label": "Historical data used",
+            "value": f"{n_months} months ({df['Date'].min().year} – {df['Date'].max().strftime('%b %Y')})",
+        },
+        {
+            "label": "Last retrained",
+            "value": datetime.now().strftime("%b %d, %Y"),
+        },
     ]
     return {"modelStats": stats}
 

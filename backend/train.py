@@ -33,10 +33,10 @@ from sklearn.metrics import (
 )
 
 from sklearn.calibration import CalibratedClassifierCV
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler, RobustScaler
 
 from prophet import Prophet
-import lightgbm as lgb
 
 from preprocess import load_data, aggregate_monthly
 
@@ -57,43 +57,13 @@ LOOKBACK = 6
 
 FIXED_REGRESSORS = [
 
-    # ── Administrative / calendar events ──────────────────────────────
-    "n_stat",
-    "n_holidays",
-    "n_ccb",
-    "n_cpp",
-    "n_oas",
+    # Only the 4 strongest, mathematically defensible drivers.
+    # More regressors → more overfitting on ~42 monthly rows.
 
-    "n_school",
-    "n_exam",
-    "n_intl",
-
-    "n_nldb",
-    "n_covid",
-
-    # ── Macro / cost-of-living signals ────────────────────────────────
-    "CPI_All_items",
-    "CPI_Food",
-    "CPI_Shelter",
-
-    "Net_Migration",
-
-    # ── Social-assistance caseload ────────────────────────────────────
-    "AISH_TOTAL",
-    "SINGLE_AISH_TOTAL",
-    "SINGLE_AISH_PARENT",
-
-    "EDMONTON_AISH_CASELOAD",
-
-    # ── Climate ───────────────────────────────────────────────────────
-    "Mean_Temp",
-
-    # NOTE: lag-derived / engineered signals (net_3mo_avg, momentum,
-    # deficit_streak, pressure_index, etc.) are intentionally excluded
-    # from Prophet regressors.  They are already captured by the
-    # LightGBM lag-feature block and adding them to Prophet both
-    # duplicates information and risks subtle look-ahead leakage when
-    # the Prophet future frame is constructed.
+    "CPI_Food",        # food-price inflation → direct demand driver
+    "AISH_TOTAL",      # income-assistance caseload → poverty proxy
+    "Net_Migration",   # population growth → demand volume
+    "Mean_Temp",       # seasonal weather → donation / usage patterns
 ]
 
 
@@ -812,100 +782,33 @@ def main():
     # LIGHTGBM
     # ─────────────────────────────────────────────────────────────────────
 
-    print("\n[3/5] Training LightGBM...")
+    print("\n[3/5] Training RandomForest classifier...")
 
-    # Upweight the minority gap class so the model is penalised more
-    # for missing real deficits (false negatives).
-    gap_rate = y_train.mean()
-    gap_weight = (1.0 - gap_rate) / (gap_rate + 1e-9)   # inverse-frequency
-    gap_weight = float(np.clip(gap_weight, 1.5, 5.0))   # guard against extremes
-    sample_weights = np.where(y_train == 1, gap_weight, 1.0)
-
-    lgbm = lgb.LGBMClassifier(
-
-        n_estimators=200,
-
-        learning_rate=0.02,
-
-        max_depth=4,
-
-        num_leaves=10,
-
-        min_data_in_leaf=6,
-
-        lambda_l2=8.0,
-
-        lambda_l1=2.0,
-
-        subsample=0.75,
-
-        colsample_bytree=0.75,
-
-        min_gain_to_split=0.01,
-
-        # inverse-frequency class weight baked into the model
-        scale_pos_weight=gap_weight,
-
+    # Shallow Random Forest — handles tiny tabular data far better than
+    # LightGBM when n_train ≈ 32 rows.  max_depth=2 prevents memorising
+    # individual months; class_weight='balanced' handles gap imbalance.
+    clf = RandomForestClassifier(
+        n_estimators=50,
+        max_depth=2,
+        min_samples_leaf=3,
+        class_weight="balanced",
         random_state=42,
-
-        verbose=-1,
     )
 
-    lgbm.fit(
+    clf.fit(X_train, y_train)
 
-        X_train,
-        y_train,
-
-        sample_weight=sample_weights,
-
-        eval_set=[(X_val, y_val)],
-
-        eval_metric="auc",
-
-        callbacks=[
-
-            lgb.early_stopping(
-                20,
-                verbose=False
-            ),
-
-            lgb.log_evaluation(period=0),
-        ]
-    )
-
-    print("  ✓ LightGBM fitted")
+    print("  ✓ RandomForest fitted")
 
     # ─────────────────────────────────────────────────────────────────────
-    # CALIBRATION
+    # CALIBRATION  (cv='prefit' — only fits the sigmoid layer on X_train;
+    # does NOT refit the forest, so feature_importances_ stays intact)
     # ─────────────────────────────────────────────────────────────────────
 
-    calibrated_lgbm = CalibratedClassifierCV(
+    calibrated_clf = CalibratedClassifierCV(clf, method="sigmoid", cv="prefit")
+    calibrated_clf.fit(X_train, y_train)
 
-        lgbm,
-
-        method="sigmoid",
-
-        cv=3
-    )
-
-    calibrated_lgbm.fit(
-        X_train,
-        y_train
-    )
-
-    lgbm_train_proba = (
-
-        calibrated_lgbm
-
-        .predict_proba(X_train)[:, 1]
-    )
-
-    lgbm_val_proba = (
-
-        calibrated_lgbm
-
-        .predict_proba(X_val)[:, 1]
-    )
+    clf_train_proba = calibrated_clf.predict_proba(X_train)[:, 1]
+    clf_val_proba   = calibrated_clf.predict_proba(X_val)[:, 1]
 
     print("  ✓ Probabilities calibrated")
 
@@ -931,49 +834,43 @@ def main():
         )
     )
 
+    # Step 1 — pick blend weight by maximising ROC-AUC on the val set.
+    # AUC is threshold-free so the search can't be gamed by majority-class
+    # guessing the way accuracy/F1 can.
     best_weight = 0.5
-    best_threshold = 0.5
-    best_score = -1
+    best_auc    = -1.0
 
     for w in np.linspace(0.1, 0.9, 9):
 
-        val_proba = (
+        val_proba = w * prophet_gap_prob + (1.0 - w) * clf_val_proba
 
-            w * prophet_gap_prob +
+        try:
+            score = roc_auc_score(y_val, val_proba)
+        except ValueError:
+            score = 0.0
 
-            (1.0 - w) * lgbm_val_proba
-        )
+        if score > best_auc:
+            best_auc    = score
+            best_weight = float(w)
 
-        thresholds = np.arange(
-            0.30,
-            0.71,
-            0.02
-        )
+    # Step 2 — with the weight fixed, find the classification threshold
+    # using F-beta(β=2) so recall is weighted twice over precision.
+    best_threshold = 0.5
+    best_fbeta     = -1.0
+    _blended_val   = best_weight * prophet_gap_prob + (1.0 - best_weight) * clf_val_proba
 
-        for t in thresholds:
+    for t in np.arange(0.30, 0.71, 0.02):
 
-            pred = (
-                val_proba > t
-            ).astype(int)
+        pred = (_blended_val > t).astype(int)
+        f1   = f1_score(y_val, pred, zero_division=0)
+        rec  = recall_score(y_val, pred, zero_division=0)
+        prec = f1 / (2 * rec - f1 + 1e-9) if rec > 0 else 0.0
+        beta = 2.0
+        score = (1 + beta**2) * prec * rec / (beta**2 * prec + rec + 1e-9)
 
-            # F-beta (β=2) weights recall twice as heavily as precision
-            # so the search favours catching real gaps over avoiding false alarms.
-            f1  = f1_score(y_val, pred, zero_division=0)
-            rec = recall_score(y_val, pred, zero_division=0)
-            prec = f1 / (2 * rec - f1 + 1e-9) if rec > 0 else 0.0
-            beta = 2.0
-            score = (
-                (1 + beta**2) * prec * rec /
-                (beta**2 * prec + rec + 1e-9)
-            )
-
-            if score > best_score:
-
-                best_score = score
-
-                best_weight = float(w)
-
-                best_threshold = float(t)
+        if score > best_fbeta:
+            best_fbeta     = score
+            best_threshold = float(t)
 
     print(
 
@@ -990,19 +887,13 @@ def main():
     )
 
     ensemble_train_proba = (
-
         best_weight * prophet_train_proba +
-
-        (1.0 - best_weight) *
-        lgbm_train_proba
+        (1.0 - best_weight) * clf_train_proba
     )
 
     ensemble_val_proba = (
-
         best_weight * prophet_gap_prob +
-
-        (1.0 - best_weight) *
-        lgbm_val_proba
+        (1.0 - best_weight) * clf_val_proba
     )
 
     train_pred = (
@@ -1161,10 +1052,10 @@ def main():
             indent=2
         )
 
-    # --- ADDED CODE: Save All Required Backend Artifacts ---
-    
+    # --- Save All Required Backend Artifacts ---
+
     # 1. Models
-    joblib.dump(calibrated_lgbm, MODELS_DIR / "lgbm_model.pkl")
+    joblib.dump(calibrated_clf, MODELS_DIR / "lgbm_model.pkl")
     joblib.dump(prophet_in, MODELS_DIR / "prophet_lbs_in.pkl")
     joblib.dump(prophet_out, MODELS_DIR / "prophet_lbs_out.pkl")
     joblib.dump(prophet_net, MODELS_DIR / "prophet_net.pkl")
@@ -1200,11 +1091,37 @@ def main():
     with open(MODELS_DIR / "metrics.json", "w") as f:
         json.dump(metrics, f, indent=2)
 
-    # 4. Importances (Using empty dicts since Prophet doesn't use standard feature importances)
+    # 4. RandomForest lag importances (kept for diagnostics)
+    importance_dict = dict(
+        sorted(
+            zip(LAG_FEATURE_NAMES, clf.feature_importances_),
+            key=lambda x: x[1],
+            reverse=True,
+        )
+    )
+    importance_dict = {k: round(float(v), 6) for k, v in importance_dict.items()}
     with open(MODELS_DIR / "importance_lbs_in.json", "w") as f:
-        json.dump({}, f)
+        json.dump(importance_dict, f, indent=2)
     with open(MODELS_DIR / "importance_lbs_out.json", "w") as f:
-        json.dump({}, f)
+        json.dump(importance_dict, f, indent=2)
+
+    # 4b. Prophet regressor contributions — mean absolute additive effect per regressor.
+    # Prophet's predict() returns a column per extra_regressor showing its additive
+    # contribution to yhat at each time step; mean(|col|) is a clean importance proxy.
+    train_fcst_in_reg = _prophet_predict(prophet_in, train_all_months, top_features)
+    raw_reg: dict = {}
+    for reg in top_features:
+        if reg in train_fcst_in_reg.columns:
+            raw_reg[reg] = float(train_fcst_in_reg[reg].abs().mean())
+        else:
+            raw_reg[reg] = 0.0
+    reg_total = sum(raw_reg.values()) or 1.0
+    importance_regressors = {
+        k: round(v / reg_total, 6)
+        for k, v in sorted(raw_reg.items(), key=lambda x: x[1], reverse=True)
+    }
+    with open(MODELS_DIR / "importance_regressors.json", "w") as f:
+        json.dump(importance_regressors, f, indent=2)
 
     # 5. Scalers (Fitted on dataframe to preserve shape & feature names)
     robust_scaler = RobustScaler().fit(X_all)

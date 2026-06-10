@@ -23,7 +23,15 @@ const C = {
 const LEVEL_STYLE = {
   High:   { bg: "#fdecea", color: "#8b2e1a" },
   Medium: { bg: "#fdf6d8", color: "#7a6010" },
-  Low:    { bg: "#f2f9ec", color: "#4a6355" },
+  Low:    { bg: "#b8ddb0", color: "#1e4d2b" },
+};
+
+const CAT_COLOR = {
+  economic: "#3f826d",
+  social:   "#5588c7",
+  calendar: "#b8a730",
+  weather:  "#c08840",
+  other:    "#7a9485",
 };
 
 // ── Components ────────────────────────────────────────────────────────────────
@@ -278,10 +286,10 @@ export default function Dashboard() {
                 borderRadius: 12, padding: 20,
               }}>
                 <div style={{ fontSize: 18, fontWeight: 600, color: C.textPrimary, marginBottom: 3 }}>
-                  Demand signals
+                  What's driving demand?
                 </div>
                 <div style={{ fontSize: 12, color: C.textMuted, marginBottom: 14 }}>
-                  Key factors driving this month's forecast
+                  Active factors influencing food bank visits this month
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 8, overflowY: "auto", maxHeight: 310 }}>
                   {signals.length === 0 ? (
@@ -289,17 +297,24 @@ export default function Dashboard() {
                       No active demand signals
                     </div>
                   ) : signals.map((s) => {
-                    const sty = LEVEL_STYLE[s.level] ?? LEVEL_STYLE.Low;
+                    const sty      = LEVEL_STYLE[s.level] ?? LEVEL_STYLE.Low;
+                    const catColor = CAT_COLOR[s.category] ?? CAT_COLOR.other;
                     return (
                       <div key={s.name} style={{
-                        display: "flex", alignItems: "center", justifyContent: "space-between",
-                        padding: "9px 11px", borderRadius: 8,
-                        background: C.surfaceGreen, border: `0.5px solid ${C.borderLight}`,
+                        display: "flex", alignItems: "flex-start", justifyContent: "space-between",
+                        padding: "10px 12px", borderRadius: 8,
+                        background: C.surfaceGreen,
+                        border: `0.5px solid ${C.borderLight}`,
+                        borderLeft: `3px solid ${catColor}`,
+                        gap: 10,
                       }}>
-                        <div>
-                          <div style={{ fontSize: 13, color: C.textPrimary }}>{s.name}</div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 13, fontWeight: 500, color: C.textPrimary }}>{s.name}</div>
                           {s.value && (
-                            <div style={{ fontSize: 11, color: C.textMuted, marginTop: 1 }}>{s.value}</div>
+                            <div style={{ fontSize: 11, color: C.textSecondary, marginTop: 2 }}>{s.value}</div>
+                          )}
+                          {s.description && (
+                            <div style={{ fontSize: 11, color: C.textMuted, marginTop: 4, lineHeight: 1.45 }}>{s.description}</div>
                           )}
                         </div>
                         <Badge bg={sty.bg} color={sty.color}>{s.level}</Badge>
