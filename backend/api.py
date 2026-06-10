@@ -203,39 +203,85 @@ def dashboard():
 @app.get("/api/signals")
 def signals():
     """
-    Demand signal cards derived from the most recent daily data row.
+    Demand signal cards derived from the most recent daily data row
+    and the last two monthly aggregates (for trend-based signals).
     """
-    df   = _daily_df()
-    last = df.iloc[-1]
+    df_daily   = _daily_df()
+    df_monthly = _monthly_df()
+    last       = df_daily.iloc[-1]
+    m_now      = df_monthly.iloc[-1]
+
     result = []
 
-    cpi_food = float(last.get("CPI_Food", 0) or 0)
-    unemp    = float(last.get("Unemployment_Rate", 0) or 0)
+    # ── Economic ──────────────────────────────────────────────────────────────
+    cpi_food    = float(last.get("CPI_Food",          0) or 0)
+    cpi_shelter = float(last.get("CPI_Shelter",       0) or 0)
+    unemp       = float(last.get("Unemployment_Rate", 0) or 0)
+    net_mig     = float(last.get("Net_Migration",     0) or 0)
 
     if cpi_food > 170:
-        result.append({"name": "CPI food index elevated",           "level": "High"})
+        result.append({"name": "CPI Food elevated",        "level": "High",   "value": f"{cpi_food:.0f}"})
     elif cpi_food > 155:
-        result.append({"name": "CPI food index elevated",           "level": "Medium"})
+        result.append({"name": "CPI Food elevated",        "level": "Medium", "value": f"{cpi_food:.0f}"})
+
+    if cpi_shelter > 190:
+        result.append({"name": "CPI Shelter elevated",     "level": "High",   "value": f"{cpi_shelter:.0f}"})
+    elif cpi_shelter > 175:
+        result.append({"name": "CPI Shelter elevated",     "level": "Medium", "value": f"{cpi_shelter:.0f}"})
 
     if unemp > 8:
-        result.append({"name": "Unemployment rate elevated",        "level": "High"})
+        result.append({"name": "Unemployment elevated",    "level": "High",   "value": f"{unemp:.1f}%"})
     elif unemp > 6:
-        result.append({"name": "Unemployment rising",               "level": "Medium"})
+        result.append({"name": "Unemployment rising",      "level": "Medium", "value": f"{unemp:.1f}%"})
 
+    if "AISH_TOTAL" in df_monthly.columns:
+        aish_series = pd.to_numeric(df_monthly["AISH_TOTAL"], errors="coerce")
+        aish_now    = float(aish_series.iloc[-1] or 0)
+        aish_mean   = float(aish_series.mean())
+        if aish_now > 0 and aish_mean > 0:
+            if aish_now > aish_mean * 1.05:
+                result.append({"name": "AISH caseload above average", "level": "High",   "value": f"{aish_now:,.0f}"})
+            elif aish_now >= aish_mean * 0.97:
+                result.append({"name": "AISH caseload at average",    "level": "Medium", "value": f"{aish_now:,.0f}"})
+
+    if net_mig > 10000:
+        result.append({"name": "High net migration",       "level": "High",   "value": f"+{net_mig:,.0f}"})
+    elif net_mig > 5000:
+        result.append({"name": "Elevated net migration",   "level": "Medium", "value": f"+{net_mig:,.0f}"})
+
+    # ── Benefits / calendar ───────────────────────────────────────────────────
     if int(last.get("GST_Dates", 0) or 0) or int(last.get("CCB_Dates", 0) or 0):
-        result.append({"name": "Government payment week (GST/CCB)", "level": "Medium"})
+        result.append({"name": "GST / CCB payment week",          "level": "Medium"})
 
     if int(last.get("ACWB", 0) or 0) or int(last.get("ACFB", 0) or 0):
-        result.append({"name": "AISH / ACWB disbursement week",     "level": "Medium"})
+        result.append({"name": "AISH / ACWB disbursement",        "level": "Medium"})
+
+    if int(last.get("CPP", 0) or 0) or int(last.get("OAS", 0) or 0):
+        result.append({"name": "CPP / OAS payment week",          "level": "Low"})
+
+    if int(last.get("Tax_Season", 0) or 0):
+        result.append({"name": "Tax season — filing pressure",    "level": "Low"})
+
+    if int(last.get("Exam_Period", 0) or 0):
+        result.append({"name": "Student exam period",             "level": "Medium"})
+
+    if int(last.get("Tuition_Payment_Deadline", 0) or 0):
+        result.append({"name": "Tuition payment deadline",        "level": "Medium"})
+
+    if int(last.get("International_Arrival", 0) or 0):
+        result.append({"name": "International arrival period",    "level": "Medium"})
 
     if int(last.get("holiday_is_stat", 0) or 0):
-        result.append({"name": "Stat holiday approaching",          "level": "Medium"})
+        result.append({"name": "Statutory holiday",               "level": "Medium"})
+
+    if int(last.get("holiday_is_ramadan", 0) or 0):
+        result.append({"name": "Ramadan",                         "level": "Low"})
 
     if int(last.get("School_In_Session", 0) or 0):
-        result.append({"name": "School in session",                 "level": "Low"})
+        result.append({"name": "School in session",               "level": "Low"})
 
     if not result:
-        result.append({"name": "No major demand signals",           "level": "Low"})
+        result.append({"name": "No major demand signals",         "level": "Low"})
 
     return {"signals": result}
 
@@ -375,7 +421,7 @@ def model_summary():
     """
     Plain-language accuracy assessment for the AI Insights chat and confidence badges.
 
-    confidence_pct is derived from LBS_Out R² (the more reliable target).
+    confidence_pct is derived from LightGBM gap classifier accuracy (not Prophet R²).
     Prediction intervals (80%) are attached to every forecast row.
     """
     _require_prov()
@@ -383,8 +429,9 @@ def model_summary():
     m_in  = metrics.get("LBS_In",  {})
     m_out = metrics.get("LBS_Out", {})
 
-    r2_out = m_out.get("r2", 0)
-    r2_in  = m_in.get("r2",  0)
+    r2_out   = m_out.get("r2", 0)
+    r2_in    = m_in.get("r2",  0)
+    gap_acc  = m_in.get("gap_accuracy", m_out.get("gap_accuracy", 0))
 
     def _confidence_label(r2: float) -> str:
         if r2 >= 0.75: return "High"
@@ -392,9 +439,15 @@ def model_summary():
         if r2 >= 0.30: return "Low"
         return "Very low"
 
+    def _gap_confidence_label(acc: float) -> str:
+        if acc >= 0.80: return "High"
+        if acc >= 0.65: return "Moderate"
+        if acc >= 0.50: return "Low"
+        return "Very low"
+
     return {
-        "confidence_pct":   int(round(max(0, r2_out) * 100)),
-        "confidence_label": _confidence_label(r2_out),
+        "confidence_pct":   int(round(max(0.0, min(1.0, gap_acc)) * 100)),
+        "confidence_label": _gap_confidence_label(gap_acc),
         "interval_width":   "80%",
         "targets": {
             "LBS_Out": {
@@ -409,10 +462,13 @@ def model_summary():
                 ),
             },
             "LBS_In": {
-                "r2":             m_in.get("r2"),
-                "smape":          m_in.get("smape"),
-                "rel_mae_pct":    m_in.get("rel_mae_pct"),
-                "confidence":     _confidence_label(r2_in),
+                "r2":              m_in.get("r2"),
+                "smape":           m_in.get("smape"),
+                "rel_mae_pct":     m_in.get("rel_mae_pct"),
+                "confidence":      _confidence_label(r2_in),
+                "gap_accuracy":    m_in.get("gap_accuracy"),
+                "gap_f1":          m_in.get("gap_f1"),
+                "gap_sur_recall":  m_in.get("gap_sur_recall"),
                 "interpretation": (
                     f"Donations are inherently irregular — the model explains "
                     f"{int(round(max(0,r2_in)*100))}% of inbound variation. "

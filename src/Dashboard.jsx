@@ -130,7 +130,7 @@ export default function Dashboard() {
   const insightText = (() => {
     if (!confidence) return "Loading forecast data…";
     const parts = [
-      `The Holt-Winters + XGBoost model forecasts the next 3 months with ${confidence.confidence_pct}% confidence (${confidence.confidence_label}).`,
+      `The Prophet + LightGBM ensemble forecasts the next 3 months with ${confidence.confidence_pct}% confidence (${confidence.confidence_label}).`,
     ];
     if (topAlert === "Critical") {
       parts.push(`A critical supply shortfall is forecast for ${alertMonth} — donations may fall well below distribution needs.`);
@@ -283,7 +283,7 @@ export default function Dashboard() {
                 <div style={{ fontSize: 12, color: C.textMuted, marginBottom: 14 }}>
                   Key factors driving this month's forecast
                 </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8, overflowY: "auto", maxHeight: 310 }}>
                   {signals.length === 0 ? (
                     <div style={{ fontSize: 13, color: C.textMuted, textAlign: "center", padding: "20px 0" }}>
                       No active demand signals
@@ -296,7 +296,12 @@ export default function Dashboard() {
                         padding: "9px 11px", borderRadius: 8,
                         background: C.surfaceGreen, border: `0.5px solid ${C.borderLight}`,
                       }}>
-                        <span style={{ fontSize: 13, color: C.textPrimary }}>{s.name}</span>
+                        <div>
+                          <div style={{ fontSize: 13, color: C.textPrimary }}>{s.name}</div>
+                          {s.value && (
+                            <div style={{ fontSize: 11, color: C.textMuted, marginTop: 1 }}>{s.value}</div>
+                          )}
+                        </div>
                         <Badge bg={sty.bg} color={sty.color}>{s.level}</Badge>
                       </div>
                     );
@@ -304,6 +309,65 @@ export default function Dashboard() {
                 </div>
               </div>
             </div>
+
+            {/* 3-month gap forecast cards */}
+            {gapForecast.length > 0 && (
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: C.textPrimary, marginBottom: 10 }}>
+                  3-month supply forecast
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0,1fr))", gap: 12 }}>
+                  {gapForecast.map((row) => {
+                    const isGap  = row.Gap_forecast < 0;
+                    const isCrit = row.alert === "Critical";
+                    const isWarn = row.alert === "Warning";
+                    const borderColor = isCrit ? "#e8a090" : isWarn ? "#d4c060" : isGap ? "#c9d8e8" : "#ace890";
+                    const badgeBg     = isCrit ? "#fdecea" : isWarn ? "#fdf6d8" : isGap ? "#ddeaf8" : "#e2ffec";
+                    const badgeColor  = isCrit ? "#8b2e1a" : isWarn ? "#7a6010" : isGap ? "#2d5a9e" : "#1a8b20";
+                    const gapAbs      = Math.abs(row.Gap_forecast);
+                    return (
+                      <div key={row.period} style={{
+                        background: C.surfaceWhite,
+                        border: `0.5px solid ${borderColor}`,
+                        borderTop: `3px solid ${borderColor}`,
+                        borderRadius: 10, padding: "14px 16px",
+                      }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: C.textPrimary }}>{row.month}</span>
+                          <span style={{
+                            fontSize: 11, fontWeight: 500, padding: "2px 8px", borderRadius: 20,
+                            background: badgeBg, color: badgeColor,
+                          }}>{row.alert}</span>
+                        </div>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 8 }}>
+                          <div>
+                            <div style={{ fontSize: 10, color: C.textMuted, marginBottom: 2 }}>Donations in</div>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: C.jungleTeal }}>
+                              {(row.LBS_In_forecast / 1000).toFixed(0)}K lbs
+                            </div>
+                          </div>
+                          <div>
+                            <div style={{ fontSize: 10, color: C.textMuted, marginBottom: 2 }}>Demand out</div>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: C.wheat }}>
+                              {(row.LBS_Out_forecast / 1000).toFixed(0)}K lbs
+                            </div>
+                          </div>
+                        </div>
+                        <div style={{
+                          fontSize: 12, fontWeight: 600,
+                          color: isGap ? "#8b2e1a" : "#1a8b20",
+                        }}>
+                          {isGap ? "▼" : "▲"} {(gapAbs / 1000).toFixed(0)}K lbs {isGap ? "shortfall" : "surplus"}
+                        </div>
+                        <div style={{ fontSize: 10, color: C.textMuted, marginTop: 4 }}>
+                          {row.confidence_pct}% model confidence
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* AI insight panel */}
             <div style={{ display: "flex", gap: 16 }}>
@@ -328,7 +392,7 @@ export default function Dashboard() {
                   borderTop: "0.5px solid rgba(255,255,255,0.12)",
                   fontSize: 14, color: "rgba(43, 67, 18, 0.6)",
                 }}>
-                  Based on Holt-Winters + XGBoost hybrid model · monthly aggregates · 80% prediction intervals
+                  Based on Prophet + LightGBM ensemble · monthly aggregates · 80% prediction intervals
                 </div>
               </div>
             </div>

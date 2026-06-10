@@ -35,6 +35,10 @@ def load_data() -> pd.DataFrame:
     df = pd.read_csv(DATA_PATH, parse_dates=["Date"])
     df = df.rename(columns=COL_RENAME)
     df = df.sort_values("Date").reset_index(drop=True)
+    # AISH columns may be stored as comma-formatted strings ("70,472") — coerce to numeric
+    for col in ["AISH_TOTAL", "SINGLE_AISH_TOTAL", "SINGLE_AISH_PARENT", "EDMONTON_AISH_CASELOAD"]:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col].astype(str).str.replace(",", ""), errors="coerce")
     return df
 
 

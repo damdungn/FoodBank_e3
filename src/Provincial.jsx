@@ -342,6 +342,65 @@ export default function Provincial() {
                   ))}
                 </div>
 
+                {/* 3-month gap forecast */}
+                {gapForecast.length > 0 && (
+                  <Panel>
+                    <SectionTitle
+                      title="3-month supply-demand outlook"
+                      sub="Prophet + LightGBM ensemble · adaptive threshold · 80% prediction intervals"
+                    />
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0,1fr))", gap: 12 }}>
+                      {gapForecast.map((row) => {
+                        const isGap  = row.Gap_forecast < 0;
+                        const isCrit = row.alert === "Critical";
+                        const isWarn = row.alert === "Warning";
+                        const accentColor = isCrit ? "#e8a090" : isWarn ? "#d4c060" : isGap ? "#c9d8e8" : "#ace890";
+                        const badgeBg     = isCrit ? "#fdecea" : isWarn ? "#fdf6d8" : isGap ? "#ddeaf8" : "#e2ffec";
+                        const badgeColor  = isCrit ? "#8b2e1a" : isWarn ? "#7a6010" : isGap ? "#2d5a9e" : "#1a8b20";
+                        const gapAbs = Math.abs(row.Gap_forecast);
+                        return (
+                          <div key={row.period} style={{
+                            border: `0.5px solid ${accentColor}`,
+                            borderTop: `3px solid ${accentColor}`,
+                            borderRadius: 10, padding: "14px 16px",
+                            background: C.surfaceGreen,
+                          }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                              <span style={{ fontSize: 14, fontWeight: 600, color: C.textPrimary }}>{row.month}</span>
+                              <span style={{
+                                fontSize: 11, fontWeight: 500, padding: "2px 8px", borderRadius: 20,
+                                background: badgeBg, color: badgeColor,
+                              }}>{row.alert}</span>
+                            </div>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
+                              <div>
+                                <div style={{ fontSize: 10, color: C.textMuted, marginBottom: 3 }}>Donations in</div>
+                                <div style={{ fontSize: 15, fontWeight: 700, color: C.jungleTeal }}>
+                                  {(row.LBS_In_forecast / 1000).toFixed(0)}K
+                                  <span style={{ fontSize: 11, fontWeight: 400, color: C.textMuted }}> lbs</span>
+                                </div>
+                              </div>
+                              <div>
+                                <div style={{ fontSize: 10, color: C.textMuted, marginBottom: 3 }}>Demand out</div>
+                                <div style={{ fontSize: 15, fontWeight: 700, color: "#c0622a" }}>
+                                  {(row.LBS_Out_forecast / 1000).toFixed(0)}K
+                                  <span style={{ fontSize: 11, fontWeight: 400, color: C.textMuted }}> lbs</span>
+                                </div>
+                              </div>
+                            </div>
+                            <div style={{ fontSize: 12, fontWeight: 600, color: isGap ? "#8b2e1a" : "#1a8b20" }}>
+                              {isGap ? "▼" : "▲"} {(gapAbs / 1000).toFixed(0)}K lbs {isGap ? "shortfall" : "surplus"}
+                            </div>
+                            <div style={{ fontSize: 10, color: C.textMuted, marginTop: 5 }}>
+                              {row.confidence_pct}% model confidence
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </Panel>
+                )}
+
                 {/* Main chart */}
                 <Panel>
                   <SectionTitle
@@ -409,6 +468,19 @@ export default function Provincial() {
             {activeTab === "model" && (
               <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
 
+                {/* Ensemble info banner */}
+                <div style={{
+                  background: "#e2ffec", border: "0.5px solid #ace890",
+                  borderRadius: 10, padding: "12px 16px",
+                  display: "flex", alignItems: "center", gap: 10,
+                }}>
+                  <div style={{ width: 8, height: 8, borderRadius: "50%", background: C.jungleTeal, flexShrink: 0 }} />
+                  <span style={{ fontSize: 13, color: C.textPrimary }}>
+                    <strong>Prophet + LightGBM ensemble</strong> — Prophet models trend &amp; seasonality for LBS_In/LBS_Out;
+                    LightGBM classifies gap/surplus from 6-month rolling lag history. 50/50 blend with adaptive threshold.
+                  </span>
+                </div>
+
                 {/* Model stats */}
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0,1fr))", gap: 14 }}>
                   {modelStats.map((s) => (
@@ -422,11 +494,36 @@ export default function Provincial() {
                   ))}
                 </div>
 
+                {/* Gap classifier metrics */}
+                {confidence?.targets?.LBS_In?.gap_accuracy != null && (
+                  <Panel>
+                    <SectionTitle
+                      title="Gap classifier performance (validation set)"
+                      sub="LightGBM binary classifier — 1 = demand exceeds supply (deficit month)"
+                    />
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0,1fr))", gap: 12 }}>
+                      {[
+                        { label: "Accuracy",       value: `${(confidence.targets.LBS_In.gap_accuracy * 100).toFixed(1)}%`, color: C.jungleTeal },
+                        { label: "F1 score",        value: (confidence.targets.LBS_In.gap_f1 ?? "—").toString().substring(0, 5),       color: C.dustyDenim },
+                        { label: "Surplus recall",  value: `${((confidence.targets.LBS_In.gap_sur_recall ?? 0) * 100).toFixed(1)}%`, color: "#a889cc" },
+                      ].map((m) => (
+                        <div key={m.label} style={{
+                          background: C.surfaceGreen, border: `0.5px solid ${C.borderLight}`,
+                          borderRadius: 10, padding: "12px 16px",
+                        }}>
+                          <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 4 }}>{m.label}</div>
+                          <div style={{ fontSize: 22, fontWeight: 700, color: m.color }}>{m.value}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </Panel>
+                )}
+
                 {/* Feature importance chart */}
                 <Panel>
                   <SectionTitle
-                    title="Feature importance (XGBoost — LBS_In residuals)"
-                    sub="Relative contribution of each variable to the forecast · colour = category"
+                    title="Feature importance (LightGBM — rolling lag history)"
+                    sub="Relative contribution of each lag variable to the gap classifier · colour = category"
                   />
                   {featureData.length === 0 ? (
                     <div style={{ fontSize: 13, color: C.textMuted, textAlign: "center", padding: "20px 0" }}>
