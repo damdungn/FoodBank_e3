@@ -19,12 +19,17 @@ Endpoints
 from __future__ import annotations
 
 import json
+import os
 from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).parent / ".env")
 
 from predict import (
     PROVINCIAL_DIR,
@@ -45,12 +50,8 @@ from preprocess import load_data, aggregate_monthly, preprocess
 app = FastAPI(title="FoodBank Forecast API", version="2.0.0")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://localhost:3000",
-        "http://localhost:4173",
-    ],
-    allow_methods=["GET"],
+    allow_origins=["*"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
@@ -58,17 +59,31 @@ app.add_middleware(
 
 _cache: dict = {}
 
+_MONTHLY_JSON = Path(__file__).parent / "data" / "monthly_data.json"
+_SIGNALS_JSON = Path(__file__).parent / "data" / "latest_signals.json"
+
 
 def _daily_df() -> pd.DataFrame:
-    """Preprocessed daily dataframe (used only for /api/signals)."""
+    """Last daily row used for /api/signals. Loads from JSON snapshot; falls back to CSV."""
     if "daily" not in _cache:
-        _cache["daily"] = preprocess(load_data())
+        if _SIGNALS_JSON.exists():
+            row = json.load(open(_SIGNALS_JSON))
+            _cache["daily"] = pd.DataFrame([row])
+        else:
+            _cache["daily"] = preprocess(load_data())
     return _cache["daily"]
 
 
 def _monthly_df() -> pd.DataFrame:
+    """Monthly aggregated dataframe. Loads from JSON snapshot; falls back to CSV."""
     if "monthly" not in _cache:
-        _cache["monthly"] = aggregate_monthly(load_data())
+        if _MONTHLY_JSON.exists():
+            df = pd.read_json(_MONTHLY_JSON, orient="records")
+            df["Date"] = pd.to_datetime(df["Date"])
+            df = df.sort_values("Date").reset_index(drop=True)
+        else:
+            df = aggregate_monthly(load_data())
+        _cache["monthly"] = df
     return _cache["monthly"]
 
 
@@ -148,6 +163,35 @@ def _pretty(col: str) -> str:
     return label_map.get(col, col.replace("_", " ").title())
 
 
+# ── AI chat proxy ─────────────────────────────────────────────────────────────
+
+class ChatRequest(BaseModel):
+    messages: list[dict]
+    systemPrompt: str = ""
+
+
+@app.post("/api/chat")
+def chat(req: ChatRequest):
+    api_key = os.getenv("OPENAI_API_KEY", "")
+    if not api_key or api_key == "paste-your-key-here":
+        raise HTTPException(status_code=503, detail="OPENAI_API_KEY not set in backend/.env")
+
+    try:
+        from openai import OpenAI
+        client = OpenAI(api_key=api_key)
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            max_tokens=1000,
+            messages=[
+                {"role": "system", "content": req.systemPrompt},
+                *req.messages,
+            ],
+        )
+        return {"reply": response.choices[0].message.content}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ── Health ────────────────────────────────────────────────────────────────────
 
 @app.get("/api/health")
@@ -155,7 +199,7 @@ def health():
     return {
         "status": "ok",
         "provincial_trained": models_are_trained(PROVINCIAL_DIR),
-        "regional_trained":   False,
+        "regional_trained":   _regional_available(),
     }
 
 
@@ -569,24 +613,98 @@ def model_summary():
     }
 
 
-# ── Regional placeholders ─────────────────────────────────────────────────────
+# ── Regional — Prophet forecast JSON (exported from Colab) ───────────────────
+# Drop rdfb_forecast.json into backend/data/ to activate these endpoints.
 
-@app.get("/api/regional/history")
-def regional_history():
-    raise HTTPException(
-        status_code=503,
-        detail="Regional model not yet available. Supply regional_data.csv and run train_regional.py.",
-    )
+REGIONAL_JSON = Path(__file__).parent / "data" / "rdfb_forecast_export.json"
+
+
+def _regional_available() -> bool:
+    return REGIONAL_JSON.exists()
+
+
+def _load_regional() -> dict:
+    if "regional_json" not in _cache:
+        if not _regional_available():
+            raise HTTPException(
+                status_code=503,
+                detail=(
+                    "Regional forecast not available. "
+                    "Export rdfb_forecast_export.json from Colab and save it as "
+                    "backend/data/rdfb_forecast.json."
+                ),
+            )
+        with open(REGIONAL_JSON) as f:
+            _cache["regional_json"] = json.load(f)
+    return _cache["regional_json"]
+
+
+@app.get("/api/regional/forecast")
+def regional_forecast():
+    """
+    12-month Prophet hamper forecast with 80% CI and AFB gap overlay.
+    Each row: { month, yhat, lower, upper, afbGap }
+    """
+    data = _load_regional()
+    return {
+        "forecast":    data.get("forecast", []),
+        "seasonality": data.get("seasonality", {}),
+        "generatedAt": data.get("generatedAt"),
+    }
 
 
 @app.get("/api/regional/features")
 def regional_features():
-    raise HTTPException(status_code=503, detail="Regional model not yet available.")
+    """SHAP-derived feature importance from the RDFB Prophet model."""
+    data = _load_regional()
+    raw  = data.get("featureImportance", [])
+    total = sum(f["shap"] for f in raw) or 1.0
+
+    _pretty_regional = {
+        "EDMONTON_AISH_CASELOAD": "Edmonton AISH caseload",
+        "SINGLE_AISH_TOTAL":      "Single AISH total",
+        "CPI All-items":          "CPI All-items",
+        "CPI Food":               "CPI Food",
+        "School_In_Session":      "School in session",
+    }
+
+    return {
+        "featureData": [
+            {
+                "name":       _pretty_regional.get(f["name"], f["name"].replace("_", " ").title()),
+                "importance": round((f["shap"] / total) * 100, 1),
+                "shap":       f["shap"],
+            }
+            for f in raw
+        ]
+    }
 
 
 @app.get("/api/regional/metrics")
 def regional_metrics():
-    raise HTTPException(status_code=503, detail="Regional model not yet available.")
+    """Model performance stats for the RDFB Prophet model."""
+    data = _load_regional()
+    m    = data.get("metrics", {})
+
+    return {
+        "modelStats": [
+            {"label": "MAE (in-sample)",   "value": f"{m.get('mae', 'N/A')} hampers/month"},
+            {"label": "MAPE (in-sample)",  "value": f"{m.get('mape', 'N/A')}%"},
+            {"label": "CV MAE",            "value": f"{m.get('cv_mae', 'N/A')} hampers/month"},
+            {"label": "CV MAPE",           "value": f"{m.get('cv_mape', 'N/A')}%"},
+            {"label": "Training months",   "value": str(m.get("trainingMonths", "N/A"))},
+            {"label": "Training window",   "value": m.get("trainingWindow", "N/A")},
+            {"label": "Model type",        "value": "Prophet + economic regressors"},
+            {"label": "Forecast horizon",  "value": "12 months"},
+            {"label": "Generated",         "value": data.get("generatedAt", "N/A")},
+        ]
+    }
+
+
+@app.get("/api/regional/history")
+def regional_history():
+    """Alias for /api/regional/forecast (kept for backwards compat)."""
+    return regional_forecast()
 
 
 # ── Dev runner ────────────────────────────────────────────────────────────────

@@ -232,9 +232,15 @@ def forecast_monthly(
             demand_supply_ratio, deficit_streak, month_sin, month_cos,
             pressure_index, forecast_uncertainty
         ])
-        
-        lags = np.concatenate([lag_block, engineered_block]).reshape(1, -1)
-        
+
+        lags_arr = np.concatenate([lag_block, engineered_block]).reshape(1, -1)
+        feat_names = config.get("lgbm_features", [])
+        lags = (
+            pd.DataFrame(lags_arr, columns=feat_names)
+            if len(feat_names) == lags_arr.shape[1]
+            else lags_arr
+        )
+
         lgbm_gap_prob     = float(models["lgbm"].predict_proba(lags)[0, 1])
         ensemble_gap_prob = 0.50 * prophet_gap_prob + 0.50 * lgbm_gap_prob
         surplus_prob      = 1.0 - ensemble_gap_prob
