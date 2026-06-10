@@ -19,12 +19,17 @@ Endpoints
 from __future__ import annotations
 
 import json
+import os
 from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).parent / ".env")
 
 from predict import (
     PROVINCIAL_DIR,
@@ -45,12 +50,8 @@ from preprocess import load_data, aggregate_monthly, preprocess
 app = FastAPI(title="FoodBank Forecast API", version="2.0.0")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://localhost:3000",
-        "http://localhost:4173",
-    ],
-    allow_methods=["GET"],
+    allow_origins=["*"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
@@ -58,17 +59,31 @@ app.add_middleware(
 
 _cache: dict = {}
 
+_MONTHLY_JSON = Path(__file__).parent / "data" / "monthly_data.json"
+_SIGNALS_JSON = Path(__file__).parent / "data" / "latest_signals.json"
+
 
 def _daily_df() -> pd.DataFrame:
-    """Preprocessed daily dataframe (used only for /api/signals)."""
+    """Last daily row used for /api/signals. Loads from JSON snapshot; falls back to CSV."""
     if "daily" not in _cache:
-        _cache["daily"] = preprocess(load_data())
+        if _SIGNALS_JSON.exists():
+            row = json.load(open(_SIGNALS_JSON))
+            _cache["daily"] = pd.DataFrame([row])
+        else:
+            _cache["daily"] = preprocess(load_data())
     return _cache["daily"]
 
 
 def _monthly_df() -> pd.DataFrame:
+    """Monthly aggregated dataframe. Loads from JSON snapshot; falls back to CSV."""
     if "monthly" not in _cache:
-        _cache["monthly"] = aggregate_monthly(load_data())
+        if _MONTHLY_JSON.exists():
+            df = pd.read_json(_MONTHLY_JSON, orient="records")
+            df["Date"] = pd.to_datetime(df["Date"])
+            df = df.sort_values("Date").reset_index(drop=True)
+        else:
+            df = aggregate_monthly(load_data())
+        _cache["monthly"] = df
     return _cache["monthly"]
 
 
@@ -146,6 +161,35 @@ def _pretty(col: str) -> str:
         "EDMONTON_AISH_CASELOAD": "Edmonton AISH caseload",
     }
     return label_map.get(col, col.replace("_", " ").title())
+
+
+# ── AI chat proxy ─────────────────────────────────────────────────────────────
+
+class ChatRequest(BaseModel):
+    messages: list[dict]
+    systemPrompt: str = ""
+
+
+@app.post("/api/chat")
+def chat(req: ChatRequest):
+    api_key = os.getenv("OPENAI_API_KEY", "")
+    if not api_key or api_key == "paste-your-key-here":
+        raise HTTPException(status_code=503, detail="OPENAI_API_KEY not set in backend/.env")
+
+    try:
+        from openai import OpenAI
+        client = OpenAI(api_key=api_key)
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            max_tokens=1000,
+            messages=[
+                {"role": "system", "content": req.systemPrompt},
+                *req.messages,
+            ],
+        )
+        return {"reply": response.choices[0].message.content}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ── Health ────────────────────────────────────────────────────────────────────

@@ -1130,6 +1130,41 @@ def main():
     joblib.dump(production_scaler, MODELS_DIR / "production_scaler.pkl")
 
 
+    # ── Export deployment snapshots (no CSV needed on server) ────────────────
+    DATA_DIR = Path(__file__).parent / "data"
+
+    # Monthly aggregated data — 62 rows, no individual records
+    export_df = monthly.copy()
+    # Drop Period column — not JSON serialisable
+    export_df = export_df.drop(columns=["ym"], errors="ignore")
+    # Convert any remaining Period columns
+    for col in export_df.columns:
+        if hasattr(export_df[col], "dt") and hasattr(export_df[col].dt, "to_timestamp"):
+            try:
+                export_df[col] = export_df[col].dt.to_timestamp()
+            except Exception:
+                export_df[col] = export_df[col].astype(str)
+    export_df.to_json(DATA_DIR / "monthly_data.json", orient="records", date_format="iso")
+    print("✓ monthly_data.json exported")
+
+    # Latest signals row — economic/calendar flags only, no individual records
+    from preprocess import preprocess as _preprocess
+    daily_df = _preprocess(load_data())
+    last_row = daily_df.iloc[-1].to_dict()
+    safe_row = {}
+    for k, v in last_row.items():
+        if hasattr(v, "item"):
+            safe_row[k] = v.item()
+        elif isinstance(v, (int, float, bool, str)):
+            safe_row[k] = v if v == v else 0  # replace NaN
+        elif hasattr(v, "isoformat"):
+            safe_row[k] = v.isoformat()
+        else:
+            safe_row[k] = str(v)
+    with open(DATA_DIR / "latest_signals.json", "w") as f:
+        json.dump(safe_row, f, indent=2)
+    print("✓ latest_signals.json exported")
+
     print("\n✓ Dashboard signals saved")
     print("✓ All artifacts saved")
     print("✓ Training complete")

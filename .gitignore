@@ -28,6 +28,11 @@ dist-ssr
 .claude/
 
 # Python backend
+.venv/
+venv/
 backend/.venv/
+backend/venv/
 backend/data/*.csv
-backend/models/
+# models/ is committed — pkl files are derived weights, not raw data
+**/__pycache__/
+**/*.pyc
