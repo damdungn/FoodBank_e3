@@ -269,7 +269,7 @@ export default function Provincial() {
             <div style={{ width: 7, height: 7, borderRadius: "50%", background: C.jungleTeal }} />
             <span style={{ color: C.textSecondary }}>Model health: </span>
             <span style={{ fontWeight: 600, color: C.forestGreen }}>
-              {confPct}% {confLabel} confidence
+              {confidence ? `${confPct}% ${confLabel} confidence` : "—"}
             </span>
           </div>
         </div>

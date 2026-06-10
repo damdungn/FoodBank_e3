@@ -110,13 +110,18 @@ def predict_historical(
     feature_cols: dict,
 ) -> pd.DataFrame:
     """Return df_monthly with LBS_In_pred and LBS_Out_pred columns added."""
-    top_features = (feature_cols or {}).get("LBS_In", [])
+    def _regressors(model, fallback):
+        if hasattr(model, "extra_regressors"):
+            return list(model.extra_regressors.keys())
+        return fallback
+
+    fallback = (feature_cols or {}).get("LBS_In", [])
     out = df_monthly[["Date", "LBS_In", "LBS_Out"]].copy()
     out["LBS_In_pred"]  = np.maximum(
-        _prophet_predict(models["prophet_lbs_in"],  df_monthly, top_features)["yhat"].values, 0
+        _prophet_predict(models["prophet_lbs_in"],  df_monthly, _regressors(models["prophet_lbs_in"],  fallback))["yhat"].values, 0
     )
     out["LBS_Out_pred"] = np.maximum(
-        _prophet_predict(models["prophet_lbs_out"], df_monthly, top_features)["yhat"].values, 0
+        _prophet_predict(models["prophet_lbs_out"], df_monthly, _regressors(models["prophet_lbs_out"], fallback))["yhat"].values, 0
     )
     return out
 
@@ -142,7 +147,12 @@ def forecast_monthly(
     gap_stats = load_gap_stats()
     metrics   = load_metrics()
 
-    top_features = config.get("top_features", (feature_cols or {}).get("LBS_In", []))
+    # FIX 1: Dynamically extract the exact regressors the Prophet models expect
+    if "prophet_net" in models and hasattr(models["prophet_net"], "extra_regressors"):
+        prophet_regressors = list(models["prophet_net"].extra_regressors.keys())
+    else:
+        prophet_regressors = config.get("top_features", (feature_cols or {}).get("LBS_In", []))
+
     lookback     = int(config.get("lookback", 6))
 
     future_dates = pd.date_range(
@@ -161,11 +171,13 @@ def forecast_monthly(
 
     results = []
     for date in future_dates:
-        # Build single-row Prophet input, carrying forward last known regressor values
+        # Build single-row Prophet input, ensuring ALL expected regressors are filled
         df_p = pd.DataFrame({"ds": [date]})
-        for col in top_features:
+        for col in prophet_regressors:
             if col in df_monthly.columns:
                 df_p[col] = df_monthly[col].iloc[-1]
+            else:
+                df_p[col] = 0.0  # Fallback zero-fill prevents Prophet from crashing if column is missing
 
         # Prophet point forecasts + 80% intervals
         fcst_net = models["prophet_net"].predict(df_p)
@@ -183,14 +195,52 @@ def forecast_monthly(
 
         # Ensemble gap probability (50/50 Prophet + LightGBM)
         prophet_gap_prob  = float(1 / (1 + np.exp(net_pred / 30000)))
-        lags              = np.array(rolling_in + rolling_out + rolling_net).reshape(1, -1)
+        
+        # FIX 2: Dynamically calculate all 14 engineered features for LightGBM (Total: 32 features)
+        net_3mo_avg = float(np.mean(rolling_net[-3:]))
+        net_6mo_avg = float(np.mean(rolling_net[-6:]))
+        net_3mo_std = float(np.std(rolling_net[-3:], ddof=1)) if len(rolling_net) >= 2 else 0.0
+        net_6mo_std = float(np.std(rolling_net[-6:], ddof=1)) if len(rolling_net) >= 2 else 0.0
+
+        in_momentum  = float((rolling_in[-1] - rolling_in[-2]) / (rolling_in[-2] + 1e-9)) if len(rolling_in) >= 2 else 0.0
+        out_momentum = float((rolling_out[-1] - rolling_out[-2]) / (rolling_out[-2] + 1e-9)) if len(rolling_out) >= 2 else 0.0
+
+        net_delta        = float(rolling_net[-1] - rolling_net[-2]) if len(rolling_net) >= 2 else 0.0
+        net_acceleration = float(net_delta - (rolling_net[-2] - rolling_net[-3])) if len(rolling_net) >= 3 else 0.0
+
+        demand_supply_ratio = float(rolling_out[-1] / (rolling_in[-1] + 1))
+
+        deficit_streak = 0
+        for val in reversed(rolling_net):
+            if val < 0:
+                deficit_streak += 1
+            else:
+                break
+
+        month_num = date.month
+        month_sin = float(np.sin(2 * np.pi * month_num / 12))
+        month_cos = float(np.cos(2 * np.pi * month_num / 12))
+
+        pressure_index       = float(df_monthly["pressure_index"].iloc[-1] if "pressure_index" in df_monthly.columns else 0.0)
+        forecast_uncertainty = float(net_6mo_std / (abs(net_6mo_avg) + 1))
+
+        # Reconstruct the exact 32-element array shape required by LightGBM
+        lag_block = np.array(rolling_in + rolling_out + rolling_net)
+        engineered_block = np.array([
+            net_3mo_avg, net_6mo_avg, net_3mo_std, net_6mo_std,
+            in_momentum, out_momentum, net_delta, net_acceleration,
+            demand_supply_ratio, deficit_streak, month_sin, month_cos,
+            pressure_index, forecast_uncertainty
+        ])
+        
+        lags = np.concatenate([lag_block, engineered_block]).reshape(1, -1)
+        
         lgbm_gap_prob     = float(models["lgbm"].predict_proba(lags)[0, 1])
         ensemble_gap_prob = 0.50 * prophet_gap_prob + 0.50 * lgbm_gap_prob
         surplus_prob      = 1.0 - ensemble_gap_prob
 
         gap   = lbs_in_pred - lbs_out_pred
         alert = _alert_level(ensemble_gap_prob, threshold, gap, gap_stats)
-        # Per-row confidence: probability of the predicted class (gap or surplus)
         conf  = int(round((ensemble_gap_prob if alert != "OK" else surplus_prob) * 100))
 
         results.append({
@@ -212,9 +262,8 @@ def forecast_monthly(
         rolling_in  = rolling_in[1:]  + [lbs_in_pred]
         rolling_out = rolling_out[1:] + [lbs_out_pred]
         rolling_net = rolling_net[1:] + [lbs_in_pred - lbs_out_pred]
-
+        
     return results
-
 
 def alert_message(alert: str, gap: float) -> str:
     sign = "+" if gap >= 0 else ""

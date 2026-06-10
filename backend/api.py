@@ -394,7 +394,7 @@ def provincial_metrics():
     feature_cols = load_feature_cols(PROVINCIAL_DIR) or {}
     df           = _monthly_df()
 
-    m          = metrics.get("LBS_In", {})
+    m          = metrics.get("LBS_In", metrics.get("in", {}))
     n_features = len(feature_cols.get("LBS_In", []))
 
     stats = [
@@ -426,12 +426,16 @@ def model_summary():
     """
     _require_prov()
     metrics = load_metrics(PROVINCIAL_DIR)
-    m_in  = metrics.get("LBS_In",  {})
-    m_out = metrics.get("LBS_Out", {})
+    # metrics.json uses "in"/"out"/"ensemble" keys (not "LBS_In"/"LBS_Out")
+    m_in       = metrics.get("LBS_In",  metrics.get("in",  {}))
+    m_out      = metrics.get("LBS_Out", metrics.get("out", {}))
+    m_ensemble = metrics.get("ensemble", {})
 
     r2_out   = m_out.get("r2", 0)
     r2_in    = m_in.get("r2",  0)
-    gap_acc  = m_in.get("gap_accuracy", m_out.get("gap_accuracy", 0))
+    gap_acc  = m_in.get("gap_accuracy",
+               m_out.get("gap_accuracy",
+               m_ensemble.get("val_acc", 0)))
 
     def _confidence_label(r2: float) -> str:
         if r2 >= 0.75: return "High"
@@ -466,9 +470,9 @@ def model_summary():
                 "smape":           m_in.get("smape"),
                 "rel_mae_pct":     m_in.get("rel_mae_pct"),
                 "confidence":      _confidence_label(r2_in),
-                "gap_accuracy":    m_in.get("gap_accuracy"),
-                "gap_f1":          m_in.get("gap_f1"),
-                "gap_sur_recall":  m_in.get("gap_sur_recall"),
+                "gap_accuracy":    m_in.get("gap_accuracy", m_ensemble.get("val_acc")),
+                "gap_f1":          m_in.get("gap_f1",       m_ensemble.get("val_f1")),
+                "gap_sur_recall":  m_in.get("gap_sur_recall", m_ensemble.get("val_recall")),
                 "interpretation": (
                     f"Donations are inherently irregular — the model explains "
                     f"{int(round(max(0,r2_in)*100))}% of inbound variation. "

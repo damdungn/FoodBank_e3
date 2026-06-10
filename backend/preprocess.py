@@ -22,10 +22,13 @@ ECONOMIC_COLS = [
 ]
 
 COL_RENAME = {
-    "CPI All-items": "CPI_All_items",
-    "CPI Food":      "CPI_Food",
-    "CPI Shelter":   "CPI_Shelter",
-    "Net Migration": "Net_Migration",
+    "CPI All-items":    "CPI_All_items",
+    "CPI Food":         "CPI_Food",
+    "CPI Shelter":      "CPI_Shelter",
+    "Net Migration":    "Net_Migration",
+    "Mean Temp (°C)":   "Mean_Temp",
+    "Total Precip (mm)":"Total_Precip",
+    "Unemployment Rate ": "Unemployment_Rate",
 }
 
 
@@ -71,8 +74,6 @@ _MONTHLY_AGG = {
     "LBS_In":  ("LBS_In",  "sum"),
     "LBS_Out": ("LBS_Out", "sum"),
     # Weather: monthly mean / total
-    "Mean_Temp":    ("Mean_Temp",    "mean"),
-    "Total_Precip": ("Total_Precip", "sum"),
     "Snow_on_Grnd": ("Snow_on_Grnd", "mean"),
     # Calendar: count of event-days in the month
     "n_holidays":  ("is_holiday",           "sum"),
@@ -89,6 +90,12 @@ _MONTHLY_AGG = {
     "n_ramadan":   ("holiday_is_ramadan",   "sum"),
     "n_exam":      ("Exam_Period",          "sum"),
     "n_intl":      ("International_Arrival","sum"),
+    # Weather (continued)
+    "Mean_Temp":    ("Mean_Temp",    "mean"),
+    "Total_Precip": ("Total_Precip", "sum"),
+    # Calendar (continued)
+    "n_nldb":  ("NLDB",     "sum"),
+    "n_covid": ("is_covid", "sum"),
     # Economic: take last value of the month
     "Unemployment_Rate":      ("Unemployment_Rate",      "last"),
     "CPI_Food":               ("CPI_Food",               "last"),
@@ -96,19 +103,30 @@ _MONTHLY_AGG = {
     "CPI_All_items":          ("CPI_All_items",          "last"),
     "Net_Migration":          ("Net_Migration",          "last"),
     "AISH_TOTAL":             ("AISH_TOTAL",             "last"),
+    "SINGLE_AISH_TOTAL":      ("SINGLE_AISH_TOTAL",      "last"),
+    "SINGLE_AISH_PARENT":     ("SINGLE_AISH_PARENT",     "last"),
     "EDMONTON_AISH_CASELOAD": ("EDMONTON_AISH_CASELOAD", "last"),
 }
 
 
-def aggregate_monthly(df: pd.DataFrame) -> pd.DataFrame:
+def aggregate_monthly(df: pd.DataFrame, min_lag: int = 3) -> pd.DataFrame:
     """
     Collapse daily rows into monthly totals/means.
     Then add:
       - Date features (month_of_year, year, quarter)
       - Lag features: lag-1, lag-2, lag-3, lag-12 for LBS_In and LBS_Out
       - 3-month rolling mean (shifted to avoid leakage)
-      - Gap = LBS_In − LBS_Out  and  Gap_lag1
-    Rows where any lag is NaN (first 12 months) are dropped.
+      - Gap = LBS_In - LBS_Out  and  Gap_lag1
+    Only rows where lags up to `min_lag` are unavailable are dropped.
+
+    Parameters
+    ----------
+    min_lag : int
+        Minimum lag that must be non-null for a row to be kept.
+        Default 3 — retains all months except the first 3.
+        Pass 12 to restore the original behaviour (drops first 12 months).
+        The training pipeline uses LOOKBACK=6 so lags 4-12 may be NaN in
+        early rows; train.py's fillna(0) pass handles those safely.
     """
     df = df.copy()
     for col in ECONOMIC_COLS:
@@ -143,8 +161,14 @@ def aggregate_monthly(df: pd.DataFrame) -> pd.DataFrame:
     monthly["Gap"]      = monthly["LBS_In"] - monthly["LBS_Out"]
     monthly["Gap_lag1"] = monthly["Gap"].shift(1)
 
-    # Drop months where lag-12 is unavailable (first 12 rows)
-    monthly = monthly.dropna(subset=["LBS_In_lag12", "LBS_Out_lag12"]).reset_index(drop=True)
+    # Drop only the first `min_lag` months where short lags are unavailable.
+    # lag-12 may still be NaN for early rows; callers needing it can pass
+    # min_lag=12.  The training pipeline uses min_lag=3 (default) and fills
+    # any remaining NaNs with 0 via its own fillna(0) pass.
+    drop_cols = [c for c in [f"LBS_In_lag{min_lag}", f"LBS_Out_lag{min_lag}"]
+                 if c in monthly.columns]
+    if drop_cols:
+        monthly = monthly.dropna(subset=drop_cols).reset_index(drop=True)
 
     return monthly
 
