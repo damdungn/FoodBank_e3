@@ -285,7 +285,7 @@ export default function Regional() {
     setForecast(null);
     setFeatures(null);
     setMetrics(null);
-    const BASE = "http://localhost:8000";
+    const BASE = (import.meta.env.VITE_API_URL ?? "");
     const get  = url => fetch(url).then(r => r.ok ? r.json() : null).catch(() => null);
     Promise.all([
       get(`${BASE}${fb.api.forecast}`),

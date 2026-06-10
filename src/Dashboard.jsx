@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { API_BASE } from "./config";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer,
@@ -98,10 +99,10 @@ export default function Dashboard() {
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/dashboard").then(r => r.json()),
-      fetch("/api/signals").then(r => r.json()),
-      fetch("/api/model_summary").then(r => r.json()),
-      fetch("/api/gap").then(r => r.json()),
+      fetch(`${API_BASE}/api/dashboard`).then(r => r.json()),
+      fetch(`${API_BASE}/api/signals`).then(r => r.json()),
+      fetch(`${API_BASE}/api/model_summary`).then(r => r.json()),
+      fetch(`${API_BASE}/api/gap`).then(r => r.json()),
     ])
       .then(([dash, sigs, summary, gap]) => {
         setTrendData(dash.trendData ?? []);

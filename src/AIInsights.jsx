@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
+import { API_BASE } from "./config";
 
 const C = {
   forestGreen:  "#224433",
@@ -191,8 +192,8 @@ export default function AIInsights() {
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/model_summary").then(r => r.json()),
-      fetch("/api/gap").then(r => r.json()),
+      fetch(`${API_BASE}/api/model_summary`).then(r => r.json()),
+      fetch(`${API_BASE}/api/gap`).then(r => r.json()),
     ])
       .then(([summary, gapData]) => {
         setSystemPrompt(buildSystemPrompt(summary, gapData));
@@ -216,7 +217,7 @@ export default function AIInsights() {
     setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:8000/api/chat", {
+      const res = await fetch(`${API_BASE}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
