@@ -133,7 +133,7 @@ def health():
     return {
         "status": "ok",
         "provincial_trained": models_are_trained(PROVINCIAL_DIR),
-        "regional_trained":   False,
+        "regional_trained":   _regional_available(),
     }
 
 
@@ -429,24 +429,98 @@ def model_summary():
     }
 
 
-# ── Regional placeholders ─────────────────────────────────────────────────────
+# ── Regional — Prophet forecast JSON (exported from Colab) ───────────────────
+# Drop rdfb_forecast.json into backend/data/ to activate these endpoints.
 
-@app.get("/api/regional/history")
-def regional_history():
-    raise HTTPException(
-        status_code=503,
-        detail="Regional model not yet available. Supply regional_data.csv and run train_regional.py.",
-    )
+REGIONAL_JSON = Path(__file__).parent / "data" / "rdfb_forecast_export.json"
+
+
+def _regional_available() -> bool:
+    return REGIONAL_JSON.exists()
+
+
+def _load_regional() -> dict:
+    if "regional_json" not in _cache:
+        if not _regional_available():
+            raise HTTPException(
+                status_code=503,
+                detail=(
+                    "Regional forecast not available. "
+                    "Export rdfb_forecast_export.json from Colab and save it as "
+                    "backend/data/rdfb_forecast.json."
+                ),
+            )
+        with open(REGIONAL_JSON) as f:
+            _cache["regional_json"] = json.load(f)
+    return _cache["regional_json"]
+
+
+@app.get("/api/regional/forecast")
+def regional_forecast():
+    """
+    12-month Prophet hamper forecast with 80% CI and AFB gap overlay.
+    Each row: { month, yhat, lower, upper, afbGap }
+    """
+    data = _load_regional()
+    return {
+        "forecast":    data.get("forecast", []),
+        "seasonality": data.get("seasonality", {}),
+        "generatedAt": data.get("generatedAt"),
+    }
 
 
 @app.get("/api/regional/features")
 def regional_features():
-    raise HTTPException(status_code=503, detail="Regional model not yet available.")
+    """SHAP-derived feature importance from the RDFB Prophet model."""
+    data = _load_regional()
+    raw  = data.get("featureImportance", [])
+    total = sum(f["shap"] for f in raw) or 1.0
+
+    _pretty_regional = {
+        "EDMONTON_AISH_CASELOAD": "Edmonton AISH caseload",
+        "SINGLE_AISH_TOTAL":      "Single AISH total",
+        "CPI All-items":          "CPI All-items",
+        "CPI Food":               "CPI Food",
+        "School_In_Session":      "School in session",
+    }
+
+    return {
+        "featureData": [
+            {
+                "name":       _pretty_regional.get(f["name"], f["name"].replace("_", " ").title()),
+                "importance": round((f["shap"] / total) * 100, 1),
+                "shap":       f["shap"],
+            }
+            for f in raw
+        ]
+    }
 
 
 @app.get("/api/regional/metrics")
 def regional_metrics():
-    raise HTTPException(status_code=503, detail="Regional model not yet available.")
+    """Model performance stats for the RDFB Prophet model."""
+    data = _load_regional()
+    m    = data.get("metrics", {})
+
+    return {
+        "modelStats": [
+            {"label": "MAE (in-sample)",   "value": f"{m.get('mae', 'N/A')} hampers/month"},
+            {"label": "MAPE (in-sample)",  "value": f"{m.get('mape', 'N/A')}%"},
+            {"label": "CV MAE",            "value": f"{m.get('cv_mae', 'N/A')} hampers/month"},
+            {"label": "CV MAPE",           "value": f"{m.get('cv_mape', 'N/A')}%"},
+            {"label": "Training months",   "value": str(m.get("trainingMonths", "N/A"))},
+            {"label": "Training window",   "value": m.get("trainingWindow", "N/A")},
+            {"label": "Model type",        "value": "Prophet + economic regressors"},
+            {"label": "Forecast horizon",  "value": "12 months"},
+            {"label": "Generated",         "value": data.get("generatedAt", "N/A")},
+        ]
+    }
+
+
+@app.get("/api/regional/history")
+def regional_history():
+    """Alias for /api/regional/forecast (kept for backwards compat)."""
+    return regional_forecast()
 
 
 # ── Dev runner ────────────────────────────────────────────────────────────────
