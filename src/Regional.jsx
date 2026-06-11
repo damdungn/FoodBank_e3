@@ -39,7 +39,7 @@ const FOOD_BANKS = [
   {
     key:      "edmonton",
     label:    "Edmonton Campus FB",
-    subtitle: "Dataset received · May 2023 – Apr 2026 · daily granularity · pending model integration",
+    subtitle: "Dataset received · May 2023 – Apr 2026 · Daily granularity · Pending model integration",
     ready:    false,
     dataset: {
       period:      "May 1, 2023 – April 30, 2026",
@@ -569,7 +569,7 @@ export default function Regional() {
                 {/* 12-month forecast chart */}
                 <Panel>
                   <SectionTitle
-                    title="12-month hamper demand forecast — Red Deer FB"
+                    title="12-month hamper demand forecast (Red Deer FB)"
                     sub="Prophet model · 80% prediction interval · red shading = AFB provincial supply gap months"
                   />
                   <ResponsiveContainer width="100%" height={240}>
@@ -638,11 +638,11 @@ export default function Regional() {
                     <div style={{ fontSize: 13, color: C.textSecondary, lineHeight: 1.7 }}>
                       Trained on 185 months of Red Deer FB data using Prophet with provincial
                       economic regressors (AISH caseload, CPI, school calendar). Features were
-                      selected via SHAP analysis on the AFB provincial model — the same drivers
+                      selected via SHAP analysis on the AFB provincial model where the same drivers
                       predict both provincial outbound and regional hamper demand.
                       <br /><br />
                       <strong style={{ color: C.textPrimary }}>Red shading</strong> marks months
-                      where the AFB model forecasts a provincial supply gap — high regional demand
+                      where the AFB model forecasts a provincial supply gap and high regional demand
                       coinciding with constrained supply.
                     </div>
                   </Panel>
@@ -671,7 +671,7 @@ export default function Regional() {
             {/* Feature importance */}
             <Panel>
               <SectionTitle
-                title="Feature importance — regional model (Prophet + SHAP)"
+                title="Feature importance using regional model (Prophet + SHAP)"
                 sub="SHAP values from AFB model applied to RDFB · Same economic drivers, regional target"
               />
               <ResponsiveContainer width="100%" height={250}>
@@ -725,7 +725,7 @@ export default function Regional() {
                 fontSize: 13, color: C.textSecondary, lineHeight: 1.6,
               }}>
                 Cross-validation used a 3-year initial window, retraining every 6 months with a 6-month
-                forecast horizon. CV MAPE of 17.7% is the honest out-of-sample accuracy — in-sample
+                forecast horizon. CV MAPE of 17.7% is the honest out-of-sample accuracy while in-sample
                 MAPE (10.8%) reflects fit on training data.
               </div>
             </Panel>
@@ -739,7 +739,7 @@ export default function Regional() {
             {/* Edmonton / Red Deer connection */}
             <Panel>
               <SectionTitle
-                title="Food bank network — where Red Deer fits"
+                title="Food bank network"
                 sub="How this model connects to the broader Alberta food bank system"
               />
               <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap: 12 }}>

@@ -195,7 +195,7 @@ export default function AIInsights() {
   const [messages, setMessages] = useState([
     {
       role: "assistant",
-      content: "Hi! I'm the FEEDS AI analyst. I can help anyone — clients, researchers, or staff — understand food bank demand forecasts and what's driving them.\n\nWhat would you like to know?",
+      content: "Hi! I'm the FEEDS AI analyst. I can help anyone (clients, researchers, or staff) who understand food bank demand forecasts and what's driving them.\n\nWhat would you like to know?",
     },
   ]);
   const [input,        setInput]        = useState("");

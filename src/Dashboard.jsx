@@ -236,7 +236,7 @@ export default function Dashboard({ onNavigate }) {
       `}</style>
 
       <div style={{
-        background: `linear-gradient(135deg, #122b1e 0%, ${C.forestGreen} 40%, #2d6a50 75%, #3f826d 100%)`,
+        background: `linear-gradient(135deg, #224433 0%, ${C.forestGreen} 40%, #33795a 75%, #438f77 100%)`,
         padding: isMobile ? "32px 20px 28px" : "52px 44px 48px",
         position: "relative",
         overflow: "hidden",

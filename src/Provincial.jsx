@@ -147,7 +147,7 @@ function DataInputForm({ isMobile }) {
         <textarea
           value={form.notes}
           onChange={e => setForm(prev => ({ ...prev, notes: e.target.value }))}
-          placeholder="Any context for this month — unusual donation event, data anomaly..."
+          placeholder="Any context for this month such as an unusual donation event, data anomaly..."
           rows={2}
           style={{ ...inputStyle, resize: "vertical", lineHeight: 1.5 }}
         />
@@ -381,7 +381,7 @@ export default function Provincial() {
                 {/* Main chart */}
                 <Panel>
                   <SectionTitle
-                    title="Donations in vs. food distributed — history + 3-month forecast"
+                    title="Donations in vs. food distributed with history + 3-month forecast"
                     sub="Monthly lbs · solid = actual, dashed = model forecast"
                   />
                   <ResponsiveContainer width="100%" height={230}>
