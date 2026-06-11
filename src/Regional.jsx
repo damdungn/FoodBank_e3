@@ -18,7 +18,7 @@ const C = {
   borderLight:  "#dde8d8",
   textPrimary:  "#1a2e22",
   textSecondary:"#4a6355",
-  textMuted:    "#7a9485",
+  textMuted:    "#556b5f",
 };
 
 // ── Food bank registry ────────────────────────────────────────────────────────
@@ -105,7 +105,7 @@ function SectionTitle({ title, sub }) {
   return (
     <div style={{ marginBottom: 18 }}>
       <div style={{ fontSize: 15, fontWeight: 600, color: C.textPrimary }}>{title}</div>
-      {sub && <div style={{ fontSize: 13, color: C.textMuted, marginTop: 2 }}>{sub}</div>}
+      {sub && <div style={{ fontSize: 14, color: C.textMuted, marginTop: 2 }}>{sub}</div>}
     </div>
   );
 }
@@ -138,7 +138,7 @@ const HamperTooltip = ({ active, payload, label }) => {
   return (
     <div style={{
       background: C.forestGreen, border: `1px solid ${C.jungleTeal}`,
-      borderRadius: 8, padding: "8px 13px", fontSize: 12, color: "#fff",
+      borderRadius: 8, padding: "8px 13px", fontSize: 14, color: "#fff",
     }}>
       <div style={{ fontWeight: 600, color: C.teaGreen, marginBottom: 4 }}>{label}</div>
       {yhat && (
@@ -147,12 +147,12 @@ const HamperTooltip = ({ active, payload, label }) => {
         </div>
       )}
       {lower != null && upper != null && (
-        <div style={{ opacity: 0.7, fontSize: 11, marginTop: 2 }}>
+        <div style={{ opacity: 0.7, fontSize: 12, marginTop: 2 }}>
           80% CI: {lower.toLocaleString()} – {upper.toLocaleString()}
         </div>
       )}
       {isGap && (
-        <div style={{ marginTop: 4, color: "#f09070", fontSize: 11 }}>
+        <div style={{ marginTop: 4, color: "#f09070", fontSize: 12 }}>
           ⚠ AFB supply gap month
         </div>
       )}
@@ -180,7 +180,7 @@ function DataInputForm() {
   ];
 
   const inputStyle = {
-    width: "100%", padding: "8px 11px", fontSize: 13,
+    width: "100%", padding: "8px 11px", fontSize: 14,
     border: `1px solid ${C.borderLight}`, borderRadius: 8,
     background: C.surfaceGreen, color: C.textPrimary,
     outline: "none", fontFamily: "inherit",
@@ -202,7 +202,7 @@ function DataInputForm() {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0,1fr))", gap: 12, marginBottom: 12 }}>
         {fields.map((f) => (
           <div key={f.key}>
-            <div style={{ fontSize: 11, color: C.textSecondary, marginBottom: 4, fontWeight: 500 }}>{f.label}</div>
+            <div style={{ fontSize: 12, color: C.textSecondary, marginBottom: 4, fontWeight: 500 }}>{f.label}</div>
             <input
               type={f.type}
               value={form[f.key]}
@@ -233,7 +233,7 @@ function DataInputForm() {
       </div>
 
       <div style={{ marginBottom: 14 }}>
-        <div style={{ fontSize: 11, color: C.textSecondary, marginBottom: 4, fontWeight: 500 }}>Notes (optional)</div>
+        <div style={{ fontSize: 12, color: C.textSecondary, marginBottom: 4, fontWeight: 500 }}>Notes (optional)</div>
         <textarea
           value={form.notes}
           onChange={e => setForm(p => ({ ...p, notes: e.target.value }))}
@@ -260,7 +260,7 @@ function DataInputForm() {
             <i className="ti ti-circle-check" aria-hidden="true" /> Row queued
           </span>
         )}
-        <span style={{ fontSize: 11, color: C.textMuted, marginLeft: "auto" }}>
+        <span style={{ fontSize: 12, color: C.textMuted, marginLeft: "auto" }}>
           Full CSV upload coming soon
         </span>
       </div>
@@ -370,9 +370,21 @@ export default function Regional() {
                 <div style={{ fontSize: 25, fontWeight: 700, color: C.forestGreen, marginBottom: 4 }}>
                   {fb.label}
                 </div>
-                <div style={{ fontSize: 13, color: C.textMuted }}>
+                <div style={{ fontSize: 13, color: C.textMuted, marginBottom: fb.ready ? 10 : 0 }}>
                   {fb.subtitle}
                 </div>
+                {fb.ready && (
+                  <div style={{
+                    display: "inline-flex", alignItems: "center", gap: 7,
+                    padding: "7px 14px", borderRadius: 8,
+                    background: "#e2ffec", border: "0.5px solid #ace890",
+                    fontSize: 13,
+                  }}>
+                    <div style={{ width: 7, height: 7, borderRadius: "50%", background: C.jungleTeal }} />
+                    <span style={{ color: C.textSecondary }}>Model health: </span>
+                    <span style={{ fontWeight: 600, color: C.forestGreen }}>82.3% Good confidence</span>
+                  </div>
+                )}
               </>
             );
           })()}
@@ -537,9 +549,9 @@ export default function Regional() {
                       background: C.surfaceWhite, border: `0.5px solid ${C.borderLight}`,
                       borderTop: `3px solid ${s.accent}`, borderRadius: 12, padding: "14px 16px",
                     }}>
-                      <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 6 }}>{s.label}</div>
-                      <div style={{ fontSize: 18, fontWeight: 700, color: C.textPrimary, marginBottom: 3 }}>{s.value}</div>
-                      <div style={{ fontSize: 11, color: C.textMuted }}>{s.sub}</div>
+                      <div style={{ fontSize: 13, color: C.textMuted, marginBottom: 6 }}>{s.label}</div>
+                      <div style={{ fontSize: 20, fontWeight: 700, color: C.textPrimary, marginBottom: 3 }}>{s.value}</div>
+                      <div style={{ fontSize: 13, color: C.textMuted }}>{s.sub}</div>
                     </div>
                   ))}
                 </div>
@@ -553,9 +565,9 @@ export default function Regional() {
                   <ResponsiveContainer width="100%" height={240}>
                     <ComposedChart data={chartData} margin={{ top: 4, right: 16, bottom: 0, left: 10 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke={C.teaGreen} />
-                      <XAxis dataKey="month" tick={{ fontSize: 10, fill: C.textMuted }} axisLine={false} tickLine={false} />
+                      <XAxis dataKey="month" tick={{ fontSize: 12, fill: C.textMuted }} axisLine={false} tickLine={false} />
                       <YAxis
-                        tick={{ fontSize: 11, fill: C.textMuted }} axisLine={false} tickLine={false}
+                        tick={{ fontSize: 13, fill: C.textMuted }} axisLine={false} tickLine={false}
                         tickFormatter={v => v.toLocaleString()} domain={["auto", "auto"]}
                       />
                       <Tooltip content={<HamperTooltip />} />
@@ -580,7 +592,7 @@ export default function Regional() {
                       { color: "#ddeaf8",    label: "80% confidence interval", square: true },
                       { color: "#fdecea",    label: "AFB supply gap month",    square: true },
                     ].map(({ color, label, line, square }) => (
-                      <span key={label} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: C.textMuted }}>
+                      <span key={label} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: C.textMuted }}>
                         <span style={{
                           width: 10, height: line ? 3 : 10,
                           background: color, display: "inline-block",
@@ -603,7 +615,7 @@ export default function Regional() {
                       ].map(row => (
                         <div key={row.label} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
                           <div style={{ width: 8, height: 8, borderRadius: "50%", background: row.color, flexShrink: 0, marginTop: 5 }} />
-                          <div style={{ fontSize: 13, color: C.textSecondary }}>
+                          <div style={{ fontSize: 14, color: C.textSecondary }}>
                             <strong style={{ color: C.textPrimary }}>{row.label}:</strong>{" "}
                             {(row.months ?? []).join(", ") || "—"}
                           </div>
@@ -613,7 +625,7 @@ export default function Regional() {
                   </Panel>
                   <Panel>
                     <SectionTitle title="About this forecast" sub="" />
-                    <div style={{ fontSize: 12, color: C.textSecondary, lineHeight: 1.7 }}>
+                    <div style={{ fontSize: 13, color: C.textSecondary, lineHeight: 1.7 }}>
                       Trained on 185 months of Red Deer FB data using Prophet with provincial
                       economic regressors (AISH caseload, CPI, school calendar). Features were
                       selected via SHAP analysis on the AFB provincial model — the same drivers
@@ -640,8 +652,8 @@ export default function Regional() {
                   background: C.surfaceGreen, border: `0.5px solid ${C.borderLight}`,
                   borderRadius: 12, padding: "14px 16px",
                 }}>
-                  <div style={{ fontSize: 13, color: C.textSecondary, marginBottom: 6 }}>{s.label}</div>
-                  <div style={{ fontSize: 15, fontWeight: 600, color: C.textPrimary, lineHeight: 1.3 }}>{s.value}</div>
+                  <div style={{ fontSize: 14, color: C.textSecondary, marginBottom: 6 }}>{s.label}</div>
+                  <div style={{ fontSize: 16, fontWeight: 600, color: C.textPrimary, lineHeight: 1.3 }}>{s.value}</div>
                 </div>
               ))}
             </div>
@@ -650,23 +662,23 @@ export default function Regional() {
             <Panel>
               <SectionTitle
                 title="Feature importance — regional model (Prophet + SHAP)"
-                sub="SHAP values from AFB model applied to RDFB · same economic drivers, regional target"
+                sub="SHAP values from AFB model applied to RDFB · Same economic drivers, regional target"
               />
               <ResponsiveContainer width="100%" height={250}>
                 <BarChart data={features?.featureData ?? featureData} layout="vertical" margin={{ top: 4, right: 50, bottom: 0, left: 110 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke={C.teaGreen} horizontal={false} />
-                  <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11, fill: C.textMuted }} axisLine={false} tickLine={false} />
-                  <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: C.textSecondary }} axisLine={false} tickLine={false} width={110} />
+                  <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 13, fill: C.textMuted }} axisLine={false} tickLine={false} />
+                  <YAxis type="category" dataKey="name" tick={{ fontSize: 13, fill: C.textSecondary }} axisLine={false} tickLine={false} width={110} />
                   <Tooltip content={<ChartTooltip />} />
                   <Bar dataKey="importance" name="Importance %" fill={C.dustyDenim} radius={[0, 4, 4, 0]} barSize={14}
-                    label={{ position: "right", fontSize: 11, fill: C.textMuted, formatter: v => `${v}%` }}
+                    label={{ position: "right", fontSize: 13, fill: C.textMuted, formatter: v => `${v}%` }}
                   />
                 </BarChart>
               </ResponsiveContainer>
               <div style={{
                 marginTop: 14, padding: "10px 14px",
                 background: C.surfaceGreen, borderRadius: 8, border: `0.5px solid ${C.borderLight}`,
-                fontSize: 12, color: C.textSecondary, lineHeight: 1.6,
+                fontSize: 13, color: C.textSecondary, lineHeight: 1.6,
               }}>
                 <strong style={{ color: C.textPrimary }}>Note:</strong> SHAP importances are derived from the AFB provincial model and validated
                 against Red Deer FB hamper data. Edmonton AISH caseload is the dominant driver (SHAP 104),
@@ -691,16 +703,16 @@ export default function Regional() {
                     padding: "12px 14px", borderRadius: 9,
                     background: C.surfaceGreen, border: `0.5px solid ${C.borderLight}`,
                   }}>
-                    <div style={{ fontSize: 12, color: C.textSecondary, marginBottom: 4 }}>{s.label}</div>
-                    <div style={{ fontSize: 18, fontWeight: 700, color: C.textPrimary }}>{s.value}</div>
-                    <div style={{ fontSize: 11, color: C.textMuted, marginTop: 2 }}>{s.sub}</div>
+                    <div style={{ fontSize: 13, color: C.textSecondary, marginBottom: 4 }}>{s.label}</div>
+                    <div style={{ fontSize: 20, fontWeight: 700, color: C.textPrimary }}>{s.value}</div>
+                    <div style={{ fontSize: 13, color: C.textMuted, marginTop: 2 }}>{s.sub}</div>
                   </div>
                 ))}
               </div>
               <div style={{
                 marginTop: 14, padding: "10px 14px",
                 background: C.surfaceGreen, borderRadius: 8, border: `0.5px solid ${C.borderLight}`,
-                fontSize: 12, color: C.textSecondary, lineHeight: 1.6,
+                fontSize: 13, color: C.textSecondary, lineHeight: 1.6,
               }}>
                 Cross-validation used a 3-year initial window, retraining every 6 months with a 6-month
                 forecast horizon. CV MAPE of 17.7% is the honest out-of-sample accuracy — in-sample
@@ -754,23 +766,23 @@ export default function Regional() {
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
                       <i className={`ti ti-${fb.icon}`} style={{ fontSize: 16, color: fb.statusColor }} aria-hidden="true" />
                       <div>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: C.textPrimary }}>{fb.label}</div>
-                        <div style={{ fontSize: 11, color: fb.statusColor, fontWeight: 500 }}>{fb.status}</div>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: C.textPrimary }}>{fb.label}</div>
+                        <div style={{ fontSize: 12, color: fb.statusColor, fontWeight: 500 }}>{fb.status}</div>
                       </div>
                     </div>
-                    <div style={{ fontSize: 12, color: C.textSecondary, lineHeight: 1.6 }}>{fb.detail}</div>
+                    <div style={{ fontSize: 13, color: C.textSecondary, lineHeight: 1.6 }}>{fb.detail}</div>
                   </div>
                 ))}
               </div>
               <div style={{
                 marginTop: 14, padding: "10px 14px",
                 background: C.surfaceWhite, borderRadius: 8, border: `0.5px solid ${C.borderLight}`,
-                fontSize: 12, color: C.textSecondary, lineHeight: 1.6,
+                fontSize: 13, color: C.textSecondary, lineHeight: 1.6,
               }}>
                 <strong style={{ color: C.textPrimary }}>The connection:</strong> AFB forecasts provincial supply.
                 Both Red Deer and Edmonton FBs are downstream consumers of that supply, and both face demand
                 driven by the same provincial economic signals (AISH caseload, CPI, school calendar).
-                When AFB signals a supply gap, it affects all regional FBs — that's why the gap overlay
+                When AFB signals a supply gap, it affects all regional FBs that's why the gap overlay
                 on the Hamper forecast tab is meaningful for Red Deer operations.
               </div>
             </Panel>
@@ -792,7 +804,7 @@ export default function Regional() {
                   {
                     icon: "circle-minus",
                     label: "Red Deer supply-demand gap",
-                    detail: "Hampers needed minus donations received, forecasted monthly. Mirrors the AFB gap model but at the regional level — enables local donor alerts.",
+                    detail: "Hampers needed minus donations received, forecasted monthly. Mirrors the AFB gap model but at the regional level which enables local donor alerts.",
                     ready: false,
                   },
                   {
@@ -804,7 +816,7 @@ export default function Regional() {
                   {
                     icon: "calendar-stats",
                     label: "Seasonal donation pattern",
-                    detail: "Which months historically receive more donations vs which months see demand spikes — supports campaign planning.",
+                    detail: "Which months historically receive more donations vs which months see demand spikes to support campaign planning.",
                     ready: false,
                   },
                 ].map(item => (
@@ -821,8 +833,8 @@ export default function Regional() {
                       <i className={`ti ti-${item.icon}`} style={{ fontSize: 14, color: C.textMuted }} aria-hidden="true" />
                     </div>
                     <div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: C.textPrimary, marginBottom: 2 }}>{item.label}</div>
-                      <div style={{ fontSize: 12, color: C.textSecondary, lineHeight: 1.5 }}>{item.detail}</div>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: C.textPrimary, marginBottom: 2 }}>{item.label}</div>
+                      <div style={{ fontSize: 13, color: C.textSecondary, lineHeight: 1.5 }}>{item.detail}</div>
                     </div>
                   </div>
                 ))}

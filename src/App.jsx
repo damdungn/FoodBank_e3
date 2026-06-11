@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Dashboard     from "./Dashboard";
 import ClientOutlook from "./ClientOutlook";
 import Provincial    from "./Provincial";
@@ -34,7 +34,7 @@ const NAV = [
     section: "Overview",
     items: [
       { icon: "layout-dashboard", label: "Dashboard",       page: "dashboard"      },
-      { icon: "map-pin",          label: "Client outlook",  page: "client-outlook" },
+      { icon: "map-pin",          label: "Client outlook",  page: "client-outlook", disabled: true  },
       { icon: "brain",            label: "AI insights",     page: "ai-insights"    },
       { icon: "info-circle",     label: "About FEEDS",     page: "about-feeds"    },
     ],
@@ -51,6 +51,7 @@ const NAV = [
     items: [
       { icon: "file-text", label: "Reports", page: "reports", disabled: true },
       { icon: "file-text", label: "Inventory Checkup", page: "reports", disabled: true },
+      { icon: "file-text", label: "Donor Alerts", page: "reports", disabled: true },
     ],
   },
 ];
@@ -191,6 +192,14 @@ export default function App() {
   const [page,        setPage]        = useState("dashboard");
   const [showModal,   setShowModal]   = useState(false);
   const [pendingPage, setPendingPage] = useState(null);
+  const [isMobile,    setIsMobile]    = useState(() => window.innerWidth < 768);
+  const [menuOpen,    setMenuOpen]    = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   // Track which pages are unlocked independently
   const [unlocked, setUnlocked] = useState({
@@ -208,6 +217,7 @@ export default function App() {
 
   function handleNavClick(item) {
     if (item.disabled) return;
+    setMenuOpen(false);
     if (isLocked(item.page)) {
       setPendingPage(item.page);
       setShowModal(true);
@@ -239,15 +249,156 @@ export default function App() {
     }
   }
 
+  // ── Shared nav items renderer (used by both sidebar and mobile drawer) ──
+  function NavItems() {
+    return NAV.map((sec) => (
+      <div key={sec.section} style={{ marginBottom: 6 }}>
+        <div style={{
+          fontSize: 11, fontWeight: 600, color: C.sectionLabel,
+          letterSpacing: "0.09em", textTransform: "uppercase",
+          padding: "10px 8px 5px",
+        }}>
+          {sec.section}
+        </div>
+        {sec.items.map((item) => {
+          const active   = page === item.page;
+          const locked   = isLocked(item.page);
+          const disabled = item.disabled;
+          const lockColor = item.page === "provincial" ? "#7bb782" : "#7899c7";
+          return (
+            <button
+              key={item.label}
+              onClick={() => handleNavClick(item)}
+              disabled={disabled}
+              style={{
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                width: "100%", padding: "8px 10px",
+                borderRadius: 8, marginBottom: 2,
+                fontSize: 15, cursor: disabled ? "default" : "pointer",
+                border: "none",
+                background: active ? C.activeItemBg : "transparent",
+                color: disabled ? C.lockedText : active ? C.activeItemText : C.inactiveText,
+                fontWeight: active ? 600 : 400,
+                textAlign: "left",
+                opacity: disabled ? 0.5 : 1,
+                transition: "background 0.15s, color 0.15s",
+                fontFamily: "inherit",
+              }}
+              onMouseEnter={e => { if (!active && !disabled) e.currentTarget.style.background = C.sidebarHover; }}
+              onMouseLeave={e => { if (!active && !disabled) e.currentTarget.style.background = "transparent"; }}
+            >
+              <span style={{ display: "flex", alignItems: "center", gap: 9 }}>
+                <i className={`ti ti-${item.icon}`} style={{ fontSize: 15 }} aria-hidden="true" />
+                {item.label}
+              </span>
+              {locked && <i className="ti ti-lock" style={{ fontSize: 12, color: lockColor, opacity: 0.9 }} aria-hidden="true" />}
+              {!locked && (item.page === "provincial" || item.page === "regional") && (
+                <i className="ti ti-lock-open" style={{ fontSize: 12, color: C.teaGreen, opacity: 0.7 }} aria-hidden="true" />
+              )}
+              {disabled && <span style={{ fontSize: 10, color: C.lockedText, fontWeight: 500 }}>Soon</span>}
+            </button>
+          );
+        })}
+      </div>
+    ));
+  }
+
+  function NavFooter() {
+    return (
+      <div style={{ padding: "12px 10px 16px", borderTop: `1px solid ${C.sidebarBorder}` }}>
+        {(unlocked.provincial || unlocked.regional) && (
+          <div style={{ marginBottom: 10 }}>
+            {unlocked.provincial && (
+              <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 8px 5px 10px", marginBottom: 4, background: "rgba(255,255,255,0.06)", borderRadius: 6 }}>
+                <i className="ti ti-shield-check" style={{ fontSize: 12, color: C.teaGreen }} aria-hidden="true" />
+                <span style={{ fontSize: 13, color: C.teaGreen, flex: 1 }}>Provincial unlocked</span>
+                <button onClick={() => handleLock("provincial")} style={{ fontSize: 12, color: C.lockedText, background: "none", border: "none", cursor: "pointer", textDecoration: "underline", fontFamily: "inherit" }}>Lock</button>
+              </div>
+            )}
+            {unlocked.regional && (
+              <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 8px 5px 10px", background: "rgba(255,255,255,0.06)", borderRadius: 6 }}>
+                <i className="ti ti-shield-check" style={{ fontSize: 12, color: "#9ab8e8" }} aria-hidden="true" />
+                <span style={{ fontSize: 13, color: "#9ab8e8", flex: 1 }}>Regional unlocked</span>
+                <button onClick={() => handleLock("regional")} style={{ fontSize: 13, color: C.lockedText, background: "none", border: "none", cursor: "pointer", textDecoration: "underline", fontFamily: "inherit" }}>Lock</button>
+              </div>
+            )}
+          </div>
+        )}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 11px", background: "rgba(82,130,84,0.25)", borderRadius: 8, border: `0.5px solid ${C.sidebarBorder}` }}>
+          <div style={{ width: 7, height: 7, borderRadius: "50%", background: C.teaGreen, flexShrink: 0 }} />
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: C.teaGreen }}>Model confidence</div>
+            <div style={{ fontSize: 11, color: "#d6ffce", marginTop: 1 }}>84% · XGBoost + Prophet</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{
-      display: "flex", height: "100vh", margin: 0, padding: 0,
+      display: "flex",
+      flexDirection: isMobile ? "column" : "row",
+      height: "100vh", margin: 0, padding: 0,
       fontFamily: "'DM Sans', system-ui, sans-serif",
       background: "#fbfcf6",
     }}>
 
-      {/* ── Sidebar ────────────────────────────────────────────── */}
-      <aside style={{
+      {/* ── Mobile top bar ─────────────────────────────────────── */}
+      {isMobile && (
+        <>
+          <header style={{
+            height: 56, flexShrink: 0,
+            background: C.sidebarBg,
+            borderBottom: `1px solid ${C.sidebarBorder}`,
+            display: "flex", alignItems: "center",
+            padding: "0 14px", gap: 10, zIndex: 50,
+          }}>
+            <img src="/logo.png" alt="FEEDS" style={{ width: 34, height: 34, borderRadius: 7, objectFit: "contain" }} />
+            <span style={{ fontSize: 22, fontWeight: 800, color: C.teaGreen, flex: 1 }}>FEEDS</span>
+            <button
+              onClick={() => setMenuOpen(o => !o)}
+              style={{
+                background: menuOpen ? C.sidebarHover : "transparent",
+                border: "none", cursor: "pointer", borderRadius: 8,
+                padding: "6px 8px", color: C.teaGreen, lineHeight: 1,
+              }}
+              aria-label="Toggle menu"
+            >
+              <i className={`ti ti-${menuOpen ? "x" : "menu-2"}`} style={{ fontSize: 22 }} aria-hidden="true" />
+            </button>
+          </header>
+
+          {/* Dropdown drawer */}
+          {menuOpen && (
+            <>
+              {/* Backdrop */}
+              <div
+                onClick={() => setMenuOpen(false)}
+                style={{ position: "fixed", inset: 0, top: 56, zIndex: 40, background: "rgba(0,0,0,0.35)" }}
+              />
+              {/* Drawer */}
+              <div style={{
+                position: "fixed", top: 56, left: 0, right: 0, zIndex: 45,
+                background: C.sidebarBg,
+                borderBottom: `1px solid ${C.sidebarBorder}`,
+                maxHeight: "calc(100vh - 56px)",
+                overflowY: "auto",
+                animation: "drawerSlide 0.2s ease",
+              }}>
+                <style>{`@keyframes drawerSlide { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }`}</style>
+                <nav style={{ padding: "8px 10px" }}>
+                  <NavItems />
+                </nav>
+                <NavFooter />
+              </div>
+            </>
+          )}
+        </>
+      )}
+
+      {/* ── Desktop sidebar ────────────────────────────────────── */}
+      {!isMobile && <aside style={{
         width: 250, flexShrink: 0,
         background: C.sidebarBg,
         borderRight: `1px solid ${C.sidebarBorder}`,
@@ -369,23 +520,9 @@ export default function App() {
               )}
             </div>
           )}
-
-          {/* Model confidence pill */}
-          <div style={{
-            display: "flex", alignItems: "center", gap: 8,
-            padding: "9px 11px",
-            background: "rgba(82, 130, 84, 0.25)",
-            borderRadius: 8, border: `0.5px solid ${C.sidebarBorder}`,
-          }}>
-            <div style={{ width: 7, height: 7, borderRadius: "50%", background: C.teaGreen, flexShrink: 0 }} />
-            <div>
-              <div style={{ fontSize: 12, fontWeight: 600, color: C.teaGreen }}>Model confidence</div>
-              <div style={{ fontSize: 11, color: "#d6ffce", marginTop: 1 }}>84% · XGBoost + Prophet</div>
-            </div>
-          </div>
         </div>
 
-      </aside>
+      </aside>}
 
       {/* ── Page content ───────────────────────────────────────── */}
       {/* ── Page content ───────────────────────────────────────── */}

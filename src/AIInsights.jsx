@@ -14,9 +14,10 @@ const C = {
   surfaceBlue:  "#cedef8",
   surfaceRed:   "#f9d4d0",
   borderLight:  "#dde8d8",
+  borderDark:   "#254f2c",
   textPrimary:  "#1a2e22",
   textSecondary:"#4a6355",
-  textMuted:    "#7a9485",
+  textMuted:    "#556b5f",
   sidebarBorder: "#247250",
 };
 
@@ -37,54 +38,69 @@ function buildSystemPrompt(summary, gapData) {
   const r2InPct  = Math.round(Math.max(0, mIn.r2  ?? 0) * 100);
   const r2OutPct = Math.round(Math.max(0, mOut.r2 ?? 0) * 100);
 
-  return `You are the AI analyst for FEEDS (Forecasting Engine for Estimating Demand and Supply), an early-warning system for the Edmonton Food Bank provincial hub in Alberta, Canada.
+  return `You are the AI assistant for FEEDS (Forecasting Engine for Estimating Demand and Supply), an AI-powered forecasting platform built by a team of University of Alberta students in partnership with Food Banks Alberta and Red Deer Food Bank.
 
-You are publicly accessible — you help clients, researchers, staff, and the general public understand food bank demand forecasts. Keep answers clear and jargon-free for general audiences, but provide depth when asked.
+You are publicly accessible — you help anyone who visits the FEEDS website: community members, donors, volunteers, food bank staff, researchers, or people who are curious about food insecurity in Alberta. Keep answers warm, clear, and jargon-free. Provide more detail only when someone asks for it.
 
-You have access to two model outputs:
+About FEEDS:
+- FEEDS uses AI to help food banks predict future demand and supply before it happens, so they can plan ahead instead of reacting
+- It combines food bank operational data with external signals: rising food prices, housing costs, government benefit schedules, weather, and more
+- The goal is to give food bank staff earlier, more accurate warnings — so they can prepare the right amount of food, schedule volunteers, and serve more families
 
-MODEL 1 — Provincial (Prophet + Random Forest hybrid):
-- Predicts provincial inbound donations (LBS_In) and outbound distribution (LBS_Out) — monthly totals in lbs
-- Monthly data aggregated from daily records: Jan 2022 – May 2026
-- Features used: CPI (food, shelter, all-items), unemployment rate, net migration, AISH caseload, CCB/GST/CPP/OAS payment days per month, school calendar, weather (mean temp, precipitation, snow on ground), stat/religious holidays, Ramadan, exam season, ACWB/ACFB disbursements
-- Prediction confidence (LBS_Out — more reliable): ${confPct}% (${confLabel}) — explains ${r2OutPct}% of month-to-month variation in outbound distribution. Typical error: ±${mOut.smape ?? "?"}%.
-- Prediction confidence (LBS_In — donations): ${r2InPct}% — donations are inherently irregular; use as a directional signal, not a precise target. Typical error: ±${mIn.smape ?? "?"}%.
+FEEDS currently has two trained models:
 
-MODEL 2 — Regional (not yet available):
-- Will predict client-level demand at Edmonton regional food bank
-- Awaiting regional dataset before training
+MODEL 1 — Provincial model (Food Banks Alberta):
+- Forecasts monthly inbound food donations and outbound food distribution for the provincial hub
+- Training data: Jan 2022 – May 2026 (monthly aggregates)
+- Key external features: Food & shelter CPI, unemployment rate, net migration, AISH caseload, government benefit payment days (CCB, GST, CPP, OAS), weather (temperature, precipitation, snowfall), stat holidays, school calendar, Ramadan, exam season
+- Forecast confidence (demand/distribution): ${confPct}% (${confLabel}) — explains ${r2OutPct}% of monthly variation. Typical error: ±${mOut.smape ?? "?"}%
+- Forecast confidence (donations): ${r2InPct}% — donations are harder to predict; treat as a directional signal
+- This helps Food Banks Alberta decide how much food to allocate across Alberta and when to run donor outreach campaigns
 
-3-month gap forecast (LBS_In − LBS_Out):
+MODEL 2 — Regional model (Red Deer Food Bank):
+- Forecasts monthly hamper demand at Red Deer Food Bank
+- Training data: 2011–2026 (15-year window)
+- Key features: AISH caseload, Food & shelter CPI, school calendar
+- Confidence: 82.3% — helps Red Deer staff plan staffing, food packaging, and storage month by month
+- This is the longest-running dataset in the project and captures long-term trends in community need
+
+Models in progress:
+- Edmonton Food Bank: research partner, dataset integration pending
+- University of Alberta Campus Food Bank: dataset received (May 2023 – Apr 2026), model under development — campus demand is driven more by academic calendar events (exam periods, tuition deadlines, international student arrivals)
+
+3-month supply-demand gap forecast (provincial):
 ${gapLines}
-  - Positive = surplus (donations > distribution); Negative = shortfall (demand > supply)
+  - Positive = surplus (donations exceed distribution); Negative = shortfall (demand exceeds supply)
 
 Historical gap context:
-- Mean monthly gap: ${Math.round((gapStats.mean_gap ?? 0) / 1000)}K lbs (${(gapStats.mean_gap ?? 0) < 0 ? "chronic deficit" : "surplus"})
+- Mean monthly gap: ${Math.round((gapStats.mean_gap ?? 0) / 1000)}K lbs (${(gapStats.mean_gap ?? 0) < 0 ? "chronic deficit on average" : "surplus on average"})
 - ${gapStats.pct_deficit ?? "?"}% of months historically run a supply deficit
 - Warning threshold: gap below ${Math.round((gapStats.warn_threshold ?? 0) / 1000)}K lbs/month
 - Critical threshold: gap below ${Math.round((gapStats.critical_threshold ?? 0) / 1000)}K lbs/month
 
-Model improvement opportunities (honest limitations):
-${(summary?.improvement_paths ?? []).map(p => `  - ${p}`).join("\n")}
+Key findings from this research:
+- Economic conditions are the strongest driver of food bank demand — rising food prices, shelter costs, and income-support caseloads all matter
+- AISH caseload changes often appear before demand increases, giving food banks a useful early-warning window
+- Adding external features significantly outperforms models that only use historical trends
+- Different food banks have different drivers: economic conditions dominate provincial and regional models, while campus food banks are more tied to the academic calendar
 
 Guidelines:
-- Be concise and practical
-- Use bullet points for recommendations
-- For clients asking about visiting: give plain-language advice (busy months, quieter periods; note this is a monthly model — daily visit patterns are not available yet)
-- Never fabricate specific numbers not listed above — say "not available in current model output" instead
-- Flag if a question is outside your scope
-- Be honest about model uncertainty — 80% intervals mean 20% of outcomes fall outside them`;
+- Be warm and approachable — many visitors may be community members or people seeking food support
+- Be concise; use bullet points for multi-part answers
+- For someone asking about visiting a food bank: give practical plain-language advice; note that the model forecasts monthly trends, not specific daily hours
+- Never fabricate numbers not listed above — say "that information isn't in the current model" instead
+- Be honest about uncertainty — forecasts have error margins and 80% prediction intervals mean 1 in 5 outcomes falls outside them
+- If asked something outside your scope, say so clearly and suggest what FEEDS can help with`;
 }
 
 const DEFAULT_SYSTEM_PROMPT = buildSystemPrompt(null, null);
 
 const SUGGESTED = [
-  "Is demand expected to be high next month?",
-  "What's driving the supply-demand gap?",
-  "How confident is the forecast?",
-  "How does AISH disbursement affect food bank demand?",
-  "What would improve the model accuracy?",
-  "How are the two models connected?",
+  "Why are more people using food banks lately?",
+  "What is FEEDS and how does it help food banks?",
+  "Is food bank demand expected to go up or down soon?",
+  "What causes food bank demand to spike?",
+  "How can I support food banks in Alberta?",
 ];
 
 // ── Bubble components ─────────────────────────────────────────────────────────
@@ -94,8 +110,8 @@ function UserBubble({ text }) {
     <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 14 }}>
       <div style={{
         maxWidth: "72%",
-        background: "#315c4b",
-        color: "#d1ecc8",
+        background: C.jungleTeal,
+        color: "#fdfffd",
         borderRadius: "12px 12px 3px 12px",
         padding: "10px 15px",
         fontSize: 13,
@@ -103,6 +119,7 @@ function UserBubble({ text }) {
         textAlign: "justify",
         whiteSpace: "pre-wrap",
         wordBreak: "break-word",
+        border: `0.5px solid ${C.borderLight}`,
       }}>
         {text}
       </div>
@@ -124,7 +141,7 @@ function AssistantBubble({ text, loading }) {
       <div style={{
         maxWidth: "80%",
         background: "#d8ffddb0",
-        border: `0.5px solid ${C.borderLight}`,
+        border: `0.5px solid ${C.borderDark}`,
         borderRadius: "3px 12px 12px 12px",
         padding: "11px 15px",
         fontSize: 14, lineHeight: 1.75,
@@ -248,16 +265,16 @@ export default function AIInsights() {
             <div style={{ fontSize: 25, fontWeight: 700, color: C.forestGreen, marginBottom: 5 }}>
               AI insights
             </div>
-            <div style={{ fontSize: 13, color: C.textMuted, lineHeight: 1.5 }}>
+            <div style={{ fontSize: 15, color: C.textMuted, lineHeight: 1.5 }}>
               Ask anything about food bank demand, forecasts, or what's driving signals this month · open to everyone
             </div>
           </div>
           {/* Public badge */}
           <div style={{
             display: "flex", alignItems: "center", gap: 6, flexShrink: 0,
-            padding: "6px 12px", borderRadius: 8, marginTop: 4,
+            padding: "6px 12px", borderRadius: 8, marginTop: 4, marginRight: 50,
             background: C.surfaceGreen, border: `0.5px solid ${C.borderLight}`,
-            fontSize: 12, fontWeight: 500, color: C.textSecondary,
+            fontSize: 14, fontWeight: 500, color: C.textSecondary,
           }}>
             <i className="ti ti-world" style={{ fontSize: 15, color: C.jungleTeal }} aria-hidden="true" />
             Public access
@@ -269,16 +286,16 @@ export default function AIInsights() {
           {[
             {
               icon: "building", label: "Provincial model",
-              detail: pillConf,
+              detail: "Food Banks Alberta",
               color: C.jungleTeal, bg: C.surfaceGreen,
             },
             {
               icon: "map-2", label: "Regional model",
-              detail: "not yet trained",
+              detail: "Red Deer Food Bank",
               color: "#5588c7", bg: C.surfaceBlue,
             },
             {
-              icon: "calendar", label: "Jun 2026",
+              icon: "calendar", label: "June 2026",
               detail: "Current period",
               color: C.textSecondary, bg: C.surfaceRed,
             },
@@ -287,7 +304,7 @@ export default function AIInsights() {
               display: "flex", alignItems: "center", gap: 7,
               padding: "6px 12px", borderRadius: 8,
               background: p.bg, border: `0.5px solid ${C.borderLight}`,
-              fontSize: 12,
+              fontSize: 14,
             }}>
               <i className={`ti ti-${p.icon}`} style={{ fontSize: 15, color: p.color }} aria-hidden="true" />
               <span style={{ fontWeight: 500, color: C.textPrimary }}>{p.label}</span>
@@ -300,7 +317,7 @@ export default function AIInsights() {
       {/* Suggested prompts — only on first load */}
       {messages.length === 1 && (
         <div style={{ padding: "0 28px 18px", flexShrink: 0 }}>
-          <div style={{ fontSize: 13, color: C.textMuted, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.07em" }}>
+          <div style={{ fontSize: 14, color: C.textMuted, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.07em" }}>
             Suggested questions
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
@@ -309,7 +326,7 @@ export default function AIInsights() {
                 key={s}
                 onClick={() => send(s)}
                 style={{
-                  padding: "6px 13px", fontSize: 13, borderRadius: 20, cursor: "pointer",
+                  padding: "6px 13px", fontSize: 14, borderRadius: 20, cursor: "pointer",
                   background: C.surfaceLight, color: C.textSecondary,
                   border: `0.5px solid ${C.borderLight}`,
                   fontFamily: "inherit",
@@ -342,7 +359,7 @@ export default function AIInsights() {
       {/* Input bar */}
       <div style={{
         padding: "14px 28px 20px",
-        background: C.surfaceLight,
+        background: "#3a8565",
         borderTop: `1px solid ${C.borderLight}`,
         flexShrink: 0,
       }}>
@@ -353,9 +370,9 @@ export default function AIInsights() {
             onKeyDown={e => e.key === "Enter" && !e.shiftKey && send()}
             placeholder="Ask about demand, forecasts, supply gaps, or what's driving signals…"
             style={{
-              flex: 1, padding: "10px 15px", fontSize: 13,
+              flex: 1, padding: "10px 15px", fontSize: 14,
               border: `1px solid ${C.borderLight}`, borderRadius: 10,
-              outline: "none", background: C.surfaceWhite,
+              outline: "none", background: C.surfaceGreen,
               color: C.textPrimary, fontFamily: "inherit",
             }}
             aria-label="Chat input"
@@ -374,11 +391,11 @@ export default function AIInsights() {
             }}
             aria-label="Send message"
           >
-            <i className="ti ti-send" style={{ fontSize: 16 }} aria-hidden="true" />
+            <i className="ti ti-send" style={{ fontSize: 18 }} aria-hidden="true" />
           </button>
         </div>
-        <div style={{ fontSize: 11, color: C.textMuted, marginTop: 8 }}>
-          Responses are grounded in live model data · monthly forecasts only · not raw operational figures
+        <div style={{ fontSize: 12, color: "#cef9e4", marginTop: 8 }}>
+          AI insights using OpenAI GPT-4 model · Monthly forecasts only · Cannot provide raw operational figures
         </div>
       </div>
 

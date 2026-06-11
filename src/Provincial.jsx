@@ -19,7 +19,7 @@ const C = {
   borderLight:  "#dde8d8",
   textPrimary:  "#1a2e22",
   textSecondary:"#4a6355",
-  textMuted:    "#7a9485",
+  textMuted:    "#556b5f",
 };
 
 const LEVEL_STYLE = {
@@ -114,7 +114,7 @@ function DataInputForm() {
   }
 
   const inputStyle = {
-    width: "100%", padding: "8px 11px", fontSize: 13,
+    width: "100%", padding: "8px 11px", fontSize: 14,
     border: `1px solid ${C.borderLight}`, borderRadius: 8,
     background: C.surfaceGreen, color: C.textPrimary, outline: "none",
     fontFamily: "inherit",
@@ -129,7 +129,7 @@ function DataInputForm() {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0,1fr))", gap: 12, marginBottom: 12 }}>
         {fields.map((f) => (
           <div key={f.key}>
-            <div style={{ fontSize: 11, color: C.textSecondary, marginBottom: 4, fontWeight: 500 }}>
+            <div style={{ fontSize: 12, color: C.textSecondary, marginBottom: 4, fontWeight: 500 }}>
               {f.label}
             </div>
             <input
@@ -143,7 +143,7 @@ function DataInputForm() {
         ))}
       </div>
       <div style={{ marginBottom: 14 }}>
-        <div style={{ fontSize: 11, color: C.textSecondary, marginBottom: 4, fontWeight: 500 }}>Notes (optional)</div>
+        <div style={{ fontSize: 12, color: C.textSecondary, marginBottom: 4, fontWeight: 500 }}>Notes (optional)</div>
         <textarea
           value={form.notes}
           onChange={e => setForm(prev => ({ ...prev, notes: e.target.value }))}
@@ -156,7 +156,7 @@ function DataInputForm() {
         <button
           onClick={handleSubmit}
           style={{
-            padding: "9px 20px", fontSize: 13, fontWeight: 600,
+            padding: "9px 20px", fontSize: 14, fontWeight: 600,
             background: C.forestGreen, color: C.teaGreen,
             border: "none", borderRadius: 8, cursor: "pointer",
           }}
@@ -165,12 +165,12 @@ function DataInputForm() {
           Submit row
         </button>
         {submitted && (
-          <span style={{ fontSize: 12, color: C.jungleTeal, display: "flex", alignItems: "center", gap: 5 }}>
+          <span style={{ fontSize: 13, color: C.jungleTeal, display: "flex", alignItems: "center", gap: 5 }}>
             <i className="ti ti-circle-check" aria-hidden="true" />
             Row queued successfully
           </span>
         )}
-        <span style={{ fontSize: 11, color: C.textMuted, marginLeft: "auto" }}>
+        <span style={{ fontSize: 12, color: C.textMuted, marginLeft: "auto" }}>
           Full CSV upload coming soon
         </span>
       </div>
@@ -359,8 +359,8 @@ export default function Provincial() {
                           background: C.surfaceWhite, border: `0.5px solid ${C.borderLight}`,
                           borderTop: `3px solid ${s.accent}`, borderRadius: 12, padding: "14px 16px",
                         }}>
-                          <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 6 }}>{s.label}</div>
-                          <div style={{ fontSize: 18, fontWeight: 600, color: C.textPrimary, marginBottom: 6 }}>{s.value}</div>
+                          <div style={{ fontSize: 12, color: C.textMuted, marginBottom: 6 }}>{s.label}</div>
+                          <div style={{ fontSize: 19, fontWeight: 600, color: C.textPrimary, marginBottom: 6 }}>{s.value}</div>
                           <Badge bg={s.badgeBg} color={s.badgeColor}>{s.sub}</Badge>
                         </div>
                       ))}
@@ -377,11 +377,11 @@ export default function Provincial() {
                   <ResponsiveContainer width="100%" height={230}>
                     <ComposedChart data={chartData} margin={{ top: 4, right: 16, bottom: 0, left: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke={C.teaGreen} />
-                      <XAxis dataKey="date" tick={{ fontSize: 11, fill: C.textMuted }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
+                      <XAxis dataKey="date" tick={{ fontSize: 12, fill: C.textMuted }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
                       <YAxis
                         domain={["auto", "auto"]}
                         tickFormatter={v => `${(v / 1000).toFixed(0)}K`}
-                        tick={{ fontSize: 11, fill: C.textMuted }} axisLine={false} tickLine={false} width={45}
+                        tick={{ fontSize: 12, fill: C.textMuted }} axisLine={false} tickLine={false} width={45}
                       />
                       <Tooltip content={<ChartTooltip />} />
                       <Line type="monotone" dataKey="inbound"   name="Inbound (actual)"  stroke={C.jungleTeal} strokeWidth={2.5} dot={false} connectNulls={false} />
@@ -395,7 +395,7 @@ export default function Provincial() {
                       { color: C.wheat,      label: "Outbound (actual)" },
                       { color: C.dustyDenim, label: "Model forecast"    },
                     ].map(({ color, label }) => (
-                      <span key={label} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: C.textMuted }}>
+                      <span key={label} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: C.textMuted }}>
                         <span style={{ width: 10, height: 3, background: color, display: "inline-block", borderRadius: 2 }} />
                         {label}
                       </span>
@@ -435,24 +435,24 @@ export default function Provincial() {
                             </div>
                             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
                               <div>
-                                <div style={{ fontSize: 10, color: C.textMuted, marginBottom: 3 }}>Donations in</div>
+                                <div style={{ fontSize: 12, color: C.textMuted, marginBottom: 3 }}>Donations in</div>
                                 <div style={{ fontSize: 15, fontWeight: 700, color: C.jungleTeal }}>
                                   {(row.LBS_In_forecast / 1000).toFixed(0)}K
-                                  <span style={{ fontSize: 11, fontWeight: 400, color: C.textMuted }}> lbs</span>
+                                  <span style={{ fontSize: 12, fontWeight: 400, color: C.textMuted }}> lbs</span>
                                 </div>
                               </div>
                               <div>
-                                <div style={{ fontSize: 10, color: C.textMuted, marginBottom: 3 }}>Demand out</div>
+                                <div style={{ fontSize: 12, color: C.textMuted, marginBottom: 3 }}>Demand out</div>
                                 <div style={{ fontSize: 15, fontWeight: 700, color: "#c0622a" }}>
                                   {(row.LBS_Out_forecast / 1000).toFixed(0)}K
-                                  <span style={{ fontSize: 11, fontWeight: 400, color: C.textMuted }}> lbs</span>
+                                  <span style={{ fontSize: 12, fontWeight: 400, color: C.textMuted }}> lbs</span>
                                 </div>
                               </div>
                             </div>
                             <div style={{ fontSize: 12, fontWeight: 600, color: isGap ? "#8b2e1a" : "#1a8b20" }}>
                               {isGap ? "▼" : "▲"} {(gapAbs / 1000).toFixed(0)}K lbs {isGap ? "shortfall" : "surplus"}
                             </div>
-                            <div style={{ fontSize: 10, color: C.textMuted, marginTop: 5 }}>
+                            <div style={{ fontSize: 12, color: C.textMuted, marginTop: 5 }}>
                               {row.confidence_pct}% model confidence
                             </div>
                           </div>
@@ -496,10 +496,10 @@ export default function Provincial() {
                     <ResponsiveContainer width="100%" height={Math.max(280, featureData.length * 22)}>
                       <BarChart data={featureData} layout="vertical" margin={{ top: 4, right: 50, bottom: 0, left: 120 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke={C.teaGreen} horizontal={false} />
-                        <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11, fill: C.textMuted }} axisLine={false} tickLine={false} />
-                        <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: C.textSecondary }} axisLine={false} tickLine={false} width={120} />
+                        <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 12, fill: C.textMuted }} axisLine={false} tickLine={false} />
+                        <YAxis type="category" dataKey="name" tick={{ fontSize: 12, fill: C.textSecondary }} axisLine={false} tickLine={false} width={120} />
                         <Bar dataKey="importance" name="Importance %" radius={[0, 4, 4, 0]} barSize={14} fill={C.jungleTeal}
-                          label={{ position: "right", fontSize: 11, fill: C.textMuted, formatter: v => `${v}%` }}
+                          label={{ position: "right", fontSize: 12, fill: C.textMuted, formatter: v => `${v}%` }}
                         >
                           {featureData.map((entry, i) => (
                             <Cell key={`cell-${i}`} fill={catColor[entry.category] ?? C.textMuted} />
@@ -510,7 +510,7 @@ export default function Provincial() {
                   )}
                   <div style={{ display: "flex", gap: 16, marginTop: 12, flexWrap: "wrap" }}>
                     {[...new Set(featureData.map(d => d.category))].map((cat) => (
-                      <span key={cat} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: C.textMuted }}>
+                      <span key={cat} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: C.textMuted }}>
                         <span style={{ width: 10, height: 10, background: catColor[cat] ?? C.textMuted, display: "inline-block", borderRadius: 2 }} />
                         {cat.charAt(0).toUpperCase() + cat.slice(1)}
                       </span>
@@ -519,7 +519,7 @@ export default function Provincial() {
                   <div style={{
                     marginTop: 14, padding: "10px 14px",
                     background: C.surfaceGreen, borderRadius: 8, border: `0.5px solid ${C.borderLight}`,
-                    fontSize: 12, color: C.textSecondary, lineHeight: 1.6,
+                    fontSize: 13, color: C.textSecondary, lineHeight: 1.6,
                   }}>
                     <strong style={{ color: C.textPrimary }}>Note:</strong> Prophet decomposes long-term trend and seasonality;
                     residuals and external signals are passed to the Random Forest for the gap classification step.
@@ -544,9 +544,9 @@ export default function Provincial() {
                           padding: "12px 14px", borderRadius: 9,
                           background: C.surfaceGreen, border: `0.5px solid ${C.borderLight}`,
                         }}>
-                          <div style={{ fontSize: 12, color: C.textSecondary, marginBottom: 4 }}>{m.label}</div>
-                          <div style={{ fontSize: 22, fontWeight: 700, color: C.textPrimary }}>{m.value}</div>
-                          <div style={{ fontSize: 11, color: C.textMuted, marginTop: 2 }}>{m.sub}</div>
+                          <div style={{ fontSize: 13, color: C.textSecondary, marginBottom: 4 }}>{m.label}</div>
+                          <div style={{ fontSize: 25, fontWeight: 700, color: C.textPrimary }}>{m.value}</div>
+                          <div style={{ fontSize: 12, color: C.textMuted, marginTop: 2 }}>{m.sub}</div>
                         </div>
                       ))}
                     </div>
@@ -573,11 +573,11 @@ export default function Provincial() {
                       margin={{ top: 4, right: 16, bottom: 0, left: 0 }}
                     >
                       <CartesianGrid strokeDasharray="3 3" stroke={C.teaGreen} />
-                      <XAxis dataKey="date" tick={{ fontSize: 11, fill: C.textMuted }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
+                      <XAxis dataKey="date" tick={{ fontSize: 12, fill: C.textMuted }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
                       <YAxis
                         domain={["auto", "auto"]}
                         tickFormatter={v => `${(v / 1000).toFixed(0)}K`}
-                        tick={{ fontSize: 11, fill: C.textMuted }} axisLine={false} tickLine={false} width={45}
+                        tick={{ fontSize: 12, fill: C.textMuted }} axisLine={false} tickLine={false} width={45}
                       />
                       <Tooltip content={<ChartTooltip />} />
                       <Line type="monotone" dataKey="outbound"  name="Observed (y)"  stroke={C.jungleTeal} strokeWidth={2.5} dot={false} />
@@ -589,7 +589,7 @@ export default function Provincial() {
                       { color: C.jungleTeal, label: "Observed (y)"  },
                       { color: C.dustyDenim, label: "Predicted (ŷ)" },
                     ].map(({ color, label }) => (
-                      <span key={label} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: C.textMuted }}>
+                      <span key={label} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: C.textMuted }}>
                         <span style={{ width: 10, height: 3, background: color, display: "inline-block", borderRadius: 2 }} />
                         {label}
                       </span>
@@ -620,7 +620,7 @@ export default function Provincial() {
                 <Panel>
                   <SectionTitle title="Recent staff entries" sub="Last 5 manually submitted rows" />
                   <div style={{ overflowX: "auto" }}>
-                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
                       <thead>
                         <tr style={{ borderBottom: `1px solid ${C.borderLight}` }}>
                           {["Date", "Inbound", "Outbound", "CPI food", "Unemployment", "Temp", "Notes", "By"].map(h => (

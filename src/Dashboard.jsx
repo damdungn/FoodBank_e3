@@ -11,7 +11,7 @@ const C = {
   borderLight:   "#dde8d8",
   textPrimary:   "#1a2e22",
   textSecondary: "#4a6355",
-  textMuted:     "#7a9485",
+  textMuted:     "#556b5f",
 };
 
 const DRIVERS = [
@@ -132,6 +132,13 @@ export default function Dashboard({ onNavigate }) {
   const [gapForecast, setGapForecast] = useState([]);
   const [loading,     setLoading]     = useState(true);
   const [signals,     setSignals]     = useState(null);
+  const [isMobile,    setIsMobile]    = useState(() => window.innerWidth < 768);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   useEffect(() => {
     Promise.all([
@@ -213,15 +220,24 @@ export default function Dashboard({ onNavigate }) {
           opacity: 0;
           animation: wordReveal 0.35s ease forwards;
         }
-        @keyframes shimmer {
-          0%   { background-position: -200% center; }
-          100% { background-position: 200% center; }
+        @keyframes logoEntrance {
+          from { opacity: 0; transform: translateX(40px) scale(0.92); }
+          to   { opacity: 1; transform: translateX(0)    scale(1);    }
+        }
+        @keyframes logoFloat {
+          0%, 100% { transform: translateY(0px);  }
+          50%      { transform: translateY(-8px); }
+        }
+        .hero-logo {
+          animation:
+            logoEntrance 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.3s both,
+            logoFloat    4s ease-in-out 1.2s infinite;
         }
       `}</style>
 
       <div style={{
         background: `linear-gradient(135deg, #122b1e 0%, ${C.forestGreen} 40%, #2d6a50 75%, #3f826d 100%)`,
-        padding: "52px 44px 48px",
+        padding: isMobile ? "32px 20px 28px" : "52px 44px 48px",
         position: "relative",
         overflow: "hidden",
       }}>
@@ -246,65 +262,89 @@ export default function Dashboard({ onNavigate }) {
           pointerEvents: "none",
         }} />
 
-        {/* Badge */}
+        {/* Hero content row */}
         <div style={{
-          display: "inline-flex", alignItems: "center", gap: 7,
-          background: "rgba(208,239,177,0.15)",
-          border: "1px solid rgba(208,239,177,0.25)",
-          borderRadius: 20,
-          padding: "5px 15px", fontSize: 11, fontWeight: 600,
-          color: C.teaGreen, marginBottom: 22, letterSpacing: "0.07em",
-          textTransform: "uppercase",
-          animation: "heroSlideUp 0.5s ease both",
-          animationDelay: "0.05s",
+          display: "flex",
+          flexDirection: isMobile ? "column-reverse" : "row",
+          alignItems: isMobile ? "flex-start" : "center",
+          justifyContent: "space-between", gap: isMobile ? 16 : 32,
           position: "relative",
         }}>
-          <i className="ti ti-welcome" style={{ fontSize: 12 }} aria-hidden="true" />
-          Welcome!
+          {/* Left — text */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            {/* Badge */}
+            <div style={{
+              display: "inline-flex", alignItems: "center", gap: 7,
+              background: "rgba(208,239,177,0.15)",
+              border: "1px solid rgba(208,239,177,0.25)",
+              borderRadius: 20,
+              padding: "5px 15px", fontSize: 13, fontWeight: 600,
+              color: C.teaGreen, marginBottom: 22, letterSpacing: "0.07em",
+              textTransform: "uppercase",
+              animation: "heroSlideUp 0.5s ease both",
+              animationDelay: "0.05s",
+            }}>
+              <i className="ti ti-welcome" style={{ fontSize: 13 }} aria-hidden="true" />
+              Welcome!
+            </div>
+
+            {/* Motto — word by word */}
+            <h1 style={{
+              fontSize: isMobile ? 22 : 30, fontWeight: 800, color: "#fff",
+              margin: "0 0 14px", lineHeight: 1.25,
+            }}>
+              {"FEEDS lands insights, so food banks can land on time.".split(" ").map((word, i) => (
+                <span
+                  key={i}
+                  className="hero-word"
+                  style={{ animationDelay: `${0.25 + i * 0.08}s`, marginRight: "0.28em" }}
+                >
+                  {word}
+                </span>
+              ))}
+            </h1>
+
+            {/* Sub-line */}
+            <p style={{
+              fontSize: 16, color: "rgba(208,239,177,0.75)",
+              margin: 0, lineHeight: 1.6, maxWidth: 520,
+              animation: "heroSlideUp 0.55s ease both",
+              animationDelay: "1.2s",
+            }}>
+              ML/ AI supply &amp; demand forecasting tool to help Alberta food banks plan ahead, reduce waste, and serve more families.
+            </p>
+          </div>
+
+          {/* Right — logo with float animation */}
+          <div style={{ flexShrink: 0, alignSelf: isMobile ? "center" : "auto" }}>
+            <img
+              src="/logo-removebg.png"
+              alt="FEEDS logo"
+              className="hero-logo"
+              style={{
+                width: isMobile ? 100 : 250,
+                height: isMobile ? 100 : 250,
+                objectFit: "contain",
+                filter: "drop-shadow(0 8px 24px rgba(208,239,177,0.25))",
+                marginRight: isMobile ? 0 : 100,
+              }}
+            />
+          </div>
         </div>
-
-        {/* Motto — word by word */}
-        <h1 style={{
-          fontSize: 30, fontWeight: 800, color: "#fff",
-          margin: "0 0 14px", lineHeight: 1.25,
-          maxWidth: 560,
-          position: "relative",
-        }}>
-          {"FEEDS lands insights, so food banks can land on time.".split(" ").map((word, i) => (
-            <span
-              key={i}
-              className="hero-word"
-              style={{ animationDelay: `${0.25 + i * 0.08}s`, marginRight: "0.28em" }}
-            >
-              {word}
-            </span>
-          ))}
-        </h1>
-
-        {/* Sub-line */}
-        <p style={{
-          fontSize: 14, color: "rgba(208,239,177,0.75)",
-          margin: 0, lineHeight: 1.6, maxWidth: 460,
-          animation: "heroSlideUp 0.55s ease both",
-          animationDelay: "1.2s",
-          position: "relative",
-        }}>
-          ML/ AI supply &amp; demand forecasting tool to help Alberta food banks plan ahead, reduce waste, and serve more families.
-        </p>
       </div>
 
-      <div style={{ padding: "36px 40px 52px", display: "flex", flexDirection: "column", gap: 40 }}>
+      <div style={{ padding: isMobile ? "24px 16px 40px" : "36px 40px 52px", display: "flex", flexDirection: "column", gap: isMobile ? 28 : 40 }}>
 
         {/* ── WHO ARE YOU ──────────────────────────────────────────────── */}
         <section>
-          <h2 style={{ fontSize: 22, fontWeight: 700, color: C.forestGreen, margin: "0 0 6px" }}>
+          <h2 style={{ fontSize: 25, fontWeight: 700, color: C.forestGreen, margin: "0 0 6px" }}>
             Who are you?
           </h2>
-          <p style={{ fontSize: 13, color: C.textMuted, margin: "0 0 20px" }}>
+          <p style={{ fontSize: 14, color: C.textMuted, margin: "0 0 20px" }}>
             Choose the section that matches you (each is tailored to what you need).
           </p>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)", gap: 16 }}>
             {WHO.map(w => (
               <div key={w.page} style={{
                 background: w.bg,
@@ -320,10 +360,10 @@ export default function Dashboard({ onNavigate }) {
                   <i className={`ti ti-${w.icon}`} style={{ fontSize: 20, color: w.color }} aria-hidden="true" />
                 </div>
                 <div>
-                  <div style={{ fontSize: 16, fontWeight: 700, color: w.color, marginBottom: 6 }}>
+                  <div style={{ fontSize: 17, fontWeight: 700, color: w.color, marginBottom: 6 }}>
                     {w.title}
                   </div>
-                  <div style={{ fontSize: 13, color: C.textSecondary, lineHeight: 1.65 }}>
+                  <div style={{ fontSize: 14, color: C.textSecondary, lineHeight: 1.65 }}>
                     {w.desc}
                   </div>
                 </div>
@@ -335,12 +375,12 @@ export default function Dashboard({ onNavigate }) {
                     padding: "9px 0", borderRadius: 8,
                     background: w.color, color: "#fff",
                     border: "none", cursor: "pointer",
-                    fontSize: 13, fontWeight: 600, fontFamily: "inherit",
+                    fontSize: 14, fontWeight: 600, fontFamily: "inherit",
                   }}
                   onMouseEnter={e => e.currentTarget.style.opacity = "0.88"}
                   onMouseLeave={e => e.currentTarget.style.opacity = "1"}
                 >
-                  {w.locked && <i className="ti ti-lock" style={{ fontSize: 12 }} aria-hidden="true" />}
+                  {w.locked && <i className="ti ti-lock" style={{ fontSize: 13 }} aria-hidden="true" />}
                   {w.btnLabel}
                 </button>
               </div>
@@ -350,14 +390,14 @@ export default function Dashboard({ onNavigate }) {
 
         {/* ── WHAT DRIVES DEMAND ───────────────────────────────────────── */}
         <section>
-          <h2 style={{ fontSize: 22, fontWeight: 700, color: C.forestGreen, margin: "0 0 6px" }}>
+          <h2 style={{ fontSize: 25, fontWeight: 700, color: C.forestGreen, margin: "0 0 6px" }}>
             What drives food bank demand?
           </h2>
-          <p style={{ fontSize: 13, color: C.textMuted, margin: "0 0 20px", maxWidth: 850, lineHeight: 1.65 }}>
+          <p style={{ fontSize: 14, color: C.textMuted, margin: "0 0 20px", maxWidth: 850, lineHeight: 1.65 }}>
             Unlike simple trend lines, FEEDS analyses four categories of external factors that independently push demand up or down to give food banks earlier, more accurate warnings.
           </p>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 20 }}>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(4, 1fr)", gap: 14, marginBottom: 20 }}>
             {DRIVERS.map(d => (
               <div key={d.title} style={{
                 background: d.bg, border: `1px solid ${d.border}`,
@@ -372,17 +412,17 @@ export default function Dashboard({ onNavigate }) {
                   <i className={`ti ti-${d.icon}`} style={{ fontSize: 20, color: d.color }} aria-hidden="true" />
                 </div>
                 <div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: d.color, marginBottom: 5 }}>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: d.color, marginBottom: 5 }}>
                     {d.title}
                   </div>
-                  <div style={{ fontSize: 12, color: C.textSecondary, lineHeight: 1.6, marginBottom: 10 }}>
+                  <div style={{ fontSize: 14, color: C.textSecondary, lineHeight: 1.6, marginBottom: 10 }}>
                     {d.desc}
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                     {d.factors.map(f => (
                       <div key={f} style={{ display: "flex", alignItems: "center", gap: 6 }}>
                         <div style={{ width: 5, height: 5, borderRadius: "50%", background: d.color, opacity: 0.6, flexShrink: 0 }} />
-                        <span style={{ fontSize: 11, color: C.textSecondary }}>{f}</span>
+                        <span style={{ fontSize: 13, color: C.textSecondary }}>{f}</span>
                       </div>
                     ))}
                   </div>
@@ -404,18 +444,18 @@ export default function Dashboard({ onNavigate }) {
               }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
                   <div style={{ width: 7, height: 7, borderRadius: "50%", background: C.jungleTeal }} />
-                  <span style={{ fontSize: 12, fontWeight: 600, color: C.textSecondary }}>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: C.textSecondary }}>
                     Active signals{monthLabel ? ` · ${monthLabel}` : ""}
                   </span>
                 </div>
                 {activeKeys.length === 0 ? (
-                  <span style={{ fontSize: 12, color: C.textMuted, fontStyle: "italic" }}>
+                  <span style={{ fontSize: 14, color: C.textMuted, fontStyle: "italic" }}>
                     No calendar or student signals active this period
                   </span>
                 ) : (
                   activeKeys.map(k => (
                     <span key={k} style={{
-                      fontSize: 11, fontWeight: 600,
+                      fontSize: 13, fontWeight: 600,
                       padding: "3px 10px", borderRadius: 20,
                       background: C.surfaceGreen, color: C.jungleTeal,
                       border: `1px solid ${C.borderLight}`,
@@ -431,14 +471,14 @@ export default function Dashboard({ onNavigate }) {
 
         {/* ── FOOD BANKS WE COVER ──────────────────────────────────────── */}
         <section>
-          <h2 style={{ fontSize: 22, fontWeight: 700, color: C.forestGreen, margin: "0 0 6px" }}>
+          <h2 style={{ fontSize: 25, fontWeight: 700, color: C.forestGreen, margin: "0 0 6px" }}>
             Food banks in this study
           </h2>
-          <p style={{ fontSize: 13, color: C.textMuted, margin: "0 0 20px" }}>
+          <p style={{ fontSize: 14, color: C.textMuted, margin: "0 0 20px" }}>
             FEEDS covers three Alberta food banks' datasets across provincial and regional levels and 1 food bank as a research partner to understand the situation on the ground and tailor the tool to real needs. 
           </p>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(4, 1fr)", gap: 14 }}>
             {FOOD_BANKS.map(fb => (
               <div key={fb.key} style={{
                 background: fb.bg,
@@ -471,14 +511,14 @@ export default function Dashboard({ onNavigate }) {
                     <i className={`ti ti-${fb.icon}`} style={{ fontSize: 26, color: fb.color }} aria-hidden="true" />
                   </div>
                 </div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: fb.color, marginBottom: 5 }}>
+                <div style={{ fontSize: 16, fontWeight: 700, color: fb.color, marginBottom: 5 }}>
                   {fb.name}
                 </div>
-                <div style={{ fontSize: 12, color: C.textSecondary, lineHeight: 1.6, marginBottom: 10 }}>
+                <div style={{ fontSize: 14, color: C.textSecondary, lineHeight: 1.6, marginBottom: 10 }}>
                   {fb.role}
                 </div>
                 <div style={{
-                  fontSize: 11, color: C.textMuted,
+                  fontSize: 14, color: C.textMuted,
                   borderTop: `1px solid ${fb.border}`, paddingTop: 8,
                 }}>
                   {fb.data}
@@ -491,14 +531,17 @@ export default function Dashboard({ onNavigate }) {
         {/* ── ABOUT FEEDS TEASER ───────────────────────────────────────── */}
         <section style={{
           background: `linear-gradient(135deg, #122b1e 0%, ${C.forestGreen} 40%, #2d6a50 75%, #3f826d 100%)`,
-          borderRadius: 14, padding: "28px 32px",
-          display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24,
+          borderRadius: 14, padding: isMobile ? "22px 20px" : "28px 32px",
+          display: "flex",
+          flexDirection: isMobile ? "column" : "row",
+          alignItems: isMobile ? "flex-start" : "center",
+          justifyContent: "space-between", gap: isMobile ? 16 : 24,
         }}>
           <div>
-            <div style={{ fontSize: 18, fontWeight: 700, color: "#fff", marginBottom: 6 }}>
+            <div style={{ fontSize: 20, fontWeight: 700, color: "#fff", marginBottom: 6 }}>
               How does FEEDS work?
             </div>
-            <div style={{ fontSize: 13, color: "rgba(255,255,255,0.72)", maxWidth: 480, lineHeight: 1.7 }}>
+            <div style={{ fontSize: 14, color: "rgba(255,255,255,0.72)", maxWidth: 480, lineHeight: 1.7 }}>
               Learn about our problem statement, the models we built, and what we found 
               including how AI forecasting can help food banks prevent shortfalls before they happen.
             </div>
@@ -506,7 +549,9 @@ export default function Dashboard({ onNavigate }) {
           <button
             onClick={() => onNavigate?.("about-feeds")}
             style={{
-              flexShrink: 0, padding: "10px 22px",
+              flexShrink: 0,
+              width: isMobile ? "100%" : "auto",
+              padding: "10px 22px",
               background: C.teaGreen, color: C.forestGreen,
               border: "none", borderRadius: 8, cursor: "pointer",
               fontSize: 13, fontWeight: 700, fontFamily: "inherit",

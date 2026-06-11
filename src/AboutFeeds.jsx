@@ -8,7 +8,7 @@ const C = {
   borderLight:   "#dde8d8",
   textPrimary:   "#1a2e22",
   textSecondary: "#4a6355",
-  textMuted:     "#7a9485",
+  textMuted:     "#556b5f",
 };
 
 const SECTIONS = [
@@ -17,7 +17,7 @@ const SECTIONS = [
     color: "#8b2e1a",
     bg: "#fdecea",
     title: "The problem",
-    summary: "Food banks plan reactively — with limited tools to anticipate demand before it arrives.",
+    summary: "Food banks plan reactively with limited tools to anticipate demand before it arrives.",
     points: [
       "Most planning relies on recent experience, not forward-looking data.",
       "Demand is shaped by many interconnected factors: food prices, housing costs, government benefits, weather, and local events.",
@@ -36,7 +36,7 @@ const SECTIONS = [
       "Generates monthly forecasts for inbound donations and outbound distribution.",
       "Gives provincial staff early visibility into supply-demand gaps and when donor outreach is needed.",
       "Gives regional staff monthly hamper estimates to support staffing, storage, and food packaging.",
-      "Designed to inform decisions, not replace them — staff stay in control.",
+      "Designed to inform decisions, not replace them so that staff stay in control.",
     ],
   },
   {
@@ -46,8 +46,8 @@ const SECTIONS = [
     title: "Key findings",
     summary: "Four consistent patterns emerged from model development and analysis.",
     points: [
-      "Economic conditions drive demand at every level — food prices, shelter costs, and income-support caseloads all matter.",
-      "AISH caseload is a particularly strong early-warning signal: changes often appear before corresponding increases in food bank demand.",
+      "Economic conditions drive demand at every level such as food prices, shelter costs, and income and support caseloads all matter.",
+      "AISH caseload is a particularly strong early warning signal: changes often appear before corresponding increases in food bank demand.",
       "Adding external features significantly improves forecasts compared to models that rely on historical trends alone.",
       "Different food banks have different drivers: economic conditions dominate provincial and regional models, while campus demand is more tied to the academic calendar.",
     ],
@@ -57,12 +57,12 @@ const SECTIONS = [
     color: "#8a6020",
     bg: "#fffbee",
     title: "Impact & next steps",
-    summary: "FEEDS helps food banks plan ahead — so they can focus on the communities they serve.",
+    summary: "FEEDS helps food banks plan ahead so they can focus on the communities they serve.",
     points: [
       "Earlier demand visibility reduces reactive scrambling for food, volunteers, and storage capacity.",
       "Better provincial allocation when staff can see supply-demand gaps forming weeks in advance.",
       "Next: integrate Edmonton Food Bank data and complete the Campus Food Bank model.",
-      "Future: expand feature engineering, improve forecast explainability, and move toward real-time data feeds.",
+      "Future: improve forecast explainability, collect more data to better generalize the models and move toward real time data feeds.",
     ],
   },
 ];
@@ -93,7 +93,7 @@ const MODELS = [
     type: "To be determined",
     target: "Daily visit demand at University of Alberta Campus FB",
     data: "May 2023 – Apr 2026 · daily granularity",
-    regressors: "Academic calendar · exam periods · international arrivals · tuition deadlines",
+    regressors: "Academic calendar · Exam periods · International arrivals · Tuition Deadlines",
     status: "Dataset received · pending",
     statusColor: "#7a6010",
     statusBg: "#fdf6d8",
@@ -147,18 +147,18 @@ export default function AboutFeeds() {
         <div style={{
           display: "inline-flex", alignItems: "center", gap: 7,
           background: "rgba(255,255,255,0.12)", borderRadius: 20,
-          padding: "4px 14px", fontSize: 11, fontWeight: 600,
+          padding: "4px 14px", fontSize: 12, fontWeight: 600,
           color: C.teaGreen, marginBottom: 18, letterSpacing: "0.05em",
           textTransform: "uppercase",
         }}>
-          <i className="ti ti-info-circle" style={{ fontSize: 12 }} aria-hidden="true" />
+          <i className="ti ti-info-circle" style={{ fontSize: 13 }} aria-hidden="true" />
           About this project
         </div>
-        <h1 style={{ fontSize: 32, fontWeight: 800, color: "#fff", margin: "0 0 10px" }}>
+        <h1 style={{ fontSize: 32, fontWeight: 800, color: "#fff", margin: "0 0 10px", marginBottom: 30 }}>
           About FEEDS
         </h1>
-        <p style={{ fontSize: 14, color: "rgba(255,255,255,0.75)", maxWidth: 560, lineHeight: 1.7, margin: 0 }}>
-          Forecasting Engine for Estimating Demand and Supply —
+        <p style={{ fontSize: 15, color: "rgba(255,255,255,0.75)", maxWidth: 650, lineHeight: 1.7, margin: 0 }}>
+          Forecasting Engine for Estimating Demand and Supply:
           an AI-powered early warning system for food bank demand across Alberta.
         </p>
       </div>
@@ -167,10 +167,10 @@ export default function AboutFeeds() {
 
         {/* Team photo — drop team.jpg into /public to activate */}
         <section>
-          <h2 style={{ fontSize: 22, fontWeight: 700, color: C.forestGreen, margin: "0 0 6px" }}>
+          <h2 style={{ fontSize: 25, fontWeight: 700, color: C.forestGreen, margin: "0 0 6px" }}>
             Meet the team
           </h2>
-          <p style={{ fontSize: 13, color: C.textMuted, margin: "0 0 16px" }}>
+          <p style={{ fontSize: 14, color: C.textMuted, margin: "0 0 16px" }}>
             FEEDS was built by a team of students at the University of Alberta.
           </p>
           <div style={{
@@ -202,7 +202,7 @@ export default function AboutFeeds() {
               color: C.textMuted,
             }}>
               <i className="ti ti-users" style={{ fontSize: 32, color: C.borderLight }} aria-hidden="true" />
-              <span style={{ fontSize: 13 }}>Add <code style={{ background: "#eee", padding: "1px 6px", borderRadius: 4 }}>team.jpg</code> to the <code style={{ background: "#eee", padding: "1px 6px", borderRadius: 4 }}>public/</code> folder</span>
+              <span style={{ fontSize: 14 }}>Add <code style={{ background: "#eee", padding: "1px 6px", borderRadius: 4 }}>team.jpg</code> to the <code style={{ background: "#eee", padding: "1px 6px", borderRadius: 4 }}>public/</code> folder</span>
             </div>
             <div style={{
               padding: "14px 20px",
@@ -217,10 +217,10 @@ export default function AboutFeeds() {
 
         {/* Research sections */}
         <section>
-          <h2 style={{ fontSize: 22, fontWeight: 700, color: C.forestGreen, margin: "0 0 6px" }}>
+          <h2 style={{ fontSize: 25, fontWeight: 700, color: C.forestGreen, margin: "0 0 6px" }}>
             Research overview
           </h2>
-          <p style={{ fontSize: 13, color: C.textMuted, margin: "0 0 20px" }}>
+          <p style={{ fontSize: 14, color: C.textMuted, margin: "0 0 20px" }}>
             Why we built FEEDS, how it works, what we found, and where it's going.
           </p>
 
@@ -242,15 +242,15 @@ export default function AboutFeeds() {
                   <i className={`ti ti-${s.icon}`} style={{ fontSize: 18, color: s.color }} aria-hidden="true" />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 16, fontWeight: 700, color: C.textPrimary, marginBottom: 4 }}>
+                  <div style={{ fontSize: 17, fontWeight: 700, color: C.textPrimary, marginBottom: 4 }}>
                     {s.title}
                   </div>
-                  <div style={{ fontSize: 13, color: C.textSecondary, marginBottom: 10, lineHeight: 1.6 }}>
+                  <div style={{ fontSize: 14, color: C.textSecondary, marginBottom: 10, lineHeight: 1.6 }}>
                     {s.summary}
                   </div>
                   <ul style={{ margin: 0, padding: "0 0 0 16px", display: "flex", flexDirection: "column", gap: 5 }}>
                     {s.points.map((p, i) => (
-                      <li key={i} style={{ fontSize: 13, color: C.textMuted, lineHeight: 1.65 }}>
+                      <li key={i} style={{ fontSize: 14, color: C.textMuted, lineHeight: 1.65 }}>
                         {p}
                       </li>
                     ))}
@@ -263,10 +263,10 @@ export default function AboutFeeds() {
 
         {/* Models table */}
         <section>
-          <h2 style={{ fontSize: 22, fontWeight: 700, color: C.forestGreen, margin: "0 0 6px" }}>
+          <h2 style={{ fontSize: 25, fontWeight: 700, color: C.forestGreen, margin: "0 0 6px" }}>
             Models in FEEDS
           </h2>
-          <p style={{ fontSize: 13, color: C.textMuted, margin: "0 0 20px" }}>
+          <p style={{ fontSize: 14, color: C.textMuted, margin: "0 0 20px" }}>
             One model per food bank — each tuned to its data granularity and demand drivers
           </p>
 
@@ -278,9 +278,9 @@ export default function AboutFeeds() {
                 borderRadius: 12, padding: "18px 22px",
               }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: C.textPrimary }}>{m.name}</div>
+                  <div style={{ fontSize: 17, fontWeight: 700, color: C.textPrimary }}>{m.name}</div>
                   <span style={{
-                    fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 20, flexShrink: 0,
+                    fontSize: 13, fontWeight: 600, padding: "3px 10px", borderRadius: 20, flexShrink: 0,
                     background: m.statusBg, color: m.statusColor,
                   }}>
                     {m.status}
@@ -294,10 +294,10 @@ export default function AboutFeeds() {
                     { label: "Key drivers", value: m.regressors },
                   ].map(row => (
                     <div key={row.label}>
-                      <span style={{ fontSize: 11, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                      <span style={{ fontSize: 13, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.05em" }}>
                         {row.label}
                       </span>
-                      <div style={{ fontSize: 13, color: C.textSecondary, marginTop: 2, lineHeight: 1.5 }}>
+                      <div style={{ fontSize: 14, color: C.textSecondary, marginTop: 2, lineHeight: 1.5 }}>
                         {row.value}
                       </div>
                     </div>
@@ -317,12 +317,12 @@ export default function AboutFeeds() {
         }}>
           <i className="ti ti-heart-handshake" style={{ fontSize: 22, color: C.jungleTeal, flexShrink: 0, marginTop: 2 }} aria-hidden="true" />
           <div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: C.forestGreen, marginBottom: 4 }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: C.forestGreen, marginBottom: 4 }}>
               Built in collaboration with food banks
             </div>
-            <div style={{ fontSize: 13, color: C.textSecondary, lineHeight: 1.65 }}>
+            <div style={{ fontSize: 14, color: C.textSecondary, lineHeight: 1.65 }}>
               FEEDS was developed in partnership with Food Banks Alberta and Red Deer Food Bank.
-              Through continued collaboration, the goal is to make FEEDS a practical decision-support tool
+              Through continued collaboration, the goal is to make FEEDS a practical support tool
               that helps organizations anticipate needs, allocate resources, and improve food security outcomes across Alberta.
             </div>
           </div>
