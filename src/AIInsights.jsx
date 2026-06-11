@@ -105,11 +105,11 @@ const SUGGESTED = [
 
 // ── Bubble components ─────────────────────────────────────────────────────────
 
-function UserBubble({ text }) {
+function UserBubble({ text, isMobile }) {
   return (
     <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 14 }}>
       <div style={{
-        maxWidth: "72%",
+        maxWidth: isMobile ? "88%" : "72%",
         background: C.jungleTeal,
         color: "#fdfffd",
         borderRadius: "12px 12px 3px 12px",
@@ -127,7 +127,7 @@ function UserBubble({ text }) {
   );
 }
 
-function AssistantBubble({ text, loading }) {
+function AssistantBubble({ text, loading, isMobile }) {
   return (
     <div style={{ display: "flex", gap: 10, marginBottom: 14, alignItems: "flex-start" }}>
       {/* Avatar */}
@@ -139,7 +139,7 @@ function AssistantBubble({ text, loading }) {
         <img src="/logo.png" alt="FEEDS logo" style={{ width: 40, height: 40, borderRadius: 7, objectFit: "contain", border: `1px solid ${C.sidebarBorder}` }} />
       </div>
       <div style={{
-        maxWidth: "80%",
+        maxWidth: isMobile ? "90%" : "80%",
         background: "#d8ffddb0",
         border: `0.5px solid ${C.borderDark}`,
         borderRadius: "3px 12px 12px 12px",
@@ -203,7 +203,14 @@ export default function AIInsights() {
   const [systemPrompt, setSystemPrompt] = useState(DEFAULT_SYSTEM_PROMPT);
   const [confPct,      setConfPct]      = useState(null);
   const [confLabel,    setConfLabel]    = useState(null);
+  const [isMobile,     setIsMobile]     = useState(() => window.innerWidth < 768);
   const bottomRef = useRef(null);
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
   useEffect(() => {
     Promise.all([
@@ -259,30 +266,32 @@ export default function AIInsights() {
     }}>
 
       {/* Header */}
-      <header style={{ padding: "32px 28px 20px", background: C.pageBg, flexShrink: 0 }}>
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+      <header style={{ padding: isMobile ? "16px 14px 14px" : "32px 28px 20px", background: C.pageBg, flexShrink: 0 }}>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 8 : 0 }}>
           <div>
-            <div style={{ fontSize: 25, fontWeight: 700, color: C.forestGreen, marginBottom: 5 }}>
+            <div style={{ fontSize: isMobile ? 20 : 25, fontWeight: 700, color: C.forestGreen, marginBottom: 5 }}>
               AI insights
             </div>
-            <div style={{ fontSize: 15, color: C.textMuted, lineHeight: 1.5 }}>
+            <div style={{ fontSize: isMobile ? 13 : 15, color: C.textMuted, lineHeight: 1.5 }}>
               Ask anything about food bank demand, forecasts, or what's driving signals this month · open to everyone
             </div>
           </div>
           {/* Public badge */}
-          <div style={{
-            display: "flex", alignItems: "center", gap: 6, flexShrink: 0,
-            padding: "6px 12px", borderRadius: 8, marginTop: 4, marginRight: 50,
-            background: C.surfaceGreen, border: `0.5px solid ${C.borderLight}`,
-            fontSize: 14, fontWeight: 500, color: C.textSecondary,
-          }}>
-            <i className="ti ti-world" style={{ fontSize: 15, color: C.jungleTeal }} aria-hidden="true" />
-            Public access
-          </div>
+          {!isMobile && (
+            <div style={{
+              display: "flex", alignItems: "center", gap: 6, flexShrink: 0,
+              padding: "6px 12px", borderRadius: 8, marginTop: 4, marginRight: 50,
+              background: C.surfaceGreen, border: `0.5px solid ${C.borderLight}`,
+              fontSize: 14, fontWeight: 500, color: C.textSecondary,
+            }}>
+              <i className="ti ti-world" style={{ fontSize: 15, color: C.jungleTeal }} aria-hidden="true" />
+              Public access
+            </div>
+          )}
         </div>
 
         {/* Model context pills */}
-        <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 14 }}>
           {[
             {
               icon: "building", label: "Provincial model",
@@ -304,11 +313,11 @@ export default function AIInsights() {
               display: "flex", alignItems: "center", gap: 7,
               padding: "6px 12px", borderRadius: 8,
               background: p.bg, border: `0.5px solid ${C.borderLight}`,
-              fontSize: 14,
+              fontSize: isMobile ? 12 : 14,
             }}>
               <i className={`ti ti-${p.icon}`} style={{ fontSize: 15, color: p.color }} aria-hidden="true" />
               <span style={{ fontWeight: 500, color: C.textPrimary }}>{p.label}</span>
-              <span style={{ color: C.textMuted }}>· {p.detail}</span>
+              {!isMobile && <span style={{ color: C.textMuted }}>· {p.detail}</span>}
             </div>
           ))}
         </div>
@@ -316,7 +325,7 @@ export default function AIInsights() {
 
       {/* Suggested prompts — only on first load */}
       {messages.length === 1 && (
-        <div style={{ padding: "0 28px 18px", flexShrink: 0 }}>
+        <div style={{ padding: isMobile ? "0 14px 14px" : "0 28px 18px", flexShrink: 0 }}>
           <div style={{ fontSize: 14, color: C.textMuted, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.07em" }}>
             Suggested questions
           </div>
@@ -343,22 +352,22 @@ export default function AIInsights() {
       )}
 
       {/* Divider */}
-      <div style={{ height: "0.5px", background: C.borderLight, flexShrink: 0, margin: "0 28px" }} />
+      <div style={{ height: "0.5px", background: C.borderLight, flexShrink: 0, margin: isMobile ? "0 14px" : "0 28px" }} />
 
       {/* Messages */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "20px 28px" }}>
+      <div style={{ flex: 1, overflowY: "auto", padding: isMobile ? "16px 14px" : "20px 28px" }}>
         {messages.map((m, i) =>
           m.role === "user"
-            ? <UserBubble key={i} text={m.content} />
-            : <AssistantBubble key={i} text={m.content} />
+            ? <UserBubble key={i} text={m.content} isMobile={isMobile} />
+            : <AssistantBubble key={i} text={m.content} isMobile={isMobile} />
         )}
-        {loading && <AssistantBubble loading />}
+        {loading && <AssistantBubble loading isMobile={isMobile} />}
         <div ref={bottomRef} />
       </div>
 
       {/* Input bar */}
       <div style={{
-        padding: "14px 28px 20px",
+        padding: isMobile ? "12px 14px 16px" : "14px 28px 20px",
         background: "#3a8565",
         borderTop: `1px solid ${C.borderLight}`,
         flexShrink: 0,

@@ -90,7 +90,7 @@ const ChartTooltip = ({ active, payload, label }) => {
 
 // ── Data input form ───────────────────────────────────────────────────────────
 
-function DataInputForm() {
+function DataInputForm({ isMobile }) {
   const [form, setForm] = useState({
     date: "", inbound: "", outbound: "",
     cpi_food: "", unemployment: "", mean_temp: "", notes: "",
@@ -126,7 +126,7 @@ function DataInputForm() {
         title="Add monthly data row"
         sub="Staff input — new rows are queued for the next model run"
       />
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0,1fr))", gap: 12, marginBottom: 12 }}>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(3, minmax(0,1fr))", gap: 12, marginBottom: 12 }}>
         {fields.map((f) => (
           <div key={f.key}>
             <div style={{ fontSize: 12, color: C.textSecondary, marginBottom: 4, fontWeight: 500 }}>
@@ -190,6 +190,13 @@ export default function Provincial() {
   const [confidence,  setConfidence]  = useState(null);
   const [gapForecast, setGapForecast] = useState([]);
   const [loading,     setLoading]     = useState(true);
+  const [isMobile,    setIsMobile]    = useState(() => window.innerWidth < 768);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   useEffect(() => {
     Promise.all([
@@ -250,8 +257,8 @@ export default function Provincial() {
     <div style={{ display: "flex", flexDirection: "column", height: "100%", background: C.pageBg, overflow: "hidden" }}>
 
       {/* Header */}
-      <header style={{ padding: "32px 28px 0", background: C.pageBg, flexShrink: 0 }}>
-        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 20 }}>
+      <header style={{ padding: isMobile ? "16px 14px 0" : "32px 28px 0", background: C.pageBg, flexShrink: 0 }}>
+        <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", alignItems: isMobile ? "flex-start" : "flex-end", justifyContent: "space-between", gap: isMobile ? 10 : 0, marginBottom: 16 }}>
           <div>
             <div style={{ fontSize: 25, fontWeight: 700, color: C.forestGreen, marginBottom: 4 }}>
               Provincial model
@@ -276,7 +283,7 @@ export default function Provincial() {
         </div>
 
         {/* Tabs */}
-        <div style={{ display: "flex", gap: 2, borderBottom: `1px solid ${C.borderLight}` }}>
+        <div style={{ display: "flex", gap: 2, borderBottom: `1px solid ${C.borderLight}`, overflowX: "auto" }}>
           {tabs.map((t) => (
             <button
               key={t.key}
@@ -298,7 +305,7 @@ export default function Provincial() {
       </header>
 
       {/* Content */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "24px 28px 32px" }}>
+      <div style={{ flex: 1, overflowY: "auto", padding: isMobile ? "16px 14px 24px" : "24px 28px 32px" }}>
 
         {loading ? (
           <div style={{ textAlign: "center", padding: "60px 0", color: C.textMuted, fontSize: 13 }}>
@@ -328,7 +335,7 @@ export default function Provincial() {
                   const gapBadgeColor = isShortfall ? gapStyle.color : C.forestGreen;
 
                   return (
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0,1fr))", gap: 14 }}>
+                    <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(4, minmax(0,1fr))", gap: 14 }}>
                       {[
                         {
                           label: `Outbound forecast`,
@@ -410,7 +417,7 @@ export default function Provincial() {
                       title="3-month supply-demand outlook"
                       sub="Will we have enough food to meet demand? Projected shortfall or surplus per month."
                     />
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0,1fr))", gap: 12 }}>
+                    <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0,1fr))", gap: 12 }}>
                       {gapForecast.map((row) => {
                         const isGap  = row.Gap_forecast < 0;
                         const isCrit = row.alert === "Critical";
@@ -470,7 +477,7 @@ export default function Provincial() {
               <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
 
                 {/* Model stats grid */}
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0,1fr))", gap: 14 }}>
+                <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(3, minmax(0,1fr))", gap: 14 }}>
                   {modelStats.map((s) => (
                     <div key={s.label} style={{
                       background: C.surfaceGreen, border: `0.5px solid ${C.borderLight}`,
@@ -494,10 +501,10 @@ export default function Provincial() {
                     </div>
                   ) : (
                     <ResponsiveContainer width="100%" height={Math.max(280, featureData.length * 22)}>
-                      <BarChart data={featureData} layout="vertical" margin={{ top: 4, right: 50, bottom: 0, left: 120 }}>
+                      <BarChart data={featureData} layout="vertical" margin={{ top: 4, right: isMobile ? 20 : 50, bottom: 0, left: isMobile ? 80 : 120 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke={C.teaGreen} horizontal={false} />
                         <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 12, fill: C.textMuted }} axisLine={false} tickLine={false} />
-                        <YAxis type="category" dataKey="name" tick={{ fontSize: 12, fill: C.textSecondary }} axisLine={false} tickLine={false} width={120} />
+                        <YAxis type="category" dataKey="name" tick={{ fontSize: isMobile ? 10 : 12, fill: C.textSecondary }} axisLine={false} tickLine={false} width={isMobile ? 80 : 120} />
                         <Bar dataKey="importance" name="Importance %" radius={[0, 4, 4, 0]} barSize={14} fill={C.jungleTeal}
                           label={{ position: "right", fontSize: 12, fill: C.textMuted, formatter: v => `${v}%` }}
                         >
@@ -534,7 +541,7 @@ export default function Provincial() {
                       title="Gap classifier — out-of-sample performance"
                       sub="Tested against months the model had never seen before"
                     />
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14 }}>
+                    <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap: 14 }}>
                       {[
                         { label: "Correct predictions",      value: `${(confidence.targets.LBS_In.gap_accuracy * 100).toFixed(1)}%`, sub: "overall accuracy"         },
                         { label: "Detection quality",        value: (confidence.targets.LBS_In.gap_f1 ?? "—").toString().substring(0, 5),                              sub: "F1 score"                  },
@@ -614,7 +621,7 @@ export default function Provincial() {
             {/* ── DATA INPUT TAB ── */}
             {activeTab === "input" && (
               <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                <DataInputForm />
+                <DataInputForm isMobile={isMobile} />
 
                 {/* Recent entries table */}
                 <Panel>

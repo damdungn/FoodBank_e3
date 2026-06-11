@@ -162,7 +162,7 @@ const HamperTooltip = ({ active, payload, label }) => {
 
 // ── Data input form ───────────────────────────────────────────────────────────
 
-function DataInputForm() {
+function DataInputForm({ isMobile }) {
   const [form, setForm] = useState({
     date: "", visits: "", households: "",
     cpi_food: "", unemployment: "", mean_temp: "",
@@ -199,7 +199,7 @@ function DataInputForm() {
         title="Add daily data row — regional FB"
         sub="Client-level entries · queued for next model retraining run"
       />
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0,1fr))", gap: 12, marginBottom: 12 }}>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(3, minmax(0,1fr))", gap: 12, marginBottom: 12 }}>
         {fields.map((f) => (
           <div key={f.key}>
             <div style={{ fontSize: 12, color: C.textSecondary, marginBottom: 4, fontWeight: 500 }}>{f.label}</div>
@@ -274,6 +274,13 @@ function DataInputForm() {
 export default function Regional() {
   const [activeTab,  setActiveTab]  = useState("hamper");
   const [selectedFB, setSelectedFB] = useState("rdfb");
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
   const [forecast, setForecast] = useState(null);
   const [features, setFeatures] = useState(null);
@@ -330,7 +337,7 @@ export default function Regional() {
     <div style={{ display: "flex", flexDirection: "column", height: "100%", background: C.pageBg, overflow: "hidden" }}>
 
       {/* Header */}
-      <header style={{ padding: "32px 28px 0", background: C.pageBg, flexShrink: 0 }}>
+      <header style={{ padding: isMobile ? "16px 14px 0" : "32px 28px 0", background: C.pageBg, flexShrink: 0 }}>
         <div style={{ marginBottom: 16 }}>
           {/* Food bank selector */}
           <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
@@ -367,7 +374,7 @@ export default function Regional() {
             const fb = FOOD_BANKS.find(b => b.key === selectedFB);
             return (
               <>
-                <div style={{ fontSize: 25, fontWeight: 700, color: C.forestGreen, marginBottom: 4 }}>
+                <div style={{ fontSize: isMobile ? 20 : 25, fontWeight: 700, color: C.forestGreen, marginBottom: 4 }}>
                   {fb.label}
                 </div>
                 <div style={{ fontSize: 13, color: C.textMuted, marginBottom: fb.ready ? 10 : 0 }}>
@@ -391,7 +398,7 @@ export default function Regional() {
         </div>
 
         {/* Tabs — hidden when selected FB isn't ready yet */}
-        <div style={{ display: fbReady ? "flex" : "none", gap: 2, borderBottom: `1px solid ${C.borderLight}` }}>
+        <div style={{ display: fbReady ? "flex" : "none", gap: 2, borderBottom: `1px solid ${C.borderLight}`, overflowX: "auto" }}>
           {tabs.map((t) => (
             <button key={t.key} onClick={() => setActiveTab(t.key)} style={{
               padding: "8px 18px", fontSize: 14, cursor: "pointer",
@@ -408,7 +415,7 @@ export default function Regional() {
       </header>
 
       {/* Content */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "24px 28px 32px" }}>
+      <div style={{ flex: 1, overflowY: "auto", padding: isMobile ? "16px 14px 24px" : "24px 28px 32px" }}>
 
         {/* ── COMING SOON PLACEHOLDER (shown when selected FB is not ready) ── */}
         {!fbReady && (() => {
@@ -518,7 +525,7 @@ export default function Regional() {
             ) : (
               <>
                 {/* Summary cards */}
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0,1fr))", gap: 14 }}>
+                <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(4, minmax(0,1fr))", gap: 14 }}>
                   {[
                     {
                       label:  "Avg forecast",
@@ -605,7 +612,7 @@ export default function Regional() {
                 </Panel>
 
                 {/* Seasonality + about */}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 16 }}>
                   <Panel>
                     <SectionTitle title="Historical seasonality" sub="Based on 15 years of Red Deer FB data (2011–2026)" />
                     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -646,7 +653,7 @@ export default function Regional() {
         {fbReady && activeTab === "model" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0,1fr))", gap: 14 }}>
+            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(3, minmax(0,1fr))", gap: 14 }}>
               {(metrics?.modelStats ?? modelStats).map((s) => (
                 <div key={s.label} style={{
                   background: C.surfaceGreen, border: `0.5px solid ${C.borderLight}`,
@@ -665,10 +672,10 @@ export default function Regional() {
                 sub="SHAP values from AFB model applied to RDFB · Same economic drivers, regional target"
               />
               <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={features?.featureData ?? featureData} layout="vertical" margin={{ top: 4, right: 50, bottom: 0, left: 110 }}>
+                <BarChart data={features?.featureData ?? featureData} layout="vertical" margin={{ top: 4, right: isMobile ? 20 : 50, bottom: 0, left: isMobile ? 75 : 110 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke={C.teaGreen} horizontal={false} />
                   <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 13, fill: C.textMuted }} axisLine={false} tickLine={false} />
-                  <YAxis type="category" dataKey="name" tick={{ fontSize: 13, fill: C.textSecondary }} axisLine={false} tickLine={false} width={110} />
+                  <YAxis type="category" dataKey="name" tick={{ fontSize: isMobile ? 10 : 13, fill: C.textSecondary }} axisLine={false} tickLine={false} width={isMobile ? 75 : 110} />
                   <Tooltip content={<ChartTooltip />} />
                   <Bar dataKey="importance" name="Importance %" fill={C.dustyDenim} radius={[0, 4, 4, 0]} barSize={14}
                     label={{ position: "right", fontSize: 13, fill: C.textMuted, formatter: v => `${v}%` }}
@@ -732,7 +739,7 @@ export default function Regional() {
                 title="Food bank network — where Red Deer fits"
                 sub="How this model connects to the broader Alberta food bank system"
               />
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap: 12 }}>
                 {[
                   {
                     icon: "building-warehouse",
@@ -842,7 +849,7 @@ export default function Regional() {
             </Panel>
 
             {/* Data input form */}
-            <DataInputForm />
+            <DataInputForm isMobile={isMobile} />
           </div>
         )}
 

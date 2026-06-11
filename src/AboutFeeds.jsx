@@ -1,3 +1,5 @@
+import { useState, useEffect } from "react";
+
 const C = {
   forestGreen:   "#224433",
   jungleTeal:    "#3f826d",
@@ -111,6 +113,14 @@ const MODELS = [
 ];
 
 export default function AboutFeeds() {
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
   return (
     <div style={{
       height: "100%", overflowY: "auto", background: C.pageBg,
@@ -120,7 +130,7 @@ export default function AboutFeeds() {
       {/* Header */}
       <div style={{
         background: `linear-gradient(135deg, #122b1e 0%, ${C.forestGreen} 40%, #2d6a50 75%, #3f826d 100%)`,
-        padding: "52px 44px 48px",
+        padding: isMobile ? "32px 20px 28px" : "52px 44px 48px",
         position: "relative",
         overflow: "hidden",
       }}>
@@ -154,7 +164,7 @@ export default function AboutFeeds() {
           <i className="ti ti-info-circle" style={{ fontSize: 13 }} aria-hidden="true" />
           About this project
         </div>
-        <h1 style={{ fontSize: 32, fontWeight: 800, color: "#fff", margin: "0 0 10px", marginBottom: 30 }}>
+        <h1 style={{ fontSize: isMobile ? 24 : 32, fontWeight: 800, color: "#fff", margin: "0 0 10px", marginBottom: 30 }}>
           About FEEDS
         </h1>
         <p style={{ fontSize: 15, color: "rgba(255,255,255,0.75)", maxWidth: 650, lineHeight: 1.7, margin: 0 }}>
@@ -163,7 +173,7 @@ export default function AboutFeeds() {
         </p>
       </div>
 
-      <div style={{ padding: "36px 40px 52px", display: "flex", flexDirection: "column", gap: 36 }}>
+      <div style={{ padding: isMobile ? "24px 16px 40px" : "36px 40px 52px", display: "flex", flexDirection: "column", gap: 36 }}>
 
         {/* Team photo — drop team.jpg into /public to activate */}
         <section>
@@ -186,7 +196,7 @@ export default function AboutFeeds() {
               onError={e => { e.currentTarget.style.display = "none"; e.currentTarget.nextSibling.style.display = "flex"; }}
               style={{
                 width: "100%",
-                maxHeight: 420,
+                maxHeight: isMobile ? 260 : 420,
                 objectFit: "cover",
                 objectPosition: "center top",
                 display: "block",
@@ -231,7 +241,7 @@ export default function AboutFeeds() {
                 border: `1px solid ${C.borderLight}`,
                 borderLeft: `4px solid ${s.color}`,
                 borderRadius: "0 12px 12px 0",
-                padding: "20px 24px",
+                padding: isMobile ? "16px 16px" : "20px 24px",
                 display: "flex", gap: 18, alignItems: "flex-start",
               }}>
                 <div style={{
@@ -277,7 +287,7 @@ export default function AboutFeeds() {
                 border: `1px solid ${C.borderLight}`,
                 borderRadius: 12, padding: "18px 22px",
               }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
+                <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", justifyContent: "space-between", alignItems: isMobile ? "flex-start" : "flex-start", gap: isMobile ? 6 : 0, marginBottom: 10 }}>
                   <div style={{ fontSize: 17, fontWeight: 700, color: C.textPrimary }}>{m.name}</div>
                   <span style={{
                     fontSize: 13, fontWeight: 600, padding: "3px 10px", borderRadius: 20, flexShrink: 0,
@@ -286,7 +296,7 @@ export default function AboutFeeds() {
                     {m.status}
                   </span>
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 24px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: isMobile ? 8 : "6px 24px" }}>
                   {[
                     { label: "Model type",  value: m.type       },
                     { label: "Predicts",    value: m.target     },
@@ -312,7 +322,7 @@ export default function AboutFeeds() {
         <div style={{
           background: C.surfaceGreen,
           border: `1px solid ${C.borderLight}`,
-          borderRadius: 12, padding: "24px 28px",
+          borderRadius: 12, padding: isMobile ? "18px 16px" : "24px 28px",
           display: "flex", gap: 14, alignItems: "flex-start",
         }}>
           <i className="ti ti-heart-handshake" style={{ fontSize: 22, color: C.jungleTeal, flexShrink: 0, marginTop: 2 }} aria-hidden="true" />
