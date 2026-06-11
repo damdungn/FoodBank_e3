@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { API_BASE } from "./config";
 
 const C = {
-  forestGreen:   "#224433",
+  forestGreen:   "#274e3a",
   jungleTeal:    "#3f826d",
   teaGreen:      "#d0efb1",
   pageBg:        "#fbfcf6",
@@ -20,8 +20,8 @@ const DRIVERS = [
     color:   "#1a6630",
     bg:      "#edfaf0",
     border:  "#b0d8b8",
-    title:   "Economic conditions",
-    desc:    "Rising food and housing costs push families toward food banks. FEEDS tracks CPI components, income-support caseloads, and labour-market signals month by month.",
+    title:   "Economic indicators",
+    desc:    "Rising food and housing costs push families toward food banks. FEEDS tracks CPI components, income-support caseloads, and net migration signals month by month.",
     factors: ["Food & shelter CPI", "AISH caseload", "Unemployment rate", "Net migration"],
     signalKeys: [],
   },
@@ -51,7 +51,7 @@ const DRIVERS = [
     bg:      "#f3eefb",
     border:  "#c0a8e8",
     title:   "Student-specific factors",
-    desc:    "Campus food banks face unique demand cycles tied to academic life — exam stress, tuition deadlines, and surges when international students arrive each semester.",
+    desc:    "Campus food banks face different demand cycles tied to academic life such as exam stress, tuition deadlines, and surges when international students arrive each semester.",
     factors: ["Exam periods", "Tuition deadlines", "International arrivals"],
     signalKeys: ["is_exam_period", "is_tuition_deadline", "is_intl_arrival_period"],
   },
@@ -86,6 +86,7 @@ const FOOD_BANKS = [
     name: "Food Banks Alberta",
     role: "Provincial hub · coordinates food distribution across Alberta",
     icon: "building",
+    logo: "/aberta_fb.jpg",
     color: C.forestGreen,
     bg: C.surfaceGreen,
     border: C.borderLight,
@@ -96,30 +97,33 @@ const FOOD_BANKS = [
     name: "Red Deer Food Bank",
     role: "Regional model · hamper demand forecasting",
     icon: "map-pin",
+    logo: "/red_deer_fb.jpg",
     color: "#5588c7",
     bg: "#eef3fb",
     border: "#c8d8f0",
-    data: "Prophet model · 15-year training window",
+    data: "Regional model trained · 2011–2026",
   },
   {
     key: "edfb",
     name: "Edmonton Food Bank",
     role: "Regional partner · serving Edmonton metro area",
     icon: "map-2",
+    logo: "/edmonton_fb.jpg",
     color: "#7a5ca8",
     bg: "#f3eefb",
     border: "#d0c0f0",
-    data: "Dataset integration pending",
+    data: "Used as a research partner",
   },
   {
     key: "campus",
     name: "Campus Food Bank",
     role: "University of Alberta · student food security",
     icon: "school",
+    logo: "/campus_fb.jpg",
     color: "#8a6020",
     bg: "#fffbee",
     border: "#e8d890",
-    data: "Dataset received · May 2023–Apr 2026",
+    data: "Dataset integration pending · May 2023–Apr 2026",
   },
 ];
 
@@ -169,16 +173,16 @@ export default function Dashboard({ onNavigate }) {
       title: "Provincial Staff",
       desc: "Food Banks Alberta team accessing provincial supply-demand forecasts, donation trends, and model analysis.",
       page: "provincial",
-      color: C.forestGreen,
-      bg: "#f0f7ec",
-      border: "#b8d8a8",
+      color: "#c39728",
+      bg: "#f7f5ec",
+      border: "#d8caa8",
       btnLabel: "Provincial Access",
       locked: true,
     },
     {
       icon: "map-2",
       title: "Regional Staff",
-      desc: "Red Deer and Edmonton regional food bank staff accessing hamper forecasts and regional demand patterns.",
+      desc: "Regional food bank staff accessing hamper forecasts and regional demand patterns.",
       page: "regional",
       color: "#3a5ea8",
       bg: "#eef3fb",
@@ -195,74 +199,98 @@ export default function Dashboard({ onNavigate }) {
     }}>
 
       {/* ── HERO ─────────────────────────────────────────────────────── */}
+      <style>{`
+        @keyframes heroSlideUp {
+          from { opacity: 0; transform: translateY(28px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes wordReveal {
+          from { opacity: 0; transform: translateX(-12px); }
+          to   { opacity: 1; transform: translateX(0); }
+        }
+        .hero-word {
+          display: inline-block;
+          opacity: 0;
+          animation: wordReveal 0.35s ease forwards;
+        }
+        @keyframes shimmer {
+          0%   { background-position: -200% center; }
+          100% { background-position: 200% center; }
+        }
+      `}</style>
+
       <div style={{
-        background: `linear-gradient(135deg, ${C.forestGreen} 0%, #2d6a50 100%)`,
-        padding: "44px 40px 40px",
+        background: `linear-gradient(135deg, #122b1e 0%, ${C.forestGreen} 40%, #2d6a50 75%, #3f826d 100%)`,
+        padding: "52px 44px 48px",
+        position: "relative",
+        overflow: "hidden",
       }}>
+        {/* Decorative rings */}
+        <div style={{
+          position: "absolute", top: -60, right: -60,
+          width: 260, height: 260, borderRadius: "50%",
+          border: "1.5px solid rgba(208,239,177,0.12)",
+          pointerEvents: "none",
+        }} />
+        <div style={{
+          position: "absolute", top: -20, right: -20,
+          width: 160, height: 160, borderRadius: "50%",
+          border: "1.5px solid rgba(208,239,177,0.08)",
+          pointerEvents: "none",
+        }} />
+        {/* Subtle leaf dot pattern */}
+        <div style={{
+          position: "absolute", bottom: 0, left: 0, right: 0, top: 0,
+          backgroundImage: "radial-gradient(circle, rgba(208,239,177,0.06) 1px, transparent 1px)",
+          backgroundSize: "28px 28px",
+          pointerEvents: "none",
+        }} />
+
+        {/* Badge */}
         <div style={{
           display: "inline-flex", alignItems: "center", gap: 7,
-          background: "rgba(255,255,255,0.12)", borderRadius: 20,
-          padding: "4px 14px", fontSize: 11, fontWeight: 600,
-          color: C.teaGreen, marginBottom: 18, letterSpacing: "0.05em",
+          background: "rgba(208,239,177,0.15)",
+          border: "1px solid rgba(208,239,177,0.25)",
+          borderRadius: 20,
+          padding: "5px 15px", fontSize: 11, fontWeight: 600,
+          color: C.teaGreen, marginBottom: 22, letterSpacing: "0.07em",
           textTransform: "uppercase",
+          animation: "heroSlideUp 0.5s ease both",
+          animationDelay: "0.05s",
+          position: "relative",
         }}>
-          <i className="ti ti-building" style={{ fontSize: 12 }} aria-hidden="true" />
-          Food Banks Alberta · Forecasting Tool
+          <i className="ti ti-welcome" style={{ fontSize: 12 }} aria-hidden="true" />
+          Welcome!
         </div>
 
-        <h1 style={{ fontSize: 32, fontWeight: 800, color: "#fff", margin: "0 0 10px", lineHeight: 1.2 }}>
-          FEEDS
+        {/* Motto — word by word */}
+        <h1 style={{
+          fontSize: 30, fontWeight: 800, color: "#fff",
+          margin: "0 0 14px", lineHeight: 1.25,
+          maxWidth: 560,
+          position: "relative",
+        }}>
+          {"FEEDS lands insights, so food banks can land on time.".split(" ").map((word, i) => (
+            <span
+              key={i}
+              className="hero-word"
+              style={{ animationDelay: `${0.25 + i * 0.08}s`, marginRight: "0.28em" }}
+            >
+              {word}
+            </span>
+          ))}
         </h1>
-        <p style={{ fontSize: 14, color: "rgba(255,255,255,0.75)", maxWidth: 500, lineHeight: 1.7, margin: "0 0 30px" }}>
-          Forecasting Engine for Estimating Demand and Supply —
-          helping Alberta food banks plan ahead so every family gets the support they need.
-        </p>
 
-        {/* Key stats */}
-        {!loading && kpis ? (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
-            {[
-              {
-                icon: "package",
-                label: "Food given to families last month",
-                value: `${fmt(kpis.thisMonth.outbound)} lbs`,
-                sub: null,
-              },
-              {
-                icon: pctOut >= 0 ? "trending-up" : "trending-down",
-                label: "Change vs previous month",
-                value: `${pctOut >= 0 ? "+" : ""}${pctOut}%`,
-                sub: null,
-              },
-              {
-                icon: meta.icon,
-                label: "3-month demand outlook",
-                value: meta.label,
-                sub: gapForecast[0]?.month ?? "",
-              },
-            ].map(s => (
-              <div key={s.label} style={{
-                background: "rgba(255,255,255,0.10)",
-                border: "1px solid rgba(255,255,255,0.16)",
-                borderRadius: 10, padding: "11px 16px",
-                display: "flex", alignItems: "center", gap: 10, minWidth: 180,
-              }}>
-                <i className={`ti ti-${s.icon}`} style={{ fontSize: 20, color: C.teaGreen, flexShrink: 0 }} aria-hidden="true" />
-                <div>
-                  <div style={{ fontSize: 10, color: "rgba(255,255,255,0.55)", marginBottom: 1, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                    {s.label}
-                  </div>
-                  <div style={{ fontSize: 16, fontWeight: 700, color: "#fff" }}>
-                    {s.value}
-                    {s.sub && <span style={{ fontSize: 11, fontWeight: 400, marginLeft: 6, opacity: 0.7 }}>{s.sub}</span>}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div style={{ fontSize: 13, color: "rgba(255,255,255,0.5)" }}>Loading data…</div>
-        )}
+        {/* Sub-line */}
+        <p style={{
+          fontSize: 14, color: "rgba(208,239,177,0.75)",
+          margin: 0, lineHeight: 1.6, maxWidth: 460,
+          animation: "heroSlideUp 0.55s ease both",
+          animationDelay: "1.2s",
+          position: "relative",
+        }}>
+          ML/ AI supply &amp; demand forecasting tool to help Alberta food banks plan ahead, reduce waste, and serve more families.
+        </p>
       </div>
 
       <div style={{ padding: "36px 40px 52px", display: "flex", flexDirection: "column", gap: 40 }}>
@@ -273,7 +301,7 @@ export default function Dashboard({ onNavigate }) {
             Who are you?
           </h2>
           <p style={{ fontSize: 13, color: C.textMuted, margin: "0 0 20px" }}>
-            Choose the section that matches you — each is tailored to what you need.
+            Choose the section that matches you (each is tailored to what you need).
           </p>
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
@@ -325,9 +353,8 @@ export default function Dashboard({ onNavigate }) {
           <h2 style={{ fontSize: 22, fontWeight: 700, color: C.forestGreen, margin: "0 0 6px" }}>
             What drives food bank demand?
           </h2>
-          <p style={{ fontSize: 13, color: C.textMuted, margin: "0 0 20px", maxWidth: 620, lineHeight: 1.65 }}>
-            Unlike simple trend lines, FEEDS analyses four categories of external factors
-            that independently push demand up or down — giving food banks earlier, more accurate warnings.
+          <p style={{ fontSize: 13, color: C.textMuted, margin: "0 0 20px", maxWidth: 850, lineHeight: 1.65 }}>
+            Unlike simple trend lines, FEEDS analyses four categories of external factors that independently push demand up or down to give food banks earlier, more accurate warnings.
           </p>
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 20 }}>
@@ -408,7 +435,7 @@ export default function Dashboard({ onNavigate }) {
             Food banks in this study
           </h2>
           <p style={{ fontSize: 13, color: C.textMuted, margin: "0 0 20px" }}>
-            FEEDS covers four Alberta food banks across provincial and regional levels
+            FEEDS covers three Alberta food banks' datasets across provincial and regional levels and 1 food bank as a research partner to understand the situation on the ground and tailor the tool to real needs. 
           </p>
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}>
@@ -418,12 +445,31 @@ export default function Dashboard({ onNavigate }) {
                 border: `1px solid ${fb.border}`,
                 borderRadius: 12, padding: "20px 18px",
               }}>
+                {/* Logo container — circular, fixed size so all logos align */}
                 <div style={{
-                  width: 48, height: 48, borderRadius: 12, marginBottom: 14,
-                  background: "rgba(255,255,255,0.7)",
+                  width: 72, height: 72, borderRadius: "50%", marginBottom: 14, marginLeft: "auto", marginRight: "auto",
+                  background: "#fff",
+                  border: `1.5px solid ${fb.border}`,
                   display: "flex", alignItems: "center", justifyContent: "center",
+                  overflow: "hidden", padding: "8px", boxSizing: "border-box",
                 }}>
-                  <i className={`ti ti-${fb.icon}`} style={{ fontSize: 22, color: fb.color }} aria-hidden="true" />
+                  <img
+                    src={fb.logo}
+                    alt={`${fb.name} logo`}
+                    onError={e => {
+                      e.currentTarget.style.display = "none";
+                      e.currentTarget.nextSibling.style.display = "flex";
+                    }}
+                    style={{
+                      maxWidth: "100%", maxHeight: "100%",
+                      objectFit: "contain",
+                      display: "block",
+                    }}
+                  />
+                  {/* Fallback icon if logo missing */}
+                  <div style={{ display: "none", alignItems: "center", justifyContent: "center", width: "100%", height: "100%" }}>
+                    <i className={`ti ti-${fb.icon}`} style={{ fontSize: 26, color: fb.color }} aria-hidden="true" />
+                  </div>
                 </div>
                 <div style={{ fontSize: 14, fontWeight: 700, color: fb.color, marginBottom: 5 }}>
                   {fb.name}
@@ -444,7 +490,7 @@ export default function Dashboard({ onNavigate }) {
 
         {/* ── ABOUT FEEDS TEASER ───────────────────────────────────────── */}
         <section style={{
-          background: C.forestGreen,
+          background: `linear-gradient(135deg, #122b1e 0%, ${C.forestGreen} 40%, #2d6a50 75%, #3f826d 100%)`,
           borderRadius: 14, padding: "28px 32px",
           display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24,
         }}>
@@ -453,7 +499,7 @@ export default function Dashboard({ onNavigate }) {
               How does FEEDS work?
             </div>
             <div style={{ fontSize: 13, color: "rgba(255,255,255,0.72)", maxWidth: 480, lineHeight: 1.7 }}>
-              Learn about our problem statement, the models we built, and what we found —
+              Learn about our problem statement, the models we built, and what we found 
               including how AI forecasting can help food banks prevent shortfalls before they happen.
             </div>
           </div>

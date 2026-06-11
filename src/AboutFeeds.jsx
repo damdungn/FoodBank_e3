@@ -16,36 +16,54 @@ const SECTIONS = [
     icon: "alert-circle",
     color: "#8b2e1a",
     bg: "#fdecea",
-    title: "Problem Statement",
-    placeholder: "What is the core challenge facing food banks in Alberta? Why is demand forecasting difficult? What gaps exist in current planning tools?",
+    title: "The problem",
+    summary: "Food banks plan reactively — with limited tools to anticipate demand before it arrives.",
+    points: [
+      "Most planning relies on recent experience, not forward-looking data.",
+      "Demand is shaped by many interconnected factors: food prices, housing costs, government benefits, weather, and local events.",
+      "Provincial staff must allocate food across Alberta; regional staff must prepare the right number of hampers. Both are working without much advance notice.",
+      "Tracking and interpreting all these signals manually is difficult and time-consuming.",
+    ],
   },
   {
     icon: "bulb",
     color: C.jungleTeal,
     bg: C.surfaceGreen,
-    title: "Our Solution",
-    placeholder: "How does FEEDS address these challenges? What does the forecasting engine do, and what makes it different from manual planning?",
-  },
-  {
-    icon: "cpu",
-    color: "#3a5ea8",
-    bg: "#eef3fb",
-    title: "Models & Methods",
-    placeholder: "What models are used? Prophet time-series, XGBoost/RandomForest ensemble, economic regressors (CPI, AISH, migration, temperature). What data sources power each model?",
+    title: "Our solution",
+    summary: "FEEDS combines food bank records with external indicators to forecast demand before it hits.",
+    points: [
+      "Ingests operational data alongside economic, weather, and calendar datasets.",
+      "Generates monthly forecasts for inbound donations and outbound distribution.",
+      "Gives provincial staff early visibility into supply-demand gaps and when donor outreach is needed.",
+      "Gives regional staff monthly hamper estimates to support staffing, storage, and food packaging.",
+      "Designed to inform decisions, not replace them — staff stay in control.",
+    ],
   },
   {
     icon: "chart-bar",
     color: "#7a5ca8",
     bg: "#f3eefb",
-    title: "Key Findings",
-    placeholder: "What did we discover? How accurately can demand be predicted? Which factors matter most? What early-warning signals were identified?",
+    title: "Key findings",
+    summary: "Four consistent patterns emerged from model development and analysis.",
+    points: [
+      "Economic conditions drive demand at every level — food prices, shelter costs, and income-support caseloads all matter.",
+      "AISH caseload is a particularly strong early-warning signal: changes often appear before corresponding increases in food bank demand.",
+      "Adding external features significantly improves forecasts compared to models that rely on historical trends alone.",
+      "Different food banks have different drivers: economic conditions dominate provincial and regional models, while campus demand is more tied to the academic calendar.",
+    ],
   },
   {
     icon: "route",
     color: "#8a6020",
     bg: "#fffbee",
-    title: "Impact & Next Steps",
-    placeholder: "How does FEEDS help food banks act earlier? What is the roadmap — Edmonton Campus FB integration, inventory signals, real-time data feeds?",
+    title: "Impact & next steps",
+    summary: "FEEDS helps food banks plan ahead — so they can focus on the communities they serve.",
+    points: [
+      "Earlier demand visibility reduces reactive scrambling for food, volunteers, and storage capacity.",
+      "Better provincial allocation when staff can see supply-demand gaps forming weeks in advance.",
+      "Next: integrate Edmonton Food Bank data and complete the Campus Food Bank model.",
+      "Future: expand feature engineering, improve forecast explainability, and move toward real-time data feeds.",
+    ],
   },
 ];
 
@@ -101,9 +119,31 @@ export default function AboutFeeds() {
 
       {/* Header */}
       <div style={{
-        background: `linear-gradient(135deg, ${C.forestGreen} 0%, #2d6a50 100%)`,
-        padding: "44px 40px 40px",
+        background: `linear-gradient(135deg, #122b1e 0%, ${C.forestGreen} 40%, #2d6a50 75%, #3f826d 100%)`,
+        padding: "52px 44px 48px",
+        position: "relative",
+        overflow: "hidden",
       }}>
+        {/* Decorative rings */}
+        <div style={{
+          position: "absolute", top: -60, right: -60,
+          width: 260, height: 260, borderRadius: "50%",
+          border: "1.5px solid rgba(208,239,177,0.12)",
+          pointerEvents: "none",
+        }} />
+        <div style={{
+          position: "absolute", top: -20, right: -20,
+          width: 160, height: 160, borderRadius: "50%",
+          border: "1.5px solid rgba(208,239,177,0.08)",
+          pointerEvents: "none",
+        }} />
+        {/* Subtle leaf dot pattern */}
+        <div style={{
+          position: "absolute", bottom: 0, left: 0, right: 0, top: 0,
+          backgroundImage: "radial-gradient(circle, rgba(208,239,177,0.06) 1px, transparent 1px)",
+          backgroundSize: "28px 28px",
+          pointerEvents: "none",
+        }} />
         <div style={{
           display: "inline-flex", alignItems: "center", gap: 7,
           background: "rgba(255,255,255,0.12)", borderRadius: 20,
@@ -125,13 +165,63 @@ export default function AboutFeeds() {
 
       <div style={{ padding: "36px 40px 52px", display: "flex", flexDirection: "column", gap: 36 }}>
 
+        {/* Team photo — drop team.jpg into /public to activate */}
+        <section>
+          <h2 style={{ fontSize: 22, fontWeight: 700, color: C.forestGreen, margin: "0 0 6px" }}>
+            Meet the team
+          </h2>
+          <p style={{ fontSize: 13, color: C.textMuted, margin: "0 0 16px" }}>
+            FEEDS was built by a team of students at the University of Alberta.
+          </p>
+          <div style={{
+            borderRadius: 16,
+            overflow: "hidden",
+            border: `1px solid ${C.borderLight}`,
+            background: C.surfaceWhite,
+            boxShadow: "0 2px 12px rgba(34,68,51,0.07)",
+          }}>
+            <img
+              src="/team.jpg"
+              alt="The FEEDS team"
+              onError={e => { e.currentTarget.style.display = "none"; e.currentTarget.nextSibling.style.display = "flex"; }}
+              style={{
+                width: "100%",
+                maxHeight: 420,
+                objectFit: "cover",
+                objectPosition: "center top",
+                display: "block",
+              }}
+            />
+            {/* Fallback shown when team.jpg is missing */}
+            <div style={{
+              display: "none",
+              alignItems: "center", justifyContent: "center",
+              flexDirection: "column", gap: 10,
+              height: 200,
+              background: C.surfaceGreen,
+              color: C.textMuted,
+            }}>
+              <i className="ti ti-users" style={{ fontSize: 32, color: C.borderLight }} aria-hidden="true" />
+              <span style={{ fontSize: 13 }}>Add <code style={{ background: "#eee", padding: "1px 6px", borderRadius: 4 }}>team.jpg</code> to the <code style={{ background: "#eee", padding: "1px 6px", borderRadius: 4 }}>public/</code> folder</span>
+            </div>
+            <div style={{
+              padding: "14px 20px",
+              borderTop: `1px solid ${C.borderLight}`,
+              fontSize: 13, color: C.textMuted,
+              background: C.surfaceGreen,
+            }}>
+              The FEEDS team · University of Alberta · 2025–2026
+            </div>
+          </div>
+        </section>
+
         {/* Research sections */}
         <section>
           <h2 style={{ fontSize: 22, fontWeight: 700, color: C.forestGreen, margin: "0 0 6px" }}>
             Research overview
           </h2>
           <p style={{ fontSize: 13, color: C.textMuted, margin: "0 0 20px" }}>
-            Content coming soon — this page will document our full research findings.
+            Why we built FEEDS, how it works, what we found, and where it's going.
           </p>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -151,19 +241,20 @@ export default function AboutFeeds() {
                 }}>
                   <i className={`ti ti-${s.icon}`} style={{ fontSize: 18, color: s.color }} aria-hidden="true" />
                 </div>
-                <div>
-                  <div style={{ fontSize: 16, fontWeight: 700, color: C.textPrimary, marginBottom: 6 }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: C.textPrimary, marginBottom: 4 }}>
                     {s.title}
                   </div>
-                  <div style={{
-                    fontSize: 13, color: C.textMuted, lineHeight: 1.65,
-                    fontStyle: "italic",
-                    background: "#f7f9f5", borderRadius: 6,
-                    padding: "8px 12px",
-                    borderLeft: `3px dashed ${C.borderLight}`,
-                  }}>
-                    {s.placeholder}
+                  <div style={{ fontSize: 13, color: C.textSecondary, marginBottom: 10, lineHeight: 1.6 }}>
+                    {s.summary}
                   </div>
+                  <ul style={{ margin: 0, padding: "0 0 0 16px", display: "flex", flexDirection: "column", gap: 5 }}>
+                    {s.points.map((p, i) => (
+                      <li key={i} style={{ fontSize: 13, color: C.textMuted, lineHeight: 1.65 }}>
+                        {p}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               </div>
             ))}
@@ -217,22 +308,22 @@ export default function AboutFeeds() {
           </div>
         </section>
 
-        {/* Coming soon notice */}
+        {/* Collaboration note */}
         <div style={{
           background: C.surfaceGreen,
-          border: `1px dashed ${C.borderLight}`,
+          border: `1px solid ${C.borderLight}`,
           borderRadius: 12, padding: "24px 28px",
           display: "flex", gap: 14, alignItems: "flex-start",
         }}>
-          <i className="ti ti-clock" style={{ fontSize: 22, color: C.jungleTeal, flexShrink: 0, marginTop: 2 }} aria-hidden="true" />
+          <i className="ti ti-heart-handshake" style={{ fontSize: 22, color: C.jungleTeal, flexShrink: 0, marginTop: 2 }} aria-hidden="true" />
           <div>
             <div style={{ fontSize: 15, fontWeight: 700, color: C.forestGreen, marginBottom: 4 }}>
-              Full documentation coming soon
+              Built in collaboration with food banks
             </div>
             <div style={{ fontSize: 13, color: C.textSecondary, lineHeight: 1.65 }}>
-              This page will include the complete project write-up: methodology, model evaluation results,
-              feature importance analysis, and recommendations for food banks.
-              Content will be added as the research is finalised.
+              FEEDS was developed in partnership with Food Banks Alberta and Red Deer Food Bank.
+              Through continued collaboration, the goal is to make FEEDS a practical decision-support tool
+              that helps organizations anticipate needs, allocate resources, and improve food security outcomes across Alberta.
             </div>
           </div>
         </div>
