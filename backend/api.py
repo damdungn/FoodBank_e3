@@ -446,10 +446,11 @@ def provincial_history():
     hist = predict_historical(df, models, fc)
     result = [
         {
-            "date":      row.Date.strftime("%b %Y"),
-            "inbound":   int(row.LBS_In),
-            "outbound":  int(row.LBS_Out),
-            "predicted": round(float(row.LBS_In_pred), 0),
+            "date":           row.Date.strftime("%b %Y"),
+            "inbound":        int(row.LBS_In),
+            "outbound":       int(row.LBS_Out),
+            "predicted":      round(float(row.LBS_In_pred), 0),
+            "predicted_gap":  round(float(row.LBS_In_pred - row.LBS_Out_pred), 0),
         }
         for row in hist.itertuples()
     ]
@@ -457,10 +458,11 @@ def provincial_history():
     # Append 3-month forecast (inbound/outbound = null → dashed in chart)
     for fc_row in forecast_monthly(df, models, fc, months=3):
         result.append({
-            "date":      fc_row["month"],
-            "inbound":   None,
-            "outbound":  None,
-            "predicted": fc_row["LBS_In_forecast"],
+            "date":           fc_row["month"],
+            "inbound":        None,
+            "outbound":       None,
+            "predicted":      fc_row["LBS_In_forecast"],
+            "predicted_gap":  round(float(fc_row["Gap_forecast"]), 0),
         })
 
     return {"historyData": result}
