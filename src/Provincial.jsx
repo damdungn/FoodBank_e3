@@ -3,7 +3,7 @@ import { API_BASE } from "./config";
 import {
   ComposedChart, LineChart, BarChart,
   Line, Bar, Cell, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer,
+  Tooltip, ResponsiveContainer, ReferenceLine,
 } from "recharts";
 
 const C = {
@@ -81,7 +81,9 @@ const ChartTooltip = ({ active, payload, label }) => {
       {payload.map((p) => p.value != null && (
         <div key={p.name} style={{ display: "flex", justifyContent: "space-between", gap: 16, opacity: 0.9 }}>
           <span>{p.name}</span>
-          <span style={{ fontWeight: 600 }}>{(p.value / 1000).toFixed(1)}K lbs</span>
+          <span style={{ fontWeight: 600 }}>
+            {p.value >= 0 ? "+" : ""}{(p.value / 1000).toFixed(1)}K lbs
+          </span>
         </div>
       ))}
     </div>
@@ -378,40 +380,48 @@ export default function Provincial() {
                   );
                 })()}
 
-                {/* Main chart */}
-                <Panel>
-                  <SectionTitle
-                    title="Donations in vs. food distributed with history + 3-month forecast"
-                    sub="Monthly lbs · solid = actual, dashed = model forecast"
-                  />
-                  <ResponsiveContainer width="100%" height={230}>
-                    <ComposedChart data={chartData} margin={{ top: 4, right: 16, bottom: 0, left: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke={C.teaGreen} />
-                      <XAxis dataKey="date" tick={{ fontSize: 12, fill: C.textMuted }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
-                      <YAxis
-                        domain={["auto", "auto"]}
-                        tickFormatter={v => `${(v / 1000).toFixed(0)}K`}
-                        tick={{ fontSize: 12, fill: C.textMuted }} axisLine={false} tickLine={false} width={45}
+                {/* Main chart — supply gap */}
+                {(() => {
+                  const gapChartData = chartData.map(d => ({
+                    date: d.date,
+                    actualGap:    d.inbound != null && d.outbound != null ? d.inbound - d.outbound : null,
+                    predictedGap: d.predicted_gap ?? null,
+                  }));
+                  return (
+                    <Panel>
+                      <SectionTitle
+                        title="Supply gap — actual vs. model predicted"
+                        sub="Monthly lbs · above zero = surplus · below zero = shortfall · dashed = model · last 3 months are forecast"
                       />
-                      <Tooltip content={<ChartTooltip />} />
-                      <Line type="monotone" dataKey="inbound"   name="Inbound (actual)"  stroke={C.jungleTeal} strokeWidth={2.5} dot={false} connectNulls={false} />
-                      <Line type="monotone" dataKey="outbound"  name="Outbound (actual)" stroke={C.wheat}      strokeWidth={2.5} dot={false} strokeDasharray="5 3" connectNulls={false} />
-                      <Line type="monotone" dataKey="predicted" name="Model forecast"    stroke={C.dustyDenim} strokeWidth={2}   dot={{ r: 3 }} strokeDasharray="7 4" connectNulls />
-                    </ComposedChart>
-                  </ResponsiveContainer>
-                  <div style={{ display: "flex", gap: 20, marginTop: 10 }}>
-                    {[
-                      { color: C.jungleTeal, label: "Inbound (actual)"  },
-                      { color: C.wheat,      label: "Outbound (actual)" },
-                      { color: C.dustyDenim, label: "Model forecast"    },
-                    ].map(({ color, label }) => (
-                      <span key={label} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: C.textMuted }}>
-                        <span style={{ width: 10, height: 3, background: color, display: "inline-block", borderRadius: 2 }} />
-                        {label}
-                      </span>
-                    ))}
-                  </div>
-                </Panel>
+                      <ResponsiveContainer width="100%" height={230}>
+                        <ComposedChart data={gapChartData} margin={{ top: 4, right: 16, bottom: 0, left: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke={C.teaGreen} />
+                          <XAxis dataKey="date" tick={{ fontSize: 12, fill: C.textMuted }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
+                          <YAxis
+                            domain={["auto", "auto"]}
+                            tickFormatter={v => `${v >= 0 ? "+" : ""}${(v / 1000).toFixed(0)}K`}
+                            tick={{ fontSize: 12, fill: C.textMuted }} axisLine={false} tickLine={false} width={52}
+                          />
+                          <Tooltip content={<ChartTooltip />} />
+                          <ReferenceLine y={0} stroke={C.borderLight} strokeWidth={1.5} />
+                          <Line type="monotone" dataKey="actualGap"    name="Actual gap"    stroke={C.jungleTeal} strokeWidth={2.5} dot={false} connectNulls={false} />
+                          <Line type="monotone" dataKey="predictedGap" name="Predicted gap" stroke={C.dustyDenim} strokeWidth={2}   dot={{ r: 3 }} strokeDasharray="7 4" connectNulls />
+                        </ComposedChart>
+                      </ResponsiveContainer>
+                      <div style={{ display: "flex", gap: 20, marginTop: 10 }}>
+                        {[
+                          { color: C.jungleTeal, label: "Actual gap"    },
+                          { color: C.dustyDenim, label: "Predicted gap" },
+                        ].map(({ color, label }) => (
+                          <span key={label} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: C.textMuted }}>
+                            <span style={{ width: 10, height: 3, background: color, display: "inline-block", borderRadius: 2 }} />
+                            {label}
+                          </span>
+                        ))}
+                      </div>
+                    </Panel>
+                  );
+                })()}
 
                 {/* 3-month gap forecast */}
                 {gapForecast.length > 0 && (
