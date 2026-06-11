@@ -616,7 +616,7 @@ def model_summary():
 # ── Regional — Prophet forecast JSON (exported from Colab) ───────────────────
 # Drop rdfb_forecast.json into backend/data/ to activate these endpoints.
 
-REGIONAL_JSON = Path(__file__).parent / "data" / "rdfb_forecast_export.json"
+REGIONAL_JSON = Path(__file__).parent / "data" / "rdfb_forecast.json"
 
 
 def _regional_available() -> bool:
@@ -642,14 +642,27 @@ def _load_regional() -> dict:
 @app.get("/api/regional/forecast")
 def regional_forecast():
     """
-    12-month Prophet hamper forecast with 80% CI and AFB gap overlay.
-    Each row: { month, yhat, lower, upper, afbGap }
+    12-month Prophet hamper forecast with 80% CI.
+    Returns both historical (actual + fitted) and forecast arrays.
+    Supports new format (forecast/lower_80/upper_80/label) and old (yhat/lower/upper/month).
     """
     data = _load_regional()
+    raw_fc = data.get("forecast", [])
+    forecast_norm = [
+        {
+            "month":  r.get("label", r.get("month", "")),
+            "yhat":   round(float(r.get("forecast", r.get("yhat", 0))), 1),
+            "lower":  round(float(r.get("lower_80",  r.get("lower",  0))), 1),
+            "upper":  round(float(r.get("upper_80",  r.get("upper",  0))), 1),
+            "afbGap": r.get("afbGap", 0),
+        }
+        for r in raw_fc
+    ]
     return {
-        "forecast":    data.get("forecast", []),
+        "historical":  data.get("historical", []),
+        "forecast":    forecast_norm,
         "seasonality": data.get("seasonality", {}),
-        "generatedAt": data.get("generatedAt"),
+        "generatedAt": data.get("generated", data.get("generatedAt")),
     }
 
 
@@ -684,7 +697,7 @@ def regional_features():
 def regional_metrics():
     """Model performance stats for the RDFB Prophet model."""
     data = _load_regional()
-    m    = data.get("metrics", {})
+    m    = data.get("metrics", data.get("accuracy", {}))
 
     return {
         "modelStats": [
@@ -696,7 +709,7 @@ def regional_metrics():
             {"label": "Training window",   "value": m.get("trainingWindow", "N/A")},
             {"label": "Model type",        "value": "Prophet + economic regressors"},
             {"label": "Forecast horizon",  "value": "12 months"},
-            {"label": "Generated",         "value": data.get("generatedAt", "N/A")},
+            {"label": "Generated",         "value": data.get("generated", data.get("generatedAt", "N/A"))},
         ]
     }
 
