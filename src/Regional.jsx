@@ -336,6 +336,9 @@ export default function Regional() {
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", background: C.pageBg, overflow: "hidden" }}>
 
+      {/* On mobile: header + content scroll together. On desktop: display:contents is transparent. */}
+      <div style={isMobile ? { flex: 1, overflowY: "auto" } : { display: "contents" }}>
+
       {/* Header */}
       <header style={{ padding: isMobile ? "16px 14px 0" : "32px 28px 0", background: C.pageBg, flexShrink: 0 }}>
         <div style={{ marginBottom: 16 }}>
@@ -415,7 +418,7 @@ export default function Regional() {
       </header>
 
       {/* Content */}
-      <div style={{ flex: 1, overflowY: "auto", padding: isMobile ? "16px 14px 24px" : "24px 28px 32px" }}>
+      <div style={{ flex: isMobile ? undefined : 1, overflowY: isMobile ? undefined : "auto", padding: isMobile ? "16px 14px 24px" : "24px 28px 32px" }}>
 
         {/* ── COMING SOON PLACEHOLDER (shown when selected FB is not ready) ── */}
         {!fbReady && (() => {
@@ -854,6 +857,8 @@ export default function Regional() {
         )}
 
       </div>
+
+      </div>{/* end mobile scroll wrapper */}
     </div>
   );
 }

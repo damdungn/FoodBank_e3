@@ -256,6 +256,9 @@ export default function Provincial() {
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", background: C.pageBg, overflow: "hidden" }}>
 
+      {/* On mobile: header + content scroll together. On desktop: display:contents is transparent. */}
+      <div style={isMobile ? { flex: 1, overflowY: "auto" } : { display: "contents" }}>
+
       {/* Header */}
       <header style={{ padding: isMobile ? "16px 14px 0" : "32px 28px 0", background: C.pageBg, flexShrink: 0 }}>
         <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", alignItems: isMobile ? "flex-start" : "flex-end", justifyContent: "space-between", gap: isMobile ? 10 : 0, marginBottom: 16 }}>
@@ -305,7 +308,7 @@ export default function Provincial() {
       </header>
 
       {/* Content */}
-      <div style={{ flex: 1, overflowY: "auto", padding: isMobile ? "16px 14px 24px" : "24px 28px 32px" }}>
+      <div style={{ flex: isMobile ? undefined : 1, overflowY: isMobile ? undefined : "auto", padding: isMobile ? "16px 14px 24px" : "24px 28px 32px" }}>
 
         {loading ? (
           <div style={{ textAlign: "center", padding: "60px 0", color: C.textMuted, fontSize: 13 }}>
@@ -659,6 +662,8 @@ export default function Provincial() {
           </>
         )}
       </div>
+
+      </div>{/* end mobile scroll wrapper */}
     </div>
   );
 }

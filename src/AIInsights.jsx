@@ -265,6 +265,10 @@ export default function AIInsights() {
       background: C.pageBg, fontFamily: "'DM Sans', system-ui, sans-serif",
     }}>
 
+      {/* On mobile: header + suggested + messages all scroll together.
+          On desktop: display:contents is transparent — children behave as direct flex items. */}
+      <div style={isMobile ? { flex: 1, overflowY: "auto" } : { display: "contents" }}>
+
       {/* Header */}
       <header style={{ padding: isMobile ? "16px 14px 14px" : "32px 28px 20px", background: C.pageBg, flexShrink: 0 }}>
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 8 : 0 }}>
@@ -355,7 +359,7 @@ export default function AIInsights() {
       <div style={{ height: "0.5px", background: C.borderLight, flexShrink: 0, margin: isMobile ? "0 14px" : "0 28px" }} />
 
       {/* Messages */}
-      <div style={{ flex: 1, overflowY: "auto", padding: isMobile ? "16px 14px" : "20px 28px" }}>
+      <div style={{ flex: isMobile ? undefined : 1, overflowY: isMobile ? undefined : "auto", padding: isMobile ? "16px 14px" : "20px 28px" }}>
         {messages.map((m, i) =>
           m.role === "user"
             ? <UserBubble key={i} text={m.content} isMobile={isMobile} />
@@ -364,6 +368,8 @@ export default function AIInsights() {
         {loading && <AssistantBubble loading isMobile={isMobile} />}
         <div ref={bottomRef} />
       </div>
+
+      </div>{/* end mobile scroll wrapper */}
 
       {/* Input bar */}
       <div style={{
