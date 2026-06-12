@@ -31,7 +31,7 @@ const DRIVERS = [
     bg:      "#eaf5fb",
     border:  "#a8d4f0",
     title:   "Weather & climate",
-    desc:    "Cold snaps and extreme precipitation affect both client travel and volunteer capacity. The model uses monthly temperature and precipitation averages as regressors.",
+    desc:    "Cold weather and extreme precipitation affect both client travel and volunteer capacity. The model uses monthly temperature and precipitation averages as regressors.",
     factors: ["Mean temperature (°C)", "Total precipitation (mm)", "Snowfall (cm)"],
     signalKeys: [],
   },
@@ -84,7 +84,7 @@ const FOOD_BANKS = [
   {
     key: "afb",
     name: "Food Banks Alberta",
-    role: "Provincial hub · coordinates food distribution across Alberta",
+    role: "Provincial model · coordinating food distribution across Alberta",
     icon: "building",
     logo: "/aberta_fb.jpg",
     color: C.forestGreen,
@@ -95,7 +95,7 @@ const FOOD_BANKS = [
   {
     key: "rdfb",
     name: "Red Deer Food Bank",
-    role: "Regional model · hamper demand forecasting",
+    role: "Regional model · serving hampers based on local demand requests",
     icon: "map-pin",
     logo: "/red_deer_fb.jpg",
     color: "#5588c7",
@@ -117,7 +117,7 @@ const FOOD_BANKS = [
   {
     key: "campus",
     name: "Campus Food Bank",
-    role: "University of Alberta · student food security",
+    role: "University of Alberta · addressing student food insecurity",
     icon: "school",
     logo: "/campus_fb.jpg",
     color: "#8a6020",
@@ -341,7 +341,7 @@ export default function Dashboard({ onNavigate }) {
             Who are you?
           </h2>
           <p style={{ fontSize: 14, color: C.textMuted, margin: "0 0 20px" }}>
-            Choose the section that matches you (each is tailored to what you need).
+            Choose the section that matches you.
           </p>
 
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)", gap: 16 }}>
@@ -394,7 +394,7 @@ export default function Dashboard({ onNavigate }) {
             What drives food bank demand?
           </h2>
           <p style={{ fontSize: 14, color: C.textMuted, margin: "0 0 20px", maxWidth: 850, lineHeight: 1.65 }}>
-            Unlike simple trend lines, FEEDS analyses four categories of external factors that independently push demand up or down to give food banks earlier, more accurate warnings.
+            Unlike simple trend lines, FEEDS analyses four categories of external factors that independently push demand up or down to give food banks earlier and more accurate warnings.
           </p>
 
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(4, 1fr)", gap: 14, marginBottom: 20 }}>

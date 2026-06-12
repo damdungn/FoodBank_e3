@@ -48,7 +48,7 @@ const FOOD_BANKS = [
         { icon: "users",          label: "Visits",           desc: "Number of visits per day" },
         { icon: "user-check",     label: "People per visit", desc: "Household size at each visit" },
         { icon: "weight",         label: "Food distributed", desc: "Pounds of food per visit" },
-        { icon: "heart-handshake",label: "Donations",        desc: "Total pounds donated (aggregated)" },
+        { icon: "heart-handshake",label: "Donations",        desc: "Total pounds donated" },
       ],
       plannedTabs: [
         "Daily visit trend & forecast",
@@ -531,7 +531,7 @@ export default function Regional() {
                 <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(4, minmax(0,1fr))", gap: 14 }}>
                   {[
                     {
-                      label:  "Avg forecast",
+                      label:  "Average forecast",
                       value:  `${meanYhat.toLocaleString()} hampers`,
                       sub:    "per month · next 12 months",
                       accent: C.jungleTeal,
@@ -724,8 +724,8 @@ export default function Regional() {
                 background: C.surfaceGreen, borderRadius: 8, border: `0.5px solid ${C.borderLight}`,
                 fontSize: 13, color: C.textSecondary, lineHeight: 1.6,
               }}>
-                Cross-validation used a 3-year initial window, retraining every 6 months with a 6-month
-                forecast horizon. CV MAPE of 17.7% is the honest out-of-sample accuracy while in-sample
+                Cross-validation used a 3-year dataset, retraining every 6 months with a 6-month
+                forecast horizon. CV MAPE of 17.7% is the out-of-sample accuracy while in-sample
                 MAPE (10.8%) reflects fit on training data.
               </div>
             </Panel>
