@@ -327,7 +327,7 @@ export default function Provincial() {
                   const nextMonth  = next?.month ?? "—";
                   const nextOut    = next?.LBS_Out_forecast;
                   const nextIn     = next?.LBS_In_forecast;
-                  const nextGap    = next?.Gap_forecast;
+                  const nextGap    = (nextIn != null && nextOut != null) ? nextIn - nextOut : null;
                   const isShortfall = nextGap != null && nextGap < 0;
                   const gapAbs     = nextGap != null ? Math.abs(nextGap) : null;
                   const gapValueStr = gapAbs != null
@@ -390,10 +390,15 @@ export default function Provincial() {
                     const avg = win.reduce((s, x) => s + x.rawGap, 0) / win.length;
                     return { date: d.date, actualGap: Math.round(avg), modelLine: d.modelLine };
                   });
+                  const fcMonths = new Set(gapForecast.map(r => r.month));
+                  const bridgePoints = chartData
+                    .filter(d => (d.inbound == null || d.outbound == null) && d.predicted_gap != null && !fcMonths.has(d.date))
+                    .map(d => ({ date: d.date, actualGap: null, modelLine: d.predicted_gap }));
                   const fcGap = gapForecast.map(r => ({
-                    date: r.month, actualGap: null, modelLine: r.Gap_forecast,
+                    date: r.month, actualGap: null,
+                    modelLine: (r.LBS_In_forecast != null && r.LBS_Out_forecast != null) ? r.LBS_In_forecast - r.LBS_Out_forecast : null,
                   }));
-                  const gapChartData = [...histGap, ...fcGap];
+                  const gapChartData = [...histGap, ...bridgePoints, ...fcGap];
                   return (
                     <Panel>
                       <SectionTitle
@@ -451,13 +456,14 @@ export default function Provincial() {
                     />
                     <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0,1fr))", gap: 12 }}>
                       {gapForecast.map((row) => {
-                        const isGap  = row.Gap_forecast < 0;
+                        const rowGap = (row.LBS_In_forecast != null && row.LBS_Out_forecast != null) ? row.LBS_In_forecast - row.LBS_Out_forecast : 0;
+                        const isGap  = rowGap < 0;
                         const isCrit = row.alert === "Critical";
                         const isWarn = row.alert === "Warning";
                         const accentColor = isCrit ? "#e8a090" : isWarn ? "#d4c060" : isGap ? "#c9d8e8" : "#ace890";
                         const badgeBg     = isCrit ? "#fdecea" : isWarn ? "#fdf6d8" : isGap ? "#ddeaf8" : "#e2ffec";
                         const badgeColor  = isCrit ? "#8b2e1a" : isWarn ? "#7a6010" : isGap ? "#2d5a9e" : "#1a8b20";
-                        const gapAbs = Math.abs(row.Gap_forecast);
+                        const gapAbs = Math.abs(rowGap);
                         return (
                           <div key={row.period} style={{
                             border: `0.5px solid ${accentColor}`,
