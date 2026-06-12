@@ -60,10 +60,11 @@ FIXED_REGRESSORS = [
     # Only the 4 strongest, mathematically defensible drivers.
     # More regressors → more overfitting on ~42 monthly rows.
 
-    "CPI_Food",        # food-price inflation → direct demand driver
-    "AISH_TOTAL",      # income-assistance caseload → poverty proxy
-    "Net_Migration",   # population growth → demand volume
-    "Mean_Temp",       # seasonal weather → donation / usage patterns
+    "CPI_Food",          # food-price inflation → direct demand driver
+    "AISH_TOTAL",        # income-assistance caseload → poverty proxy
+    "Net_Migration",     # population growth → demand volume
+    "Mean_Temp",         # seasonal weather → donation / usage patterns
+    "n_ramadan_lag1",    # post-Ramadan donation hangover (prev month Ramadan days)
 ]
 
 
@@ -115,6 +116,9 @@ def _fit_prophet(
     data: pd.DataFrame,
     top_features: list,
     target_col: str,
+    changepoint_prior_scale: float = 0.001,
+    seasonality_prior_scale: float = 0.01,
+    regressor_prior_scale: float = 0.02,
 ) -> Prophet:
 
     df_p = data[["Date"]].copy().rename(
@@ -136,10 +140,10 @@ def _fit_prophet(
         weekly_seasonality=False,
         daily_seasonality=False,
 
-        seasonality_prior_scale=0.01,
+        seasonality_prior_scale=seasonality_prior_scale,
         seasonality_mode="additive",
 
-        changepoint_prior_scale=0.001,
+        changepoint_prior_scale=changepoint_prior_scale,
     )
 
     for col in top_features:
@@ -148,7 +152,7 @@ def _fit_prophet(
 
             model.add_regressor(
                 col,
-                prior_scale=0.02,
+                prior_scale=regressor_prior_scale,
                 mode="additive",
             )
 
@@ -392,6 +396,16 @@ def main():
     print("\n[1/5] Loading monthly data...")
 
     monthly = aggregate_monthly(load_data())
+
+    # Drop incomplete months where fewer than 10 days have non-zero LBS_In
+    # (e.g. December 2025 only has 3 days of data, corrupting lag features)
+    daily = load_data()
+    daily["_month"] = pd.to_datetime(daily["Date"]).dt.to_period("M")
+    active_days = daily[daily["LBS_In"] > 0].groupby("_month").size()
+    complete_months = active_days[active_days >= 10].index
+    monthly = monthly[
+        monthly["Date"].dt.to_period("M").isin(complete_months)
+    ].reset_index(drop=True)
 
     monthly["net"] = (
         monthly["LBS_In"] - monthly["LBS_Out"]
@@ -676,10 +690,15 @@ def main():
 
     print("\n[2/5] Training Prophet...")
 
+    # Train prophet_net on ALL months so it sees the 2025 downturn.
+    # prophet_in/out stay on the train split for evaluation purposes.
     prophet_net = _fit_prophet(
-        train_all_months,
+        monthly,
         top_features,
-        "net"
+        "net",
+        changepoint_prior_scale=0.05,
+        seasonality_prior_scale=0.05,
+        regressor_prior_scale=0.05,
     )
 
     prophet_in = _fit_prophet(

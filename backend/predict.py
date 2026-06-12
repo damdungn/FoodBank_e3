@@ -123,6 +123,16 @@ def predict_historical(
     out["LBS_Out_pred"] = np.maximum(
         _prophet_predict(models["prophet_lbs_out"], df_monthly, _regressors(models["prophet_lbs_out"], fallback))["yhat"].values, 0
     )
+    if "prophet_net" in models:
+        net_regressors = _regressors(models["prophet_net"], fallback)
+        net_fcst = _prophet_predict(models["prophet_net"], df_monthly, net_regressors)
+        out["LBS_Net_pred"]  = net_fcst["yhat"].values
+        out["LBS_Net_lower"] = net_fcst["yhat_lower"].values
+        out["LBS_Net_upper"] = net_fcst["yhat_upper"].values
+    else:
+        out["LBS_Net_pred"]  = out["LBS_In_pred"] - out["LBS_Out_pred"]
+        out["LBS_Net_lower"] = out["LBS_Net_pred"]
+        out["LBS_Net_upper"] = out["LBS_Net_pred"]
     return out
 
 
@@ -185,6 +195,8 @@ def forecast_monthly(
         fcst_out = models["prophet_lbs_out"].predict(df_p)
 
         net_pred      = float(fcst_net["yhat"].iloc[0])
+        net_lower     = float(fcst_net["yhat_lower"].iloc[0])
+        net_upper     = float(fcst_net["yhat_upper"].iloc[0])
         lbs_in_pred   = max(float(fcst_in["yhat"].iloc[0]),  0.0)
         lbs_out_pred  = max(float(fcst_out["yhat"].iloc[0]), 0.0)
 
@@ -245,7 +257,7 @@ def forecast_monthly(
         ensemble_gap_prob = 0.50 * prophet_gap_prob + 0.50 * lgbm_gap_prob
         surplus_prob      = 1.0 - ensemble_gap_prob
 
-        gap   = lbs_in_pred - lbs_out_pred
+        gap   = net_pred
         alert = _alert_level(ensemble_gap_prob, threshold, gap, gap_stats)
         conf  = int(round((ensemble_gap_prob if alert != "OK" else surplus_prob) * 100))
 
@@ -259,6 +271,8 @@ def forecast_monthly(
             "LBS_Out_lower":     round(min(out_lower, lbs_out_pred), 0),
             "LBS_Out_upper":     round(max(out_upper, lbs_out_pred), 0),
             "Gap_forecast":      round(gap, 0),
+            "Gap_lower":         round(net_lower, 0),
+            "Gap_upper":         round(net_upper, 0),
             "alert":             alert,
             "confidence_pct":    conf,
             "gap_prob":          round(ensemble_gap_prob, 4),

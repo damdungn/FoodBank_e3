@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { API_BASE } from "./config";
 import {
   ComposedChart, LineChart, BarChart,
-  Line, Bar, Cell, XAxis, YAxis, CartesianGrid,
+  Line, Bar, Area, Cell, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, ReferenceLine,
 } from "recharts";
 
@@ -252,8 +252,7 @@ export default function Provincial() {
   const confPct   = confidence?.confidence_pct ?? "—";
   const confLabel = confidence?.confidence_label ?? "confidence";
 
-  // Keep last 18 rows of history + forecast for chart clarity
-  const chartData = historyData.length > 20 ? historyData.slice(-20) : historyData;
+  const chartData = historyData.filter(d => parseInt(d.date.split(" ")[1], 10) >= 2026);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", background: C.pageBg, overflow: "hidden" }}>
@@ -358,7 +357,8 @@ export default function Provincial() {
                           label: `Projected gap`,
                           value: gapValueStr,
                           sub: gapSubStr, accent: gapAccent,
-                          badgeBg: gapBadgeBg, badgeColor: gapBadgeColor,
+                          badgeBg:    isShortfall ? "#fdecea" : "#e2ffec",
+                          badgeColor: isShortfall ? "#c0622a" : "#1a8b20",
                         },
                         {
                           label: "Forecast confidence",
@@ -382,43 +382,62 @@ export default function Provincial() {
 
                 {/* Main chart — supply gap */}
                 {(() => {
-                  const gapChartData = chartData.map(d => ({
-                    date: d.date,
-                    actualGap:    d.inbound != null && d.outbound != null ? d.inbound - d.outbound : null,
-                    predictedGap: d.predicted_gap ?? null,
+                  const rawHist = chartData
+                    .filter(d => d.inbound != null && d.outbound != null)
+                    .map(d => ({ date: d.date, rawGap: d.inbound - d.outbound, modelLine: d.predicted_gap ?? null }));
+                  const histGap = rawHist.map((d, i) => {
+                    const win = rawHist.slice(Math.max(0, i - 2), i + 1);
+                    const avg = win.reduce((s, x) => s + x.rawGap, 0) / win.length;
+                    return { date: d.date, actualGap: Math.round(avg), modelLine: d.modelLine };
+                  });
+                  const fcGap = gapForecast.map(r => ({
+                    date: r.month, actualGap: null, modelLine: r.Gap_forecast,
                   }));
+                  const gapChartData = [...histGap, ...fcGap];
                   return (
                     <Panel>
                       <SectionTitle
-                        title="Supply gap — actual vs. model predicted"
-                        sub="Monthly lbs · above zero = surplus · below zero = shortfall · dashed = model · last 3 months are forecast"
+                        title="Supply gap — actual + 3-month forecast"
+                        sub="Solid = 3-month rolling avg of actual gap · dashed = model fit + 3-month forecast"
                       />
-                      <ResponsiveContainer width="100%" height={230}>
-                        <ComposedChart data={gapChartData} margin={{ top: 4, right: 16, bottom: 0, left: 0 }}>
+                      <ResponsiveContainer width="100%" height={280}>
+                        <ComposedChart data={gapChartData} margin={{ top: 4, right: 16, bottom: 20, left: 10 }}>
                           <CartesianGrid strokeDasharray="3 3" stroke={C.teaGreen} />
-                          <XAxis dataKey="date" tick={{ fontSize: 12, fill: C.textMuted }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
+                          <XAxis
+                            dataKey="date"
+                            tick={{ fontSize: 11, fill: C.textMuted }}
+                            axisLine={false} tickLine={false}
+                            interval={0}
+                            angle={-30} textAnchor="end"
+                          />
                           <YAxis
                             domain={["auto", "auto"]}
-                            tickFormatter={v => `${v >= 0 ? "+" : ""}${(v / 1000).toFixed(0)}K`}
-                            tick={{ fontSize: 12, fill: C.textMuted }} axisLine={false} tickLine={false} width={52}
+                            tickFormatter={v => `${v > 0 ? "+" : ""}${(v / 1000).toFixed(0)}K`}
+                            tick={{ fontSize: 11, fill: C.textMuted }}
+                            axisLine={false} tickLine={false} width={46}
                           />
                           <Tooltip content={<ChartTooltip />} />
-                          <ReferenceLine y={0} stroke={C.borderLight} strokeWidth={1.5} />
-                          <Line type="monotone" dataKey="actualGap"    name="Actual gap"    stroke={C.jungleTeal} strokeWidth={2.5} dot={false} connectNulls={false} />
-                          <Line type="monotone" dataKey="predictedGap" name="Predicted gap" stroke={C.dustyDenim} strokeWidth={2}   dot={{ r: 3 }} strokeDasharray="7 4" connectNulls />
+                          <ReferenceLine y={0} stroke="#a0b8a0" strokeWidth={1.5} />
+                          <Line type="monotone" dataKey="actualGap" name="Actual gap (3-mo avg)"   stroke={C.jungleTeal} strokeWidth={1.5} dot={{ r: 2.5, fill: C.jungleTeal }} connectNulls={false} />
+                          <Line type="monotone" dataKey="modelLine" name="Model fit / forecast"    stroke={C.dustyDenim} strokeWidth={1.5} dot={{ r: 2.5, fill: C.dustyDenim }} strokeDasharray="5 3" connectNulls />
                         </ComposedChart>
                       </ResponsiveContainer>
-                      <div style={{ display: "flex", gap: 20, marginTop: 10 }}>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 16, marginTop: 10 }}>
                         {[
-                          { color: C.jungleTeal, label: "Actual gap"    },
-                          { color: C.dustyDenim, label: "Predicted gap" },
-                        ].map(({ color, label }) => (
+                          { color: C.jungleTeal, label: "Actual gap (3-mo avg)", dash: false },
+                          { color: C.dustyDenim, label: "Model fit / forecast",  dash: true  },
+                        ].map(({ color, label, dash }) => (
                           <span key={label} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: C.textMuted }}>
-                            <span style={{ width: 10, height: 3, background: color, display: "inline-block", borderRadius: 2 }} />
+                            <svg width="18" height="10">
+                              <line x1="0" y1="5" x2="18" y2="5" stroke={color} strokeWidth="2.5" strokeDasharray={dash ? "5 3" : undefined} />
+                            </svg>
                             {label}
                           </span>
                         ))}
                       </div>
+                      <p style={{ fontSize: 11, color: C.textMuted, fontStyle: "italic", marginTop: 10, lineHeight: 1.5 }}>
+                        Negative values mark months where the model forecasts a provincial supply shortfall — more food distributed than donated.
+                      </p>
                     </Panel>
                   );
                 })()}
@@ -551,7 +570,7 @@ export default function Provincial() {
                 {confidence?.targets?.LBS_In?.gap_accuracy != null && (
                   <Panel>
                     <SectionTitle
-                      title="Gap classifier — out-of-sample performance"
+                      title="Shortfall classifier — out-of-sample performance"
                       sub="Tested against months the model had never seen before"
                     />
                     <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap: 14 }}>

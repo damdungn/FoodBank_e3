@@ -450,7 +450,7 @@ def provincial_history():
             "inbound":        int(row.LBS_In),
             "outbound":       int(row.LBS_Out),
             "predicted":      round(float(row.LBS_In_pred), 0),
-            "predicted_gap":  round(float(row.LBS_In_pred - row.LBS_Out_pred), 0),
+            "predicted_gap":  round(float(row.LBS_Net_pred), 0),
         }
         for row in hist.itertuples()
     ]

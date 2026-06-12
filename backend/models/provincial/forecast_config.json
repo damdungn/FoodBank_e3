@@ -1,13 +1,14 @@
 {
   "lookback": 6,
-  "best_weight": 0.8,
+  "best_weight": 0.9,
   "best_threshold": 0.3,
-  "dynamic_scale": 70528.80079411954,
+  "dynamic_scale": 61454.30400251386,
   "prophet_regressors": [
     "CPI_Food",
     "AISH_TOTAL",
     "Net_Migration",
-    "Mean_Temp"
+    "Mean_Temp",
+    "n_ramadan_lag1"
   ],
   "lgbm_features": [
     "LBS_In_lag1",
