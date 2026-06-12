@@ -77,18 +77,65 @@ const featureData = [
 ];
 
 const modelStats = [
-  { label: "MAE (in-sample)",  value: "59 hampers/month"          },
-  { label: "MAPE (in-sample)", value: "10.8%"                     },
-  { label: "CV MAE",           value: "118 hampers/month"         },
-  { label: "CV MAPE",          value: "17.7%"                     },
   { label: "Training months",  value: "185"                       },
   { label: "Training window",  value: "2011-01-01 → 2026-05-01"  },
-  { label: "Model type",       value: "Prophet + economic regressors" },
+  { label: "Model type",       value: "Prophet" },
   { label: "Forecast horizon", value: "12 months"                 },
-  { label: "Generated",        value: "2026-06-09"                },
+  { label: "CV MAE",           value: "118 hampers/month"         },
+  { label: "CV MAPE",          value: "17.7%"                     },
 ];
 
+const METRIC_ENRICH = {
+
+  "CV MAE": {
+    tooltip: "Cross validation mean absolute error",
+  },
+  "CV MAPE": {
+    tooltip: "Cross validation mean absolute percentage error",
+  },
+};
+
 // ── Sub-components ────────────────────────────────────────────────────────────
+
+function StatCard({ label, value, sub, tooltip }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        position: "relative",
+        background: hovered && tooltip ? "#e8f5e2" : C.surfaceGreen,
+        border: `0.5px solid ${hovered && tooltip ? C.jungleTeal : C.borderLight}`,
+        borderRadius: 12, padding: "14px 16px",
+        transition: "background 0.15s, border-color 0.15s",
+        cursor: "default",
+      }}
+    >
+      <div style={{ fontSize: 14, color: C.textSecondary, marginBottom: 6 }}>{label}</div>
+      <div style={{ fontSize: 16, fontWeight: 600, color: C.textPrimary, lineHeight: 1.3 }}>{value}</div>
+      {sub && <div style={{ fontSize: 12, color: C.textMuted, marginTop: 3 }}>{sub}</div>}
+      {hovered && tooltip && (
+        <div style={{
+          position: "absolute", bottom: "calc(100% + 8px)", left: 0,
+          width: 240, zIndex: 10,
+          background: C.forestGreen, color: "#e8f5e2",
+          borderRadius: 8, padding: "9px 12px",
+          fontSize: 12, lineHeight: 1.55,
+          boxShadow: "0 4px 16px rgba(0,0,0,0.18)",
+          pointerEvents: "none",
+        }}>
+          {tooltip}
+          <div style={{
+            position: "absolute", top: "100%", left: 20,
+            borderLeft: "6px solid transparent", borderRight: "6px solid transparent",
+            borderTop: `6px solid ${C.forestGreen}`,
+          }} />
+        </div>
+      )}
+    </div>
+  );
+}
 
 function Panel({ children, style = {} }) {
   return (
@@ -194,7 +241,7 @@ function DataInputForm({ isMobile }) {
   return (
     <Panel>
       <SectionTitle
-        title="Add daily data row — regional FB"
+        title="Add daily data row"
         sub="Client-level entries · queued for next model retraining run"
       />
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(3, minmax(0,1fr))", gap: 12, marginBottom: 12 }}>
@@ -576,8 +623,8 @@ export default function Regional() {
                 {/* Combined historical + forecast chart */}
                 <Panel>
                   <SectionTitle
-                    title="Actual vs fitted — 12-month forecast (Red Deer FB)"
-                    sub="Prophet model · last 25 months actual & fitted · 80% CI on forecast"
+                    title="Model performance & 12-month forecast"
+                    sub="Prophet model · last 25 months observed & predicted · 80% CI on forecast"
                   />
                   <ResponsiveContainer width="100%" height={280}>
                     <ComposedChart data={chartData} margin={{ top: 4, right: 16, bottom: 20, left: 10 }}>
@@ -623,7 +670,7 @@ export default function Regional() {
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 16, marginTop: 10 }}>
                     {[
                       { color: C.jungleTeal, label: "Actual hampers",          line: true,   dash: false },
-                      { color: C.jungleTeal, label: "Model fitted (historical)",line: true,   dash: true  },
+                      { color: C.jungleTeal, label: "Predicted hampers",line: true,   dash: true  },
                       { color: C.dustyDenim, label: "Forecast (next 12 mo.)",  line: true,   dash: false },
                       { color: "#ddeaf8",    label: "80% confidence interval", square: true              },
                     ].map(({ color, label, line, dash }) => (
@@ -672,12 +719,8 @@ export default function Regional() {
                     <div style={{ fontSize: 13, color: C.textSecondary, lineHeight: 1.7 }}>
                       Trained on 185 months of Red Deer FB data using Prophet with provincial
                       economic regressors (AISH caseload, CPI, school calendar). Features were
-                      selected via SHAP analysis on the AFB provincial model where the same drivers
+                      selected via SHAP analysis on the FBA provincial model where the same drivers
                       predict both provincial outbound and regional hamper demand.
-                      <br /><br />
-                      <strong style={{ color: C.textPrimary }}>Red shading</strong> marks months
-                      where the AFB model forecasts a provincial supply gap and high regional demand
-                      coinciding with constrained supply.
                     </div>
                   </Panel>
                 </div>
@@ -691,22 +734,29 @@ export default function Regional() {
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
 
             <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(3, minmax(0,1fr))", gap: 14 }}>
-              {(metrics?.modelStats?.length ? metrics.modelStats : modelStats).map((s) => (
-                <div key={s.label} style={{
-                  background: C.surfaceGreen, border: `0.5px solid ${C.borderLight}`,
-                  borderRadius: 12, padding: "14px 16px",
-                }}>
-                  <div style={{ fontSize: 14, color: C.textSecondary, marginBottom: 6 }}>{s.label}</div>
-                  <div style={{ fontSize: 16, fontWeight: 600, color: C.textPrimary, lineHeight: 1.3 }}>{s.value}</div>
-                </div>
-              ))}
+              {(() => {
+                const apiMap = Object.fromEntries((metrics?.modelStats ?? []).map(s => [s.label, s.value]));
+                return modelStats.map(s => {
+                  const enrich = METRIC_ENRICH[s.label] ?? {};
+                  return <StatCard key={s.label} label={s.label} value={apiMap[s.label] ?? s.value} sub={enrich.sub} tooltip={enrich.tooltip} />;
+                });
+              })()}
+            </div>
+            <div style={{
+              padding: "10px 14px",
+              background: C.surfaceGreen, borderRadius: 8, border: `0.5px solid ${C.borderLight}`,
+              fontSize: 13, color: C.textSecondary, lineHeight: 1.6,
+            }}>
+              Cross-validation used a 3-year rolling window, retraining every 6 months with a 6-month
+              forecast horizon. CV MAPE of 17.7% is the validation missed percentage; in-sample
+              MAPE (10.8%) reflects fit on training data. Hover the metric cards above for plain language explanations.
             </div>
 
             {/* Feature importance */}
             <Panel>
               <SectionTitle
                 title="Feature importance using regional model (Prophet + SHAP)"
-                sub="SHAP values from AFB model applied to RDFB · Same economic drivers, regional target"
+                sub="SHAP values from FBA model applied to RDFB · Same economic drivers, regional target"
               />
               <ResponsiveContainer width="100%" height={250}>
                 <BarChart data={features?.featureData?.length ? features.featureData : featureData} layout="vertical" margin={{ top: 4, right: isMobile ? 20 : 50, bottom: 0, left: isMobile ? 75 : 110 }}>
@@ -724,45 +774,12 @@ export default function Regional() {
                 background: C.surfaceGreen, borderRadius: 8, border: `0.5px solid ${C.borderLight}`,
                 fontSize: 13, color: C.textSecondary, lineHeight: 1.6,
               }}>
-                <strong style={{ color: C.textPrimary }}>Note:</strong> SHAP importances are derived from the AFB provincial model and validated
+                <strong style={{ color: C.textPrimary }}>Note:</strong> SHAP importances are derived from the FBA provincial model and validated
                 against Red Deer FB hamper data. Edmonton AISH caseload is the dominant driver (SHAP 104),
                 followed by single AISH total, CPI, and school calendar.
               </div>
             </Panel>
 
-            {/* In-sample accuracy summary */}
-            <Panel>
-              <SectionTitle
-                title="In-sample model accuracy"
-                sub="Measured on 185 months of training data (2011–2026)"
-              />
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-                {[
-                  { label: "In-sample MAE",  value: "59 hampers/month", sub: "8.6% of monthly mean"  },
-                  { label: "In-sample MAPE", value: "10.8%",            sub: "typical forecast error" },
-                  { label: "CV MAE",         value: "118 hampers/month", sub: "honest out-of-sample"  },
-                  { label: "CV MAPE",        value: "17.7%",            sub: "6-month horizon"        },
-                ].map(s => (
-                  <div key={s.label} style={{
-                    padding: "12px 14px", borderRadius: 9,
-                    background: C.surfaceGreen, border: `0.5px solid ${C.borderLight}`,
-                  }}>
-                    <div style={{ fontSize: 13, color: C.textSecondary, marginBottom: 4 }}>{s.label}</div>
-                    <div style={{ fontSize: 20, fontWeight: 700, color: C.textPrimary }}>{s.value}</div>
-                    <div style={{ fontSize: 13, color: C.textMuted, marginTop: 2 }}>{s.sub}</div>
-                  </div>
-                ))}
-              </div>
-              <div style={{
-                marginTop: 14, padding: "10px 14px",
-                background: C.surfaceGreen, borderRadius: 8, border: `0.5px solid ${C.borderLight}`,
-                fontSize: 13, color: C.textSecondary, lineHeight: 1.6,
-              }}>
-                Cross-validation used a 3-year dataset, retraining every 6 months with a 6-month
-                forecast horizon. CV MAPE of 17.7% is the out-of-sample accuracy while in-sample
-                MAPE (10.8%) reflects fit on training data.
-              </div>
-            </Panel>
           </div>
         )}
 
@@ -780,7 +797,7 @@ export default function Regional() {
                 {[
                   {
                     icon: "building-warehouse",
-                    label: "AFB (provincial)",
+                    label: "FBA (provincial)",
                     status: "Live model",
                     statusColor: C.jungleTeal,
                     detail: "Forecasts provincial inbound / outbound lbs. SHAP analysis identified the economic features used in both models.",
@@ -823,10 +840,10 @@ export default function Regional() {
                 background: C.surfaceWhite, borderRadius: 8, border: `0.5px solid ${C.borderLight}`,
                 fontSize: 13, color: C.textSecondary, lineHeight: 1.6,
               }}>
-                <strong style={{ color: C.textPrimary }}>The connection:</strong> AFB forecasts provincial supply.
+                <strong style={{ color: C.textPrimary }}>The connection:</strong> FBA forecasts provincial supply.
                 Both Red Deer and Edmonton FBs are downstream consumers of that supply, and both face demand
                 driven by the same provincial economic signals (AISH caseload, CPI, school calendar).
-                When AFB signals a supply gap, it affects all regional FBs that's why the gap overlay
+                When FBA signals a supply gap, it affects all regional FBs that's why the gap overlay
                 on the Hamper forecast tab is meaningful for Red Deer operations.
               </div>
             </Panel>
@@ -848,7 +865,7 @@ export default function Regional() {
                   {
                     icon: "circle-minus",
                     label: "Red Deer supply-demand gap",
-                    detail: "Hampers needed minus donations received, forecasted monthly. Mirrors the AFB gap model but at the regional level which enables local donor alerts.",
+                    detail: "Hampers needed minus donations received, forecasted monthly. Mirrors the FBA gap model but at the regional level which enables local donor alerts.",
                     ready: false,
                   },
                   {
@@ -877,7 +894,7 @@ export default function Regional() {
                       <i className={`ti ti-${item.icon}`} style={{ fontSize: 14, color: C.textMuted }} aria-hidden="true" />
                     </div>
                     <div>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: C.textPrimary, marginBottom: 2 }}>{item.label}</div>
+                      <div style={{ fontSize: 15, fontWeight: 600, color: C.textPrimary, marginBottom: 2 }}>{item.label}</div>
                       <div style={{ fontSize: 13, color: C.textSecondary, lineHeight: 1.5 }}>{item.detail}</div>
                     </div>
                   </div>

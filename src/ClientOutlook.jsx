@@ -122,7 +122,7 @@ export default function ClientOutlook() {
       {/* Header */}
       <header style={{ padding: "32px 28px 20px", background: C.pageBg, flexShrink: 0 }}>
         <div style={{ fontSize: 25, fontWeight: 700, color: C.forestGreen, marginBottom: 4 }}>
-          Client outlook (placeholder only)
+          Client outlook (coming soon)
         </div>
         <div style={{ fontSize: 15, color: C.textMuted }}>
           How busy is the food bank this week? Updated daily · indexed demand, no personal data shown

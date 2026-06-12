@@ -519,7 +519,7 @@ def provincial_metrics():
         },
         {
             "label": "What the model predicts",
-            "value": "Monthly supply vs. demand direction",
+            "value": "Monthly Supply Gap",
         },
         {
             "label": "Forecast horizon",
@@ -527,7 +527,7 @@ def provincial_metrics():
         },
         {
             "label": "External indicators used",
-            "value": f"{n_regressors} (food prices, income support, migration, temperature)",
+            "value": f"{n_regressors-1} (food prices, income support, migration, temperature)",
         },
         {
             "label": "Historical data used",

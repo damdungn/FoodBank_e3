@@ -34,7 +34,16 @@ const catColor = {
   calendar:       C.lightGold,
   weather:        C.wheat,
   autoregressive: "#a889cc",
-  other:          C.textMuted,
+  other:          "#933838b8",
+};
+
+const CAT_LABEL = {
+  economic:       "Economic",
+  social:         "Social",
+  calendar:       "Calendar & benefits",
+  weather:        "Weather",
+  autoregressive: "Autoregressive",
+  other:          "Other factors",
 };
 
 // ── Sub-components ────────────────────────────────────────────────────────────
@@ -67,6 +76,44 @@ function Badge({ children, bg, color }) {
     }}>
       {children}
     </span>
+  );
+}
+
+function MetricCard({ label, value, sub, tooltip }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        position: "relative", padding: "12px 14px", borderRadius: 9,
+        background: hovered ? "#e8f5e2" : C.surfaceGreen,
+        border: `0.5px solid ${hovered ? C.jungleTeal : C.borderLight}`,
+        cursor: "default", transition: "background 0.15s, border-color 0.15s",
+      }}
+    >
+      <div style={{ fontSize: 13, color: C.textSecondary, marginBottom: 4 }}>{label}</div>
+      <div style={{ fontSize: 25, fontWeight: 700, color: C.textPrimary }}>{value}</div>
+      <div style={{ fontSize: 12, color: C.textMuted, marginTop: 2 }}>{sub}</div>
+      {hovered && tooltip && (
+        <div style={{
+          position: "absolute", bottom: "calc(100% + 8px)", left: 0,
+          width: 220, zIndex: 10,
+          background: C.forestGreen, color: "#e8f5e2",
+          borderRadius: 8, padding: "9px 12px",
+          fontSize: 12, lineHeight: 1.55,
+          boxShadow: "0 4px 16px rgba(0,0,0,0.18)",
+          pointerEvents: "none",
+        }}>
+          {tooltip}
+          <div style={{
+            position: "absolute", top: "100%", left: 20,
+            borderLeft: "6px solid transparent", borderRight: "6px solid transparent",
+            borderTop: `6px solid ${C.forestGreen}`,
+          }} />
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -126,7 +173,7 @@ function DataInputForm({ isMobile }) {
     <Panel>
       <SectionTitle
         title="Add monthly data row"
-        sub="Staff input — new rows are queued for the next model run"
+        sub="Staff input"
       />
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(3, minmax(0,1fr))", gap: 12, marginBottom: 12 }}>
         {fields.map((f) => (
@@ -244,10 +291,8 @@ export default function Provincial() {
   const detectionRate = modelStats.find(s => s.label === "Shortfall detection accuracy")?.value ?? "N/A";
 
   const topGapAlert = gapForecast[0]?.alert ?? "OK";
-  const gapLabel    = { Critical: "Critical", Warning: "Warning", Watch: "Watch", OK: "Balanced" }[topGapAlert] ?? "—";
-  const gapStyle    = topGapAlert === "Critical" ? LEVEL_STYLE.High
-    : topGapAlert === "Warning" ? LEVEL_STYLE.Medium
-    : LEVEL_STYLE.Low;
+  const gapLabel    = (topGapAlert === "Critical" || topGapAlert === "Warning") ? "Caution" : "Stable";
+  const gapStyle    = (topGapAlert === "Critical" || topGapAlert === "Warning") ? LEVEL_STYLE.High : LEVEL_STYLE.Low;
 
   const confPct   = confidence?.confidence_pct ?? "—";
   const confLabel = confidence?.confidence_label ?? "confidence";
@@ -268,7 +313,7 @@ export default function Provincial() {
               Provincial model
             </div>
             <div style={{ fontSize: 13, color: C.textMuted }}>
-              Model 1 · Predicts provincial inbound donations and outbound to regional FBs
+              Predicts provincial inbound donations and outbound to regional FBs
             </div>
           </div>
           {/* Model health badge */}
@@ -278,11 +323,6 @@ export default function Provincial() {
             background: "#e2ffec", color: "#1a8b20", border: "0.5px solid #ace890",
             fontSize: 13,
           }}>
-            <div style={{ width: 7, height: 7, borderRadius: "50%", background: C.jungleTeal }} />
-            <span style={{ color: C.textSecondary }}>Model health: </span>
-            <span style={{ fontWeight: 600, color: C.forestGreen }}>
-              {confidence ? `Good confidence` : "—"}
-            </span>
           </div>
         </div>
 
@@ -361,7 +401,7 @@ export default function Provincial() {
                           badgeColor: isShortfall ? "#c0622a" : "#1a8b20",
                         },
                         {
-                          label: "Forecast confidence",
+                          label: "Forecast accuracy",
                           value: confPct !== "—" ? `${confPct}%` : "—",
                           sub: confLabel, accent: C.dustyDenim,
                           badgeBg: "#ddeaf8", badgeColor: "#2d5a9e",
@@ -402,8 +442,7 @@ export default function Provincial() {
                   return (
                     <Panel>
                       <SectionTitle
-                        title="Supply gap (actual + 3-month forecast)"
-                        sub="Solid = 3-month average of actual gap · dashed = model fit + 3-month forecast"
+                        title="Supply gap (observed + 3 month forecast)"
                       />
                       <ResponsiveContainer width="100%" height={280}>
                         <ComposedChart data={gapChartData} margin={{ top: 4, right: 16, bottom: 20, left: 10 }}>
@@ -417,20 +456,20 @@ export default function Provincial() {
                           />
                           <YAxis
                             domain={["auto", "auto"]}
-                            tickFormatter={v => `${v > 0 ? "+" : ""}${(v / 1000).toFixed(0)}K`}
+                            tickFormatter={v => `${v > 0 ? "+" : ""}${(v / 1000).toFixed(0)} K`}
                             tick={{ fontSize: 12, fill: C.textMuted }}
                             axisLine={false} tickLine={false} width={46}
                           />
                           <Tooltip content={<ChartTooltip />} />
                           <ReferenceLine y={0} stroke="#a0b8a0" strokeWidth={1.5} />
-                          <Line type="monotone" dataKey="actualGap" name="Actual gap (3-mo avg)"   stroke={C.jungleTeal} strokeWidth={1.5} dot={{ r: 2.5, fill: C.jungleTeal }} connectNulls={false} />
-                          <Line type="monotone" dataKey="modelLine" name="Model fit / forecast"    stroke={C.dustyDenim} strokeWidth={1.5} dot={{ r: 2.5, fill: C.dustyDenim }} strokeDasharray="5 3" connectNulls />
+                          <Line type="monotone" dataKey="actualGap" name="Observed gap"   stroke={C.jungleTeal} strokeWidth={1.5} dot={{ r: 2.5, fill: C.jungleTeal }} connectNulls={false} />
+                          <Line type="monotone" dataKey="modelLine" name="Forecast line"    stroke={C.dustyDenim} strokeWidth={1.5} dot={{ r: 2.5, fill: C.dustyDenim }} strokeDasharray="5 3" connectNulls />
                         </ComposedChart>
                       </ResponsiveContainer>
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 16, marginTop: 10 }}>
                         {[
-                          { color: C.jungleTeal, label: "Actual gap (3-mo avg)", dash: false },
-                          { color: C.dustyDenim, label: "Model fit / forecast",  dash: true  },
+                          { color: C.jungleTeal, label: "Observed gap", dash: false },
+                          { color: C.dustyDenim, label: "Forecast line",  dash: true  },
                         ].map(({ color, label, dash }) => (
                           <span key={label} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: C.textMuted }}>
                             <svg width="18" height="10">
@@ -451,7 +490,7 @@ export default function Provincial() {
                 {gapForecast.length > 0 && (
                   <Panel>
                     <SectionTitle
-                      title="3-month supply-demand outlook"
+                      title="3 month supply-demand outlook"
                       sub="Predicted shortfall or surplus per month."
                     />
                     <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0,1fr))", gap: 12 }}>
@@ -498,7 +537,7 @@ export default function Provincial() {
                               {isGap ? "▼" : "▲"} {(gapAbs / 1000).toFixed(0)}K lbs {isGap ? "shortfall" : "surplus"}
                             </div>
                             <div style={{ fontSize: 12, color: C.textMuted, marginTop: 5 }}>
-                              {row.confidence_pct}% model confidence
+                              {row.confidence_pct}% model reliability
                             </div>
                           </div>
                         );
@@ -531,7 +570,7 @@ export default function Provincial() {
                 <Panel>
                   <SectionTitle
                     title="Feature importance using provincial model (Prophet + Random Forest)"
-                    sub="Random Forest feature importance"
+                    sub="Feature contributions to gap prediction"
                   />
                   {featureData.length === 0 ? (
                     <div style={{ fontSize: 13, color: C.textMuted, textAlign: "center", padding: "20px 0" }}>
@@ -554,12 +593,14 @@ export default function Provincial() {
                     </ResponsiveContainer>
                   )}
                   <div style={{ display: "flex", gap: 16, marginTop: 12, flexWrap: "wrap" }}>
-                    {[...new Set(featureData.map(d => d.category))].map((cat) => (
-                      <span key={cat} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: C.textMuted }}>
-                        <span style={{ width: 10, height: 10, background: catColor[cat] ?? C.textMuted, display: "inline-block", borderRadius: 2 }} />
-                        {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                      </span>
-                    ))}
+                    {[...new Set(featureData.map(d => d.category))]
+                      .sort((a, b) => a === "other" ? 1 : b === "other" ? -1 : 0)
+                      .map((cat) => (
+                        <span key={cat} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: C.textMuted }}>
+                          <span style={{ width: 10, height: 10, background: catColor[cat] ?? C.textMuted, display: "inline-block", borderRadius: 2 }} />
+                          {CAT_LABEL[cat] ?? cat.charAt(0).toUpperCase() + cat.slice(1)}
+                        </span>
+                      ))}
                   </div>
                   <div style={{
                     marginTop: 14, padding: "10px 14px",
@@ -576,23 +617,32 @@ export default function Provincial() {
                 {confidence?.targets?.LBS_In?.gap_accuracy != null && (
                   <Panel>
                     <SectionTitle
-                      title="Shortfall classifier — out-of-sample performance"
+                      title="Shortfall classifier performance"
                       sub="Tested against months the model had never seen before"
                     />
                     <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap: 14 }}>
                       {[
-                        { label: "Correct predictions",      value: `${(confidence.targets.LBS_In.gap_accuracy * 100).toFixed(1)}%`, sub: "overall accuracy"         },
-                        { label: "Detection quality",        value: (confidence.targets.LBS_In.gap_f1 ?? "—").toString().substring(0, 5),                              sub: "F1 score"                  },
-                        { label: "Surplus months identified",value: `${((confidence.targets.LBS_In.gap_sur_recall ?? 0) * 100).toFixed(1)}%`, sub: "surplus recall"   },
+                        {
+                          label: "Correct predictions",
+                          value: `${(confidence.targets.LBS_In.gap_accuracy * 100).toFixed(1)}%`,
+                          sub: "overall accuracy",
+                          tooltip: "How often the model correctly called whether a month would be a shortfall or surplus.",
+                        },
+                        {
+                          label: "Detection quality",
+                          value: (confidence.targets.LBS_In.gap_f1 ?? "—").toString().substring(0, 5),
+                          sub: "F1 score",
+                          tooltip: "A balance between catching real shortfalls and avoiding false alarms. Closer to 1.0 means both are done well; 0.5 is no better than a coin flip.",
+                        },
+                        {
+                          label: "Gap months identified",
+                          value: `${((confidence.targets.LBS_In.gap_sur_recall ?? 0) * 100).toFixed(1)}%`,
+                          sub: "gap recall",
+                          tooltip: "Of all the months that actually had a gap, how many did the model correctly flag?",
+                        },
+                       
                       ].map((m) => (
-                        <div key={m.label} style={{
-                          padding: "12px 14px", borderRadius: 9,
-                          background: C.surfaceGreen, border: `0.5px solid ${C.borderLight}`,
-                        }}>
-                          <div style={{ fontSize: 13, color: C.textSecondary, marginBottom: 4 }}>{m.label}</div>
-                          <div style={{ fontSize: 25, fontWeight: 700, color: C.textPrimary }}>{m.value}</div>
-                          <div style={{ fontSize: 12, color: C.textMuted, marginTop: 2 }}>{m.sub}</div>
-                        </div>
+                        <MetricCard key={m.label} {...m} />
                       ))}
                     </div>
                     <div style={{
@@ -605,42 +655,6 @@ export default function Provincial() {
                     </div>
                   </Panel>
                 )}
-
-                {/* Actual vs predicted chart */}
-                <Panel>
-                  <SectionTitle
-                    title="Actual vs. predicted — out-of-sample fit"
-                    sub="LBS_Out · solid = observed · dashed = model estimate · last 18 months"
-                  />
-                  <ResponsiveContainer width="100%" height={200}>
-                    <LineChart
-                      data={historyData.filter(d => d.outbound !== null).slice(-18)}
-                      margin={{ top: 4, right: 16, bottom: 0, left: 0 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" stroke={C.teaGreen} />
-                      <XAxis dataKey="date" tick={{ fontSize: 12, fill: C.textMuted }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
-                      <YAxis
-                        domain={["auto", "auto"]}
-                        tickFormatter={v => `${(v / 1000).toFixed(0)}K`}
-                        tick={{ fontSize: 12, fill: C.textMuted }} axisLine={false} tickLine={false} width={45}
-                      />
-                      <Tooltip content={<ChartTooltip />} />
-                      <Line type="monotone" dataKey="outbound"  name="Observed (y)"  stroke={C.jungleTeal} strokeWidth={2.5} dot={false} />
-                      <Line type="monotone" dataKey="predicted" name="Predicted (ŷ)" stroke={C.dustyDenim} strokeWidth={2}   dot={false} strokeDasharray="5 3" />
-                    </LineChart>
-                  </ResponsiveContainer>
-                  <div style={{ display: "flex", gap: 20, marginTop: 10 }}>
-                    {[
-                      { color: C.jungleTeal, label: "Observed (y)"  },
-                      { color: C.dustyDenim, label: "Predicted (ŷ)" },
-                    ].map(({ color, label }) => (
-                      <span key={label} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: C.textMuted }}>
-                        <span style={{ width: 10, height: 3, background: color, display: "inline-block", borderRadius: 2 }} />
-                        {label}
-                      </span>
-                    ))}
-                  </div>
-                </Panel>
               </div>
             )}
 

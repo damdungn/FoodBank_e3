@@ -96,10 +96,8 @@ Guidelines:
 const DEFAULT_SYSTEM_PROMPT = buildSystemPrompt(null, null);
 
 const SUGGESTED = [
-  "Why are more people using food banks lately?",
   "What is FEEDS and how does it help food banks?",
   "Is food bank demand expected to go up or down soon?",
-  "What causes food bank demand to spike?",
   "How can I support food banks in Alberta?",
 ];
 
@@ -140,7 +138,7 @@ function AssistantBubble({ text, loading, isMobile }) {
       </div>
       <div style={{
         maxWidth: isMobile ? "90%" : "80%",
-        background: "#d8ffddb0",
+        background: "#e6ffe8b0",
         border: `0.5px solid ${C.borderDark}`,
         borderRadius: "3px 12px 12px 12px",
         padding: "11px 15px",
@@ -195,7 +193,7 @@ export default function AIInsights() {
   const [messages, setMessages] = useState([
     {
       role: "assistant",
-      content: "Hi! I'm the FEEDS AI analyst. I can help anyone (clients, researchers, or staff) who understand food bank demand forecasts and what's driving them.\n\nWhat would you like to know?",
+      content: "Hi! I'm the FEEDS AI analyst. I can help you understand food banks better and what drives the demand.\n\nWhat would you like to know?",
     },
   ]);
   const [input,        setInput]        = useState("");
@@ -265,19 +263,12 @@ export default function AIInsights() {
       background: C.pageBg, fontFamily: "'DM Sans', system-ui, sans-serif",
     }}>
 
-      {/* On mobile: header + suggested + messages all scroll together.
-          On desktop: display:contents is transparent — children behave as direct flex items. */}
-      <div style={isMobile ? { flex: 1, overflowY: "auto" } : { display: "contents" }}>
-
       {/* Header */}
       <header style={{ padding: isMobile ? "16px 14px 14px" : "32px 28px 20px", background: C.pageBg, flexShrink: 0 }}>
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 8 : 0 }}>
           <div>
             <div style={{ fontSize: isMobile ? 20 : 25, fontWeight: 700, color: C.forestGreen, marginBottom: 5 }}>
               AI insights
-            </div>
-            <div style={{ fontSize: isMobile ? 13 : 15, color: C.textMuted, lineHeight: 1.5 }}>
-              Ask anything about food bank demand, forecasts, or what's driving signals this month
             </div>
           </div>
           {/* Public badge */}
@@ -293,83 +284,51 @@ export default function AIInsights() {
             </div>
           )}
         </div>
-
-        {/* Model context pills */}
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 14 }}>
-          {[
-            {
-              icon: "building", label: "Provincial model",
-              detail: "Food Banks Alberta",
-              color: C.jungleTeal, bg: C.surfaceGreen,
-            },
-            {
-              icon: "map-2", label: "Regional model",
-              detail: "Red Deer Food Bank",
-              color: "#5588c7", bg: C.surfaceBlue,
-            },
-            {
-              icon: "calendar", label: "June 2026",
-              detail: "Current period",
-              color: C.textSecondary, bg: C.surfaceRed,
-            },
-          ].map(p => (
-            <div key={p.label} style={{
-              display: "flex", alignItems: "center", gap: 7,
-              padding: "6px 12px", borderRadius: 8,
-              background: p.bg, border: `0.5px solid ${C.borderLight}`,
-              fontSize: isMobile ? 12 : 14,
-            }}>
-              <i className={`ti ti-${p.icon}`} style={{ fontSize: 15, color: p.color }} aria-hidden="true" />
-              <span style={{ fontWeight: 500, color: C.textPrimary }}>{p.label}</span>
-              {!isMobile && <span style={{ color: C.textMuted }}>· {p.detail}</span>}
-            </div>
-          ))}
-        </div>
       </header>
 
       {/* Suggested prompts — only on first load */}
-      {messages.length === 1 && (
-        <div style={{ padding: isMobile ? "0 14px 14px" : "0 28px 18px", flexShrink: 0 }}>
-          <div style={{ fontSize: 14, color: C.textMuted, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.07em" }}>
-            Suggested questions
-          </div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
-            {SUGGESTED.map(s => (
-              <button
-                key={s}
-                onClick={() => send(s)}
-                style={{
-                  padding: "6px 13px", fontSize: 14, borderRadius: 20, cursor: "pointer",
-                  background: C.surfaceLight, color: C.textSecondary,
-                  border: `0.5px solid ${C.borderLight}`,
-                  fontFamily: "inherit",
-                  transition: "background 0.12s",
-                }}
-                onMouseEnter={e => e.currentTarget.style.background = C.teaGreen}
-                onMouseLeave={e => e.currentTarget.style.background = C.surfaceLight}
-              >
-                {s}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* Divider */}
       <div style={{ height: "0.5px", background: C.borderLight, flexShrink: 0, margin: isMobile ? "0 14px" : "0 28px" }} />
 
-      {/* Messages */}
-      <div style={{ flex: isMobile ? undefined : 1, overflowY: isMobile ? undefined : "auto", padding: isMobile ? "16px 14px" : "20px 28px" }}>
-        {messages.map((m, i) =>
-          m.role === "user"
-            ? <UserBubble key={i} text={m.content} isMobile={isMobile} />
-            : <AssistantBubble key={i} text={m.content} isMobile={isMobile} />
-        )}
+      {/* Messages — always the scrollable area */}
+      <div style={{ flex: 1, overflowY: "auto", padding: isMobile ? "16px 14px" : "20px 28px" }}>
+        {messages.map((m, i) => (
+          <div key={i}>
+            {m.role === "user"
+              ? <UserBubble text={m.content} isMobile={isMobile} />
+              : <AssistantBubble text={m.content} isMobile={isMobile} />}
+            {i === 0 && m.role === "assistant" && messages.length === 1 && (
+              <div style={{ marginTop: 6, marginBottom: 10, marginLeft: isMobile ? 0 : 40 }}>
+                <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 7, textTransform: "uppercase", letterSpacing: "0.07em" }}>
+                  Suggested
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
+                  {SUGGESTED.map(s => (
+                    <button
+                      key={s}
+                      onClick={() => send(s)}
+                      style={{
+                        padding: "6px 12px", fontSize: 13, borderRadius: 20, cursor: "pointer",
+                        background: C.surfaceLight, color: C.textSecondary,
+                        border: `0.5px solid ${C.borderLight}`,
+                        fontFamily: "inherit",
+                        transition: "background 0.12s",
+                        textAlign: "left",
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.background = C.teaGreen}
+                      onMouseLeave={e => e.currentTarget.style.background = C.surfaceLight}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
         {loading && <AssistantBubble loading isMobile={isMobile} />}
         <div ref={bottomRef} />
       </div>
-
-      </div>{/* end mobile scroll wrapper */}
 
       {/* Input bar */}
       <div style={{
@@ -387,7 +346,7 @@ export default function AIInsights() {
             style={{
               flex: 1, padding: "10px 15px", fontSize: 14,
               border: `1px solid ${C.borderLight}`, borderRadius: 10,
-              outline: "none", background: C.surfaceGreen,
+              outline: "none", background: "rgb(230, 255, 232)",
               color: C.textPrimary, fontFamily: "inherit",
             }}
             aria-label="Chat input"
@@ -398,7 +357,7 @@ export default function AIInsights() {
             style={{
               width: 40, height: 40, flexShrink: 0,
               display: "flex", alignItems: "center", justifyContent: "center",
-              background: loading || !input.trim() ? C.surfaceGreen : C.forestGreen,
+              background: loading || !input.trim() ? "rgb(230, 255, 232)" : C.forestGreen,
               color: loading || !input.trim() ? C.textMuted : C.teaGreen,
               border: `1px solid ${C.borderLight}`,
               borderRadius: 10, cursor: loading || !input.trim() ? "default" : "pointer",

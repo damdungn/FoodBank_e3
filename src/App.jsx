@@ -342,6 +342,7 @@ export default function App() {
       height: "100vh", margin: 0, padding: 0,
       fontFamily: "'DM Sans', system-ui, sans-serif",
       background: "#fbfcf6",
+      overflowX: "hidden",
     }}>
 
       {/* ── Mobile top bar ─────────────────────────────────────── */}

@@ -21,10 +21,10 @@ const SECTIONS = [
     title: "The problem",
     summary: "Food banks plan reactively with limited tools to anticipate demand before it arrives.",
     points: [
-      "Most planning relies on recent experience, not forward-looking data.",
-      "Demand is shaped by many interconnected factors: food prices, housing costs, government benefits, weather, and local events.",
-      "Provincial staff must allocate food across Alberta; regional staff must prepare the right number of hampers. While both are working without much advance notice.",
-      "Demands have increased significantly in recent years, while supply chains and volunteer capacity have not kept pace.",
+      "Food banks rely on reactive planning with limited forecasting tools.",
+      "Demand is influenced by factors like prices, benefits, weather, and local events which are often not considered during planning.",
+      "Provincial and regional teams must allocate food and prepare hampers with little notice.",
+      "Rising demand has outpaced supply chains and volunteer capacity.",
     ],
   },
   {
@@ -32,10 +32,10 @@ const SECTIONS = [
     color: C.jungleTeal,
     bg: C.surfaceGreen,
     title: "Our solution",
-    summary: "FEEDS combines food bank records with external indicators to forecast demand",
+    summary: "FEEDS combines food bank records with external indicators to forecast demand and supply.",
     points: [
       "Combines operational data alongside economic, weather, and calendar datasets.",
-      "Generates monthly forecasts for inbound donations and outbound distribution.",
+      "Generates monthly forecasts for inbound (supply) and outbound (demand).",
       "Gives provincial staff early visibility into shortage gaps and when donor outreach is needed.",
       "Gives regional staff monthly hamper estimates to support staffing, storage, and food packaging.",
       "Designed to inform decisions, not replace them so that staff stay in control.",
@@ -48,10 +48,9 @@ const SECTIONS = [
     title: "Key findings",
     summary: "Four consistent patterns emerged from model development and analysis.",
     points: [
-      "Economic conditions drive demand at every level such as food prices, shelter costs, and income and support caseloads all matter.",
-      "AISH caseload is a particularly strong early warning signal: changes often appear before corresponding increases in food bank demand.",
-      "Adding external features significantly improves forecasts compared to models that rely on historical trends alone.",
-      "Different food banks have different drivers: economic conditions dominate provincial and regional models, while campus demand is more tied to the academic calendar.",
+      "Economic conditions strongly influence food bank demand.",
+      "AISH (Assured Income for the Severely Handicapped) caseload can act as an early warning signal.",
+      "External features (e.g., weather, calendar events) improve forecasts beyond historical trends.",
     ],
   },
   {
@@ -61,10 +60,10 @@ const SECTIONS = [
     title: "Impact & next steps",
     summary: "FEEDS helps food banks plan ahead so they can focus on the communities they serve.",
     points: [
-      "Earlier demand visibility reduces reactive scrambling for food, volunteers, and storage capacity.",
-      "Better provincial allocation when staff can see supply-demand gaps forming weeks in advance.",
-      "Next: integrate Edmonton Food Bank data and complete the Campus Food Bank model.",
-      "Future: improve forecast explainability, collect more data to better generalize the models and move toward client outlook and donor engagement.",
+      "FEEDS helps food banks plan ahead and reduce last minute pressure.",
+      "Forecasts can improve food allocation, staffing, and storage planning.",
+      "Next: add Edmonton Food Bank data and finish the Campus Food Bank model.",
+      "Future: improve explainability, generalization, client outlook, and donor engagement.",
     ],
   },
 ];
@@ -95,7 +94,7 @@ const MODELS = [
     type: "To be determined",
     target: "Daily visit demand at University of Alberta Campus FB",
     data: "May 2023 – Apr 2026 · daily granularity",
-    regressors: "Academic calendar · Exam periods · International arrivals · Tuition Deadlines",
+    regressors: "TBD",
     status: "Dataset integration pending",
     statusColor: "#7a6010",
     statusBg: "#fdf6d8",
@@ -129,7 +128,7 @@ export default function AboutFeeds() {
 
       {/* Header */}
       <div style={{
-        background: `linear-gradient(135deg, #122b1e 0%, ${C.forestGreen} 40%, #2d6a50 75%, #3f826d 100%)`,
+        background: `linear-gradient(135deg, ${C.forestGreen} 40%, #2d6a50 75%, #3f826d 100%)`,
         padding: isMobile ? "32px 20px 28px" : "52px 44px 48px",
         position: "relative",
         overflow: "hidden",
@@ -237,7 +236,7 @@ export default function AboutFeeds() {
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             {SECTIONS.map(s => (
               <div key={s.title} style={{
-                background: C.surfaceWhite,
+                background: s.bg,
                 border: `1px solid ${C.borderLight}`,
                 borderLeft: `4px solid ${s.color}`,
                 borderRadius: "0 12px 12px 0",
@@ -301,7 +300,7 @@ export default function AboutFeeds() {
                     { label: "Key drivers", value: m.regressors },
                   ].map(row => (
                     <div key={row.label}>
-                      <span style={{ fontSize: 14, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 600 }}>
+                      <span style={{ fontSize: 14, color: "#3a3939", textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 800 }}>
                         {row.label}
                       </span>
                       <div style={{ fontSize: 14, color: C.textSecondary, marginTop: 2, lineHeight: 1.5 }}>

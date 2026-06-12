@@ -31,8 +31,8 @@ const DRIVERS = [
     bg:      "#eaf5fb",
     border:  "#a8d4f0",
     title:   "Weather & climate",
-    desc:    "Cold weather and extreme precipitation affect both client travel and volunteer capacity. The model uses monthly temperature and precipitation averages as regressors.",
-    factors: ["Mean temperature (°C)", "Total precipitation (mm)", "Snowfall (cm)"],
+    desc:    "Cold weather and extreme precipitation affect both client travel and volunteer capacity. The model uses monthly temperature and precipitation averages as features.",
+    factors: ["Average temperature (°C)", "Total precipitation (mm)", "Snowfall (cm)"],
     signalKeys: [],
   },
   {
@@ -84,7 +84,7 @@ const FOOD_BANKS = [
   {
     key: "afb",
     name: "Food Banks Alberta",
-    role: "Provincial model · coordinating food distribution across Alberta",
+    role: "Provincial model · Coordinating food distribution across Alberta",
     icon: "building",
     logo: "/aberta_fb.jpg",
     color: C.forestGreen,
@@ -95,7 +95,7 @@ const FOOD_BANKS = [
   {
     key: "rdfb",
     name: "Red Deer Food Bank",
-    role: "Regional model · serving hampers based on local demand requests",
+    role: "Regional model · Serving hampers based on local demand requests",
     icon: "map-pin",
     logo: "/red_deer_fb.jpg",
     color: "#5588c7",
@@ -106,7 +106,7 @@ const FOOD_BANKS = [
   {
     key: "edfb",
     name: "Edmonton Food Bank",
-    role: "Regional partner · serving Edmonton metro area",
+    role: "Regional partner · Serving Edmonton metropolitan",
     icon: "map-2",
     logo: "/edmonton_fb.jpg",
     color: "#a85c5c",
@@ -117,7 +117,7 @@ const FOOD_BANKS = [
   {
     key: "campus",
     name: "Campus Food Bank",
-    role: "University of Alberta · addressing student food insecurity",
+    role: "University of Alberta · Addressing student food insecurity",
     icon: "school",
     logo: "/campus_fb.jpg",
     color: "#8a6020",
@@ -165,16 +165,7 @@ export default function Dashboard({ onNavigate }) {
   const meta     = ALERT_META[topAlert] ?? ALERT_META.OK;
 
   const WHO = [
-    {
-      icon: "users",
-      title: "Clients & Community",
-      desc: "Looking for food support, want to know when to visit, or curious about food bank demand in your area.",
-      page: "client-outlook",
-      color: C.jungleTeal,
-      bg: C.surfaceGreen,
-      border: C.borderLight,
-      btnLabel: "Go to Client Outlook",
-    },
+
     {
       icon: "building",
       title: "Provincial Staff",
@@ -196,6 +187,16 @@ export default function Dashboard({ onNavigate }) {
       border: "#c8d8f0",
       btnLabel: "Regional Access",
       locked: true,
+    },
+    {
+      icon: "users",
+      title: "Clients & Community",
+      desc: "Check the best time to visit, or explore food bank demand in your community.",
+      page: "client-outlook",
+      color: C.jungleTeal,
+      bg: C.surfaceGreen,
+      border: C.borderLight,
+      btnLabel: "Go to Client Outlook",
     },
   ];
 
@@ -311,24 +312,8 @@ export default function Dashboard({ onNavigate }) {
               animation: "heroSlideUp 0.55s ease both",
               animationDelay: "1.2s",
             }}>
-              ML/ AI supply &amp; demand forecasting tool to help Alberta food banks plan ahead, reduce waste, and serve more families.
+              AI supply &amp; demand forecasting tool to help Alberta food banks plan ahead, and serve more families.
             </p>
-          </div>
-
-          {/* Right — logo with float animation */}
-          <div style={{ flexShrink: 0, alignSelf: isMobile ? "center" : "auto" }}>
-            <img
-              src="/logo-removebg.png"
-              alt="FEEDS logo"
-              className="hero-logo"
-              style={{
-                width: isMobile ? 100 : 250,
-                height: isMobile ? 100 : 250,
-                objectFit: "contain",
-                filter: "drop-shadow(0 8px 24px rgba(208,239,177,0.25))",
-                marginRight: isMobile ? 0 : 100,
-              }}
-            />
           </div>
         </div>
       </div>
@@ -341,7 +326,7 @@ export default function Dashboard({ onNavigate }) {
             Who are you?
           </h2>
           <p style={{ fontSize: 14, color: C.textMuted, margin: "0 0 20px" }}>
-            Choose the section that matches you.
+            Choose the section that best matches you.
           </p>
 
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)", gap: 16 }}>
@@ -395,7 +380,7 @@ export default function Dashboard({ onNavigate }) {
             What drives food bank demand?
           </h2>
           <p style={{ fontSize: 14, color: C.textMuted, margin: "0 0 20px", maxWidth: 900, lineHeight: 1.65 }}>
-            Unlike simple trend lines, FEEDS analyses four categories of external factors that independently push demand up or down to give food banks earlier and more accurate warnings.
+            FEEDS analyses four categories of external factors that drive demand up or down to give food banks early and more accurate warnings.
           </p>
 
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(4, 1fr)", gap: 14, marginBottom: 20 }}>
@@ -434,43 +419,6 @@ export default function Dashboard({ onNavigate }) {
               </div>
             ))}
           </div>
-
-          {/* Live signal pills — only shown when API data is available */}
-          {signals && (() => {
-            const activeKeys = Object.keys(SIGNAL_LABELS).filter(k => signals[k] === true || signals[k] === 1);
-            const monthLabel = signals.month_label ?? signals.date ?? null;
-            return (
-              <div style={{
-                background: C.surfaceWhite,
-                border: `1px solid ${C.borderLight}`,
-                borderRadius: 12, padding: "16px 20px",
-                display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap",
-              }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-                  <div style={{ width: 7, height: 7, borderRadius: "50%", background: C.jungleTeal }} />
-                  <span style={{ fontSize: 14, fontWeight: 600, color: C.textSecondary }}>
-                    Active signals{monthLabel ? ` · ${monthLabel}` : ""}
-                  </span>
-                </div>
-                {activeKeys.length === 0 ? (
-                  <span style={{ fontSize: 14, color: C.textMuted, fontStyle: "italic" }}>
-                    No calendar or student signals active this period
-                  </span>
-                ) : (
-                  activeKeys.map(k => (
-                    <span key={k} style={{
-                      fontSize: 13, fontWeight: 600,
-                      padding: "3px 10px", borderRadius: 20,
-                      background: C.surfaceGreen, color: C.jungleTeal,
-                      border: `1px solid ${C.borderLight}`,
-                    }}>
-                      {SIGNAL_LABELS[k]}
-                    </span>
-                  ))
-                )}
-              </div>
-            );
-          })()}
         </section>
 
         {/* ── FOOD BANKS WE COVER ──────────────────────────────────────── */}
@@ -479,7 +427,7 @@ export default function Dashboard({ onNavigate }) {
             Food banks in this study
           </h2>
           <p style={{ fontSize: 14, color: C.textMuted, margin: "0 0 20px" }}>
-            FEEDS covers three Alberta food banks' datasets across provincial and regional levels and 1 food bank as a research partner to understand the situation on the ground and tailor the tool to real needs. 
+            FEEDS used data from 2 Alberta food banks across provincial and regional levels and 2 research partners to build forecasting tools grounded in real-world needs. 
           </p>
 
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(4, 1fr)", gap: 14 }}>
@@ -549,8 +497,7 @@ export default function Dashboard({ onNavigate }) {
               How does FEEDS work?
             </div>
             <div style={{ fontSize: 14, color: "rgba(255,255,255,0.72)", maxWidth: 480, lineHeight: 1.7 }}>
-              Learn about our problem statement, the models we built, and what we found 
-              including how AI forecasting can help food banks prevent shortfalls before they happen.
+              Learn about our problem statement, the models we built, and what we found.
             </div>
           </div>
           <button
