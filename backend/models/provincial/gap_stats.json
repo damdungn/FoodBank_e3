@@ -1,9 +1,9 @@
 {
-  "mean_gap": -53275.0,
-  "std_gap": 78619.0,
-  "min_gap": -267296.0,
-  "max_gap": 133722.0,
-  "pct_deficit": 74.2,
-  "warn_threshold": -131894.0,
-  "critical_threshold": -210513.0
+  "mean_gap": -43266.0,
+  "std_gap": 71409.0,
+  "min_gap": -262519.0,
+  "max_gap": 106084.0,
+  "pct_deficit": 68.2,
+  "warn_threshold": -114675.0,
+  "critical_threshold": -186084.0
 }

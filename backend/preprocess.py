@@ -157,6 +157,9 @@ def aggregate_monthly(df: pd.DataFrame, min_lag: int = 3) -> pd.DataFrame:
     monthly["LBS_In_roll3"]  = monthly["LBS_In"].shift(1).rolling(3, min_periods=2).mean()
     monthly["LBS_Out_roll3"] = monthly["LBS_Out"].shift(1).rolling(3, min_periods=2).mean()
 
+    # Post-Ramadan signal: previous month's Ramadan days → captures donation hangover
+    monthly["n_ramadan_lag1"] = monthly["n_ramadan"].shift(1).fillna(0)
+
     # Gap (actual surplus/deficit) and its lag
     monthly["Gap"]      = monthly["LBS_In"] - monthly["LBS_Out"]
     monthly["Gap_lag1"] = monthly["Gap"].shift(1)
