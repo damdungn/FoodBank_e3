@@ -15,10 +15,12 @@ const C = {
 
 const SECTIONS = [
   {
-    icon: "alert-circle",
-    color: "#8b2e1a",
-    bg: "#fdecea",
-    title: "The problem",
+    icon:    "alert-circle",
+    color:   "#8b2e1a",
+    iconBg:  "#fdecea",
+    image:   "/problem.jpg",
+    credit:  "https://www.cpr.org/2024/11/27/inflation-affecting-local-food-banks/",
+    title:   "The problem",
     summary: "Food banks plan reactively with limited tools to anticipate demand before it arrives.",
     points: [
       "Food banks rely on reactive planning with limited forecasting tools.",
@@ -28,39 +30,45 @@ const SECTIONS = [
     ],
   },
   {
-    icon: "bulb",
-    color: C.jungleTeal,
-    bg: C.surfaceGreen,
-    title: "Our solution",
+    icon:    "bulb",
+    color:   C.jungleTeal,
+    iconBg:  C.surfaceGreen,
+    image:   "/solution.jpg",
+    credit:  "https://engineering.fb.com/2016/05/10/ai-research/ai-revealed/",
+    title:   "Our solution",
     summary: "FEEDS combines food bank records with external indicators to forecast demand and supply.",
     points: [
       "Combines operational data alongside economic, weather, and calendar datasets.",
       "Generates monthly forecasts for inbound (supply) and outbound (demand).",
       "Gives provincial staff early visibility into shortage gaps and when donor outreach is needed.",
       "Gives regional staff monthly hamper estimates to support staffing, storage, and food packaging.",
-      "Designed to inform decisions, not replace them so that staff stay in control.",
+      "Designed to inform decisions, not replace them — staff stay in control.",
     ],
   },
   {
-    icon: "chart-bar",
-    color: "#7a5ca8",
-    bg: "#f3eefb",
-    title: "Key findings",
-    summary: "Four consistent patterns emerged from model development and analysis.",
+    icon:    "chart-bar",
+    color:   "#7a5ca8",
+    iconBg:  "#f3eefb",
+    image:   "/findings.jpg",
+    credit:  "https://www.effective-states.org/why-should-i-care-about-economic-growth/",
+    title:   "Key findings",
+    summary: "Consistent patterns emerged from model development and analysis.",
     points: [
       "Economic conditions strongly influence food bank demand.",
       "AISH (Assured Income for the Severely Handicapped) caseload can act as an early warning signal.",
-      "External features (e.g., weather, calendar events) improve forecasts beyond historical trends.",
+      "External features (weather, calendar events) improve forecasts beyond historical trends alone.",
     ],
   },
   {
-    icon: "route",
-    color: "#8a6020",
-    bg: "#fffbee",
-    title: "Impact & next steps",
+    icon:    "route",
+    color:   "#8a6020",
+    iconBg:  "#fffbee",
+    image:   "/future.jpg",
+    credit:  "https://www.computersciencedegreehub.com/faq/what-is-coding/",
+    title:   "Impact & next steps",
     summary: "FEEDS helps food banks plan ahead so they can focus on the communities they serve.",
     points: [
-      "FEEDS helps food banks plan ahead and reduce last minute pressure.",
+      "FEEDS helps food banks plan ahead and reduce last-minute pressure.",
       "Forecasts can improve food allocation, staffing, and storage planning.",
       "Next: add Edmonton Food Bank data and finish the Campus Food Bank model.",
       "Future: improve explainability, generalization, client outlook, and donor engagement.",
@@ -233,40 +241,90 @@ export default function AboutFeeds() {
             Why we built FEEDS, how it works, what we found, and where it's going.
           </p>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            {SECTIONS.map(s => (
-              <div key={s.title} style={{
-                background: s.bg,
-                border: `1px solid ${C.borderLight}`,
-                borderLeft: `4px solid ${s.color}`,
-                borderRadius: "0 12px 12px 0",
-                padding: isMobile ? "16px 16px" : "20px 24px",
-                display: "flex", gap: 18, alignItems: "flex-start",
-              }}>
-                <div style={{
-                  width: 40, height: 40, flexShrink: 0, borderRadius: 10,
-                  background: s.bg,
-                  display: "flex", alignItems: "center", justifyContent: "center",
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            {SECTIONS.map((s, idx) => {
+              const imgRight = idx % 2 === 0;
+              return (
+                <div key={s.title} style={{
+                  background: C.surfaceWhite,
+                  border: `1px solid ${C.borderLight}`,
+                  borderRadius: 16,
+                  overflow: "hidden",
+                  display: "flex",
+                  flexDirection: isMobile ? "column" : (imgRight ? "row" : "row-reverse"),
+                  minHeight: isMobile ? "auto" : 200,
+                  boxShadow: "0 2px 10px rgba(34,68,51,0.06)",
                 }}>
-                  <i className={`ti ti-${s.icon}`} style={{ fontSize: 18, color: s.color }} aria-hidden="true" />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 17, fontWeight: 700, color: C.textPrimary, marginBottom: 4 }}>
-                    {s.title}
+                  {/* Photo */}
+                  <div style={{
+                    width: isMobile ? "100%" : "32%",
+                    flexShrink: 0,
+                    minHeight: isMobile ? 150 : "auto",
+                    overflow: "hidden",
+                    background: C.surfaceGreen,
+                    display: "flex", flexDirection: "column",
+                  }}>
+                    <img
+                      src={s.image}
+                      alt={s.title}
+                      style={{ width: "100%", flex: 1, objectFit: "cover", display: "block", minHeight: 0 }}
+                    />
+                    {s.credit && (
+                      <div style={{
+                        padding: "4px 8px",
+                        background: "rgba(0,0,0,0.45)",
+                        fontSize: 9,
+                        lineHeight: 1.4,
+                        color: "rgba(255,255,255,0.65)",
+                        overflow: "hidden",
+                        whiteSpace: "nowrap",
+                        textOverflow: "ellipsis",
+                      }}>
+                        Image:{" "}
+                        <a
+                          href={s.credit}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ color: "rgba(255,255,255,0.65)", textDecoration: "underline" }}
+                        >
+                          {s.credit}
+                        </a>
+                      </div>
+                    )}
                   </div>
-                  <div style={{ fontSize: 14, color: C.textSecondary, marginBottom: 10, lineHeight: 1.6 }}>
-                    {s.summary}
+
+                  {/* Text */}
+                  <div style={{
+                    flex: 1,
+                    padding: isMobile ? "20px 18px" : "28px 32px",
+                    display: "flex", flexDirection: "column", justifyContent: "center",
+                  }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                      <div style={{
+                        width: 36, height: 36, borderRadius: 9, flexShrink: 0,
+                        background: s.iconBg,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                      }}>
+                        <i className={`ti ti-${s.icon}`} style={{ fontSize: 17, color: s.color }} aria-hidden="true" />
+                      </div>
+                      <div style={{ fontSize: 18, fontWeight: 700, color: C.textPrimary }}>
+                        {s.title}
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 14, color: C.textSecondary, marginBottom: 12, lineHeight: 1.65 }}>
+                      {s.summary}
+                    </div>
+                    <ul style={{ margin: 0, padding: "0 0 0 16px", display: "flex", flexDirection: "column", gap: 6 }}>
+                      {s.points.map((p, i) => (
+                        <li key={i} style={{ fontSize: 14, color: C.textMuted, lineHeight: 1.65 }}>
+                          {p}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                  <ul style={{ margin: 0, padding: "0 0 0 16px", display: "flex", flexDirection: "column", gap: 5 }}>
-                    {s.points.map((p, i) => (
-                      <li key={i} style={{ fontSize: 14, color: C.textMuted, lineHeight: 1.65 }}>
-                        {p}
-                      </li>
-                    ))}
-                  </ul>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
 
