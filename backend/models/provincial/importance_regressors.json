@@ -1,6 +1,7 @@
 {
-  "Net_Migration": 0.502904,
-  "Mean_Temp": 0.300038,
-  "CPI_Food": 0.14102,
-  "AISH_TOTAL": 0.056038
+  "Mean_Temp": 0.362966,
+  "Net_Migration": 0.283434,
+  "n_ramadan_lag1": 0.209753,
+  "CPI_Food": 0.114951,
+  "AISH_TOTAL": 0.028896
 }

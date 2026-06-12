@@ -1,0 +1,289 @@
+{
+  "model": "RDFB Prophet",
+  "generated": "2026-06-11",
+  "units": "hampers per month",
+  "accuracy": {
+    "cv_mape": 17.7,
+    "cv_mae": 118
+  },
+  "historical": [
+    {
+      "month": "2024-05-01",
+      "label": "May 2024",
+      "actual": 1102,
+      "fitted": 985.3
+    },
+    {
+      "month": "2024-06-01",
+      "label": "Jun 2024",
+      "actual": 975,
+      "fitted": 979.3
+    },
+    {
+      "month": "2024-07-01",
+      "label": "Jul 2024",
+      "actual": 985,
+      "fitted": 953.5
+    },
+    {
+      "month": "2024-08-01",
+      "label": "Aug 2024",
+      "actual": 1091,
+      "fitted": 1036.7
+    },
+    {
+      "month": "2024-09-01",
+      "label": "Sep 2024",
+      "actual": 873,
+      "fitted": 949.0
+    },
+    {
+      "month": "2024-10-01",
+      "label": "Oct 2024",
+      "actual": 1009,
+      "fitted": 1004.3
+    },
+    {
+      "month": "2024-11-01",
+      "label": "Nov 2024",
+      "actual": 1040,
+      "fitted": 1049.6
+    },
+    {
+      "month": "2024-12-01",
+      "label": "Dec 2024",
+      "actual": 942,
+      "fitted": 995.6
+    },
+    {
+      "month": "2025-01-01",
+      "label": "Jan 2025",
+      "actual": 1075,
+      "fitted": 1087.8
+    },
+    {
+      "month": "2025-02-01",
+      "label": "Feb 2025",
+      "actual": 956,
+      "fitted": 1028.1
+    },
+    {
+      "month": "2025-03-01",
+      "label": "Mar 2025",
+      "actual": 1080,
+      "fitted": 1143.1
+    },
+    {
+      "month": "2025-04-01",
+      "label": "Apr 2025",
+      "actual": 1031,
+      "fitted": 1002.3
+    },
+    {
+      "month": "2025-05-01",
+      "label": "May 2025",
+      "actual": 1060,
+      "fitted": 1039.4
+    },
+    {
+      "month": "2025-06-01",
+      "label": "Jun 2025",
+      "actual": 1050,
+      "fitted": 1039.8
+    },
+    {
+      "month": "2025-07-01",
+      "label": "Jul 2025",
+      "actual": 1090,
+      "fitted": 1001.3
+    },
+    {
+      "month": "2025-08-01",
+      "label": "Aug 2025",
+      "actual": 1065,
+      "fitted": 1086.2
+    },
+    {
+      "month": "2025-09-01",
+      "label": "Sep 2025",
+      "actual": 1046,
+      "fitted": 1034.8
+    },
+    {
+      "month": "2025-10-01",
+      "label": "Oct 2025",
+      "actual": 1165,
+      "fitted": 1094.7
+    },
+    {
+      "month": "2025-11-01",
+      "label": "Nov 2025",
+      "actual": 1099,
+      "fitted": 997.1
+    },
+    {
+      "month": "2025-12-01",
+      "label": "Dec 2025",
+      "actual": 958,
+      "fitted": 992.7
+    },
+    {
+      "month": "2026-01-01",
+      "label": "Jan 2026",
+      "actual": 1114,
+      "fitted": 1059.0
+    },
+    {
+      "month": "2026-02-01",
+      "label": "Feb 2026",
+      "actual": 1018,
+      "fitted": 983.9
+    },
+    {
+      "month": "2026-03-01",
+      "label": "Mar 2026",
+      "actual": 1025,
+      "fitted": 1038.4
+    },
+    {
+      "month": "2026-04-01",
+      "label": "Apr 2026",
+      "actual": 966,
+      "fitted": 1021.9
+    },
+    {
+      "month": "2026-05-01",
+      "label": "May 2026",
+      "actual": 932,
+      "fitted": 1028.4
+    }
+  ],
+  "forecast": [
+    {
+      "month": "2026-06-01",
+      "label": "Jun 2026",
+      "forecast": 1027.5,
+      "lower_80": 927.8,
+      "upper_80": 1120.0
+    },
+    {
+      "month": "2026-07-01",
+      "label": "Jul 2026",
+      "forecast": 969.2,
+      "lower_80": 872.2,
+      "upper_80": 1069.8
+    },
+    {
+      "month": "2026-08-01",
+      "label": "Aug 2026",
+      "forecast": 1043.9,
+      "lower_80": 953.9,
+      "upper_80": 1146.0
+    },
+    {
+      "month": "2026-09-01",
+      "label": "Sep 2026",
+      "forecast": 1000.7,
+      "lower_80": 913.1,
+      "upper_80": 1095.6
+    },
+    {
+      "month": "2026-10-01",
+      "label": "Oct 2026",
+      "forecast": 1053.4,
+      "lower_80": 953.2,
+      "upper_80": 1148.1
+    },
+    {
+      "month": "2026-11-01",
+      "label": "Nov 2026",
+      "forecast": 1102.9,
+      "lower_80": 990.7,
+      "upper_80": 1199.3
+    },
+    {
+      "month": "2026-12-01",
+      "label": "Dec 2026",
+      "forecast": 1011.6,
+      "lower_80": 916.3,
+      "upper_80": 1106.1
+    },
+    {
+      "month": "2027-01-01",
+      "label": "Jan 2027",
+      "forecast": 1165.3,
+      "lower_80": 1067.4,
+      "upper_80": 1265.5
+    },
+    {
+      "month": "2027-02-01",
+      "label": "Feb 2027",
+      "forecast": 1072.3,
+      "lower_80": 973.4,
+      "upper_80": 1171.6
+    },
+    {
+      "month": "2027-03-01",
+      "label": "Mar 2027",
+      "forecast": 1063.8,
+      "lower_80": 963.6,
+      "upper_80": 1156.3
+    },
+    {
+      "month": "2027-04-01",
+      "label": "Apr 2027",
+      "forecast": 1064.4,
+      "lower_80": 964.1,
+      "upper_80": 1160.3
+    },
+    {
+      "month": "2027-05-01",
+      "label": "May 2027",
+      "forecast": 1097.7,
+      "lower_80": 995.3,
+      "upper_80": 1199.3
+    }
+  ],
+  "metrics": {
+    "mae": 58.6,
+    "mape": 10.8,
+    "cv_mae": 118.0,
+    "cv_mape": 17.7,
+    "trainingMonths": 185,
+    "trainingWindow": "2011-01-01 \u2192 2026-05-01"
+  },
+  "featureImportance": [
+    {
+      "name": "EDMONTON_AISH_CASELOAD",
+      "shap": 104
+    },
+    {
+      "name": "SINGLE_AISH_TOTAL",
+      "shap": 32
+    },
+    {
+      "name": "CPI All-items",
+      "shap": 26
+    },
+    {
+      "name": "CPI Food",
+      "shap": 7.5
+    },
+    {
+      "name": "School_In_Session",
+      "shap": 7.0
+    }
+  ],
+  "seasonality": {
+    "peakMonths": [
+      "Jan",
+      "Mar",
+      "Nov"
+    ],
+    "troughMonths": [
+      "Jul",
+      "Sep",
+      "Dec"
+    ]
+  }
+}

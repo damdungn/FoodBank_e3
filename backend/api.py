@@ -159,6 +159,7 @@ def _pretty(col: str) -> str:
         "n_gst": "GST payment days", "n_ccb": "CCB payment days",
         "n_acwb": "ACWB payment days", "n_holidays": "Holiday days",
         "EDMONTON_AISH_CASELOAD": "Edmonton AISH caseload",
+        "n_ramadan_lag1": "Post-Ramadan donation effect",
     }
     return label_map.get(col, col.replace("_", " ").title())
 
@@ -446,10 +447,11 @@ def provincial_history():
     hist = predict_historical(df, models, fc)
     result = [
         {
-            "date":      row.Date.strftime("%b %Y"),
-            "inbound":   int(row.LBS_In),
-            "outbound":  int(row.LBS_Out),
-            "predicted": round(float(row.LBS_In_pred), 0),
+            "date":           row.Date.strftime("%b %Y"),
+            "inbound":        int(row.LBS_In),
+            "outbound":       int(row.LBS_Out),
+            "predicted":      round(float(row.LBS_In_pred), 0),
+            "predicted_gap":  round(float(row.LBS_Net_pred), 0),
         }
         for row in hist.itertuples()
     ]
@@ -457,10 +459,11 @@ def provincial_history():
     # Append 3-month forecast (inbound/outbound = null → dashed in chart)
     for fc_row in forecast_monthly(df, models, fc, months=3):
         result.append({
-            "date":      fc_row["month"],
-            "inbound":   None,
-            "outbound":  None,
-            "predicted": fc_row["LBS_In_forecast"],
+            "date":           fc_row["month"],
+            "inbound":        None,
+            "outbound":       None,
+            "predicted":      fc_row["LBS_In_forecast"],
+            "predicted_gap":  round(float(fc_row["Gap_forecast"]), 0),
         })
 
     return {"historyData": result}
@@ -616,7 +619,7 @@ def model_summary():
 # ── Regional — Prophet forecast JSON (exported from Colab) ───────────────────
 # Drop rdfb_forecast.json into backend/data/ to activate these endpoints.
 
-REGIONAL_JSON = Path(__file__).parent / "data" / "rdfb_forecast_export.json"
+REGIONAL_JSON = Path(__file__).parent / "data" / "rdfb_forecast.json"
 
 
 def _regional_available() -> bool:
@@ -642,14 +645,27 @@ def _load_regional() -> dict:
 @app.get("/api/regional/forecast")
 def regional_forecast():
     """
-    12-month Prophet hamper forecast with 80% CI and AFB gap overlay.
-    Each row: { month, yhat, lower, upper, afbGap }
+    12-month Prophet hamper forecast with 80% CI.
+    Returns both historical (actual + fitted) and forecast arrays.
+    Supports new format (forecast/lower_80/upper_80/label) and old (yhat/lower/upper/month).
     """
     data = _load_regional()
+    raw_fc = data.get("forecast", [])
+    forecast_norm = [
+        {
+            "month":  r.get("label", r.get("month", "")),
+            "yhat":   round(float(r.get("forecast", r.get("yhat", 0))), 1),
+            "lower":  round(float(r.get("lower_80",  r.get("lower",  0))), 1),
+            "upper":  round(float(r.get("upper_80",  r.get("upper",  0))), 1),
+            "afbGap": r.get("afbGap", 0),
+        }
+        for r in raw_fc
+    ]
     return {
-        "forecast":    data.get("forecast", []),
+        "historical":  data.get("historical", []),
+        "forecast":    forecast_norm,
         "seasonality": data.get("seasonality", {}),
-        "generatedAt": data.get("generatedAt"),
+        "generatedAt": data.get("generated", data.get("generatedAt")),
     }
 
 
@@ -684,7 +700,7 @@ def regional_features():
 def regional_metrics():
     """Model performance stats for the RDFB Prophet model."""
     data = _load_regional()
-    m    = data.get("metrics", {})
+    m    = data.get("metrics", data.get("accuracy", {}))
 
     return {
         "modelStats": [
@@ -696,7 +712,7 @@ def regional_metrics():
             {"label": "Training window",   "value": m.get("trainingWindow", "N/A")},
             {"label": "Model type",        "value": "Prophet + economic regressors"},
             {"label": "Forecast horizon",  "value": "12 months"},
-            {"label": "Generated",         "value": data.get("generatedAt", "N/A")},
+            {"label": "Generated",         "value": data.get("generated", data.get("generatedAt", "N/A"))},
         ]
     }
 

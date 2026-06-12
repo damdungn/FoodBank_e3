@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import {
   ComposedChart, BarChart,
   Line, Bar, Area, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer, ReferenceArea,
+  Tooltip, ResponsiveContainer,
 } from "recharts";
 
 const C = {
@@ -131,30 +131,28 @@ const ChartTooltip = ({ active, payload, label }) => {
 
 const HamperTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
-  const yhat  = payload.find(p => p.dataKey === "yhat");
-  const lower = payload[0]?.payload?.lower;
-  const upper = payload[0]?.payload?.upper;
-  const isGap = payload[0]?.payload?.afbGap === 1;
+  const pt = payload[0]?.payload ?? {};
+  const isForecast = pt.actual == null;
   return (
     <div style={{
       background: C.forestGreen, border: `1px solid ${C.jungleTeal}`,
-      borderRadius: 8, padding: "8px 13px", fontSize: 14, color: "#fff",
+      borderRadius: 8, padding: "8px 13px", fontSize: 13, color: "#fff",
     }}>
-      <div style={{ fontWeight: 600, color: C.teaGreen, marginBottom: 4 }}>{label}</div>
-      {yhat && (
-        <div style={{ opacity: 0.9 }}>
-          Forecast: <strong>{yhat.value?.toLocaleString()}</strong> hampers
-        </div>
-      )}
-      {lower != null && upper != null && (
-        <div style={{ opacity: 0.7, fontSize: 12, marginTop: 2 }}>
-          80% CI: {lower.toLocaleString()} – {upper.toLocaleString()}
-        </div>
-      )}
-      {isGap && (
-        <div style={{ marginTop: 4, color: "#f09070", fontSize: 12 }}>
-          ⚠ AFB supply gap month
-        </div>
+      <div style={{ fontWeight: 600, color: C.teaGreen, marginBottom: 5 }}>{label}</div>
+      {!isForecast ? (
+        <>
+          <div style={{ opacity: 0.9 }}>Actual: <strong>{pt.actual?.toLocaleString()}</strong> hampers</div>
+          <div style={{ opacity: 0.7, marginTop: 2 }}>Fitted: <strong>{pt.fitted?.toLocaleString()}</strong> hampers</div>
+        </>
+      ) : (
+        <>
+          <div style={{ opacity: 0.9 }}>Forecast: <strong>{pt.yhat?.toLocaleString()}</strong> hampers</div>
+          {pt.bandBot != null && (
+            <div style={{ opacity: 0.65, fontSize: 12, marginTop: 2 }}>
+              80% CI: {pt.bandBot?.toLocaleString()} – {(pt.bandBot + pt.band)?.toLocaleString()}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
@@ -306,24 +304,35 @@ export default function Regional() {
   }, [selectedFB]);
 
   // Derived values for hamper tab
-  const forecastRows = forecast?.forecast ?? [];
-  const gapMonths    = forecastRows.filter(r => r.afbGap === 1).map(r => r.month);
-  const meanYhat     = forecastRows.length
+  const historicalRows = forecast?.historical ?? [];
+  const forecastRows   = forecast?.forecast   ?? [];
+  const meanYhat       = forecastRows.length
     ? Math.round(forecastRows.reduce((s, r) => s + r.yhat, 0) / forecastRows.length)
     : 0;
-  const peakRow      = forecastRows.length
+  const peakRow        = forecastRows.length
     ? forecastRows.reduce((best, r) => r.yhat > best.yhat ? r : best)
     : null;
-  const seasonality  = forecast?.seasonality ?? {};
-  const chartData    = forecastRows.map(r => ({
-    month:   r.month,
-    yhat:    r.yhat,
-    lower:   r.lower,
-    upper:   r.upper,
-    bandBot: r.lower,
-    band:    r.upper - r.lower,
-    afbGap:  r.afbGap,
-  }));
+  const seasonality    = forecast?.seasonality ?? {};
+
+  // Combined chart: historical actual+fitted then forecast yhat+CI
+  const chartData = [
+    ...historicalRows.map(r => ({
+      month:   r.label ?? r.month,
+      actual:  Math.round(r.actual),
+      fitted:  Math.round(r.fitted),
+      yhat:    null,
+      bandBot: null,
+      band:    null,
+    })),
+    ...forecastRows.map(r => ({
+      month:   r.month,
+      actual:  null,
+      fitted:  null,
+      yhat:    r.yhat,
+      bandBot: r.lower,
+      band:    r.upper - r.lower,
+    })),
+  ];
 
   const fbReady = FOOD_BANKS.find(b => b.key === selectedFB)?.ready ?? false;
 
@@ -537,12 +546,6 @@ export default function Regional() {
                       accent: C.jungleTeal,
                     },
                     {
-                      label:  "AFB gap months",
-                      value:  `${gapMonths.length} / ${forecastRows.length}`,
-                      sub:    "provincial supply gap overlap",
-                      accent: "#c0622a",
-                    },
-                    {
                       label:  "Peak demand month",
                       value:  peakRow?.month ?? "—",
                       sub:    peakRow ? `${peakRow.yhat.toLocaleString()} hampers forecast` : "",
@@ -566,48 +569,75 @@ export default function Regional() {
                   ))}
                 </div>
 
-                {/* 12-month forecast chart */}
+                {/* Combined historical + forecast chart */}
                 <Panel>
                   <SectionTitle
-                    title="12-month hamper demand forecast (Red Deer FB)"
-                    sub="Prophet model · 80% prediction interval · red shading = AFB provincial supply gap months"
+                    title="Actual vs fitted — 12-month forecast (Red Deer FB)"
+                    sub="Prophet model · last 25 months actual & fitted · 80% CI on forecast"
                   />
-                  <ResponsiveContainer width="100%" height={240}>
-                    <ComposedChart data={chartData} margin={{ top: 4, right: 16, bottom: 0, left: 10 }}>
+                  <ResponsiveContainer width="100%" height={280}>
+                    <ComposedChart data={chartData} margin={{ top: 4, right: 16, bottom: 20, left: 10 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke={C.teaGreen} />
-                      <XAxis dataKey="month" tick={{ fontSize: 12, fill: C.textMuted }} axisLine={false} tickLine={false} />
+                      <XAxis
+                        dataKey="month"
+                        tick={{ fontSize: 11, fill: C.textMuted }}
+                        axisLine={false} tickLine={false}
+                        interval={4}
+                        angle={-30} textAnchor="end"
+                      />
                       <YAxis
-                        tick={{ fontSize: 13, fill: C.textMuted }} axisLine={false} tickLine={false}
+                        tick={{ fontSize: 12, fill: C.textMuted }} axisLine={false} tickLine={false}
                         tickFormatter={v => v.toLocaleString()} domain={["auto", "auto"]}
                       />
                       <Tooltip content={<HamperTooltip />} />
-                      {/* CI band — stacked so gap shading renders on top */}
-                      <Area type="monotone" dataKey="bandBot" stackId="ci" stroke="none" fill="transparent" legendType="none" />
-                      <Area type="monotone" dataKey="band"    stackId="ci" stroke="none" fill="#ddeaf8" fillOpacity={0.6} legendType="none" />
-                      {/* AFB gap month shading */}
-                      {gapMonths.map(m => (
-                        <ReferenceArea key={m} x1={m} x2={m} fill="#fdecea" fillOpacity={0.65} />
-                      ))}
-                      {/* Forecast line */}
+                      {/* 80% CI band (forecast only — null values break the area naturally) */}
+                      <Area type="monotone" dataKey="bandBot" stackId="ci" stroke="none" fill="transparent" legendType="none" connectNulls={false} />
+                      <Area type="monotone" dataKey="band"    stackId="ci" stroke="none" fill="#ddeaf8" fillOpacity={0.7} legendType="none" connectNulls={false} />
+                      {/* Historical: actual */}
                       <Line
-                        type="monotone" dataKey="yhat" name="Forecast (hampers/month)"
+                        type="monotone" dataKey="actual" name="Actual"
                         stroke={C.jungleTeal} strokeWidth={2.5}
-                        dot={{ r: 4, fill: C.jungleTeal }}
+                        dot={{ r: 3, fill: C.jungleTeal }}
+                        connectNulls={false}
+                      />
+                      {/* Historical: fitted */}
+                      <Line
+                        type="monotone" dataKey="fitted" name="Fitted"
+                        stroke={C.jungleTeal} strokeWidth={1.5} strokeDasharray="5 3"
+                        dot={false}
+                        connectNulls={false}
+                      />
+                      {/* Forecast */}
+                      <Line
+                        type="monotone" dataKey="yhat" name="Forecast"
+                        stroke={C.dustyDenim} strokeWidth={2.5}
+                        dot={{ r: 3, fill: C.dustyDenim }}
+                        connectNulls={false}
                       />
                     </ComposedChart>
                   </ResponsiveContainer>
-                  <div style={{ display: "flex", gap: 18, marginTop: 10 }}>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 16, marginTop: 10 }}>
                     {[
-                      { color: C.jungleTeal, label: "Forecast hampers/month", line: true  },
-                      { color: "#ddeaf8",    label: "80% confidence interval", square: true },
-                      { color: "#fdecea",    label: "AFB supply gap month",    square: true },
-                    ].map(({ color, label, line, square }) => (
+                      { color: C.jungleTeal, label: "Actual hampers",          line: true,   dash: false },
+                      { color: C.jungleTeal, label: "Model fitted (historical)",line: true,   dash: true  },
+                      { color: C.dustyDenim, label: "Forecast (next 12 mo.)",  line: true,   dash: false },
+                      { color: "#ddeaf8",    label: "80% confidence interval", square: true              },
+                    ].map(({ color, label, line, dash }) => (
                       <span key={label} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: C.textMuted }}>
-                        <span style={{
-                          width: 10, height: line ? 3 : 10,
-                          background: color, display: "inline-block",
-                          borderRadius: 2, border: square ? `1px solid ${C.borderLight}` : "none",
-                        }} />
+                        {line ? (
+                          <svg width="18" height="10">
+                            <line
+                              x1="0" y1="5" x2="18" y2="5"
+                              stroke={color} strokeWidth="2.5"
+                              strokeDasharray={dash ? "5 3" : undefined}
+                            />
+                          </svg>
+                        ) : (
+                          <span style={{
+                            width: 12, height: 12, background: color, display: "inline-block",
+                            borderRadius: 3, border: `1px solid ${C.borderLight}`,
+                          }} />
+                        )}
                         {label}
                       </span>
                     ))}
@@ -657,7 +687,7 @@ export default function Regional() {
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
 
             <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(3, minmax(0,1fr))", gap: 14 }}>
-              {(metrics?.modelStats ?? modelStats).map((s) => (
+              {(metrics?.modelStats?.length ? metrics.modelStats : modelStats).map((s) => (
                 <div key={s.label} style={{
                   background: C.surfaceGreen, border: `0.5px solid ${C.borderLight}`,
                   borderRadius: 12, padding: "14px 16px",
@@ -675,7 +705,7 @@ export default function Regional() {
                 sub="SHAP values from AFB model applied to RDFB · Same economic drivers, regional target"
               />
               <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={features?.featureData ?? featureData} layout="vertical" margin={{ top: 4, right: isMobile ? 20 : 50, bottom: 0, left: isMobile ? 75 : 110 }}>
+                <BarChart data={features?.featureData?.length ? features.featureData : featureData} layout="vertical" margin={{ top: 4, right: isMobile ? 20 : 50, bottom: 0, left: isMobile ? 75 : 110 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke={C.teaGreen} horizontal={false} />
                   <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 13, fill: C.textMuted }} axisLine={false} tickLine={false} />
                   <YAxis type="category" dataKey="name" tick={{ fontSize: isMobile ? 10 : 13, fill: C.textSecondary }} axisLine={false} tickLine={false} width={isMobile ? 75 : 110} />
