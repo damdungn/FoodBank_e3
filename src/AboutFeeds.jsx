@@ -181,7 +181,7 @@ export default function AboutFeeds() {
             Meet the team
           </h2>
           <p style={{ fontSize: 14, color: C.textMuted, margin: "0 0 16px" }}>
-            FEEDS was built by a team of students at the University of Alberta.
+            FEEDS was built by a team of 5 students at the University of Alberta through AI4Good Lab.
           </p>
           <div style={{
             borderRadius: 16,
@@ -212,7 +212,7 @@ export default function AboutFeeds() {
               color: C.textMuted,
             }}>
               <i className="ti ti-users" style={{ fontSize: 32, color: C.borderLight }} aria-hidden="true" />
-              <span style={{ fontSize: 14 }}>Add <code style={{ background: "#eee", padding: "1px 6px", borderRadius: 4 }}>team.jpg</code> to the <code style={{ background: "#eee", padding: "1px 6px", borderRadius: 4 }}>public/</code> folder</span>
+              <span style={{ fontSize: 14 }}>Very slay team photo coming soon!</span>
             </div>
             <div style={{
               padding: "14px 20px",
@@ -220,7 +220,7 @@ export default function AboutFeeds() {
               fontSize: 13, color: C.textMuted,
               background: C.surfaceGreen,
             }}>
-              The FEEDS team · University of Alberta · 2025–2026
+              The e3 team · University of Alberta · AI4Good Lab 2026
             </div>
           </div>
         </section>
@@ -273,12 +273,9 @@ export default function AboutFeeds() {
 
         {/* Models table */}
         <section>
-          <h2 style={{ fontSize: 25, fontWeight: 700, color: C.forestGreen, margin: "0 0 6px" }}>
+          <h2 style={{ fontSize: 25, fontWeight: 700, color: C.forestGreen, margin: "0 0 6px", marginBottom: 20 }}>
             Models in FEEDS
           </h2>
-          <p style={{ fontSize: 14, color: C.textMuted, margin: "0 0 20px" }}>
-            One model per food bank — each tuned to its data granularity and demand drivers
-          </p>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {MODELS.map(m => (
@@ -304,7 +301,7 @@ export default function AboutFeeds() {
                     { label: "Key drivers", value: m.regressors },
                   ].map(row => (
                     <div key={row.label}>
-                      <span style={{ fontSize: 13, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                      <span style={{ fontSize: 14, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 600 }}>
                         {row.label}
                       </span>
                       <div style={{ fontSize: 14, color: C.textSecondary, marginTop: 2, lineHeight: 1.5 }}>

@@ -386,24 +386,28 @@ export default function Regional() {
             const fb = FOOD_BANKS.find(b => b.key === selectedFB);
             return (
               <>
-                <div style={{ fontSize: isMobile ? 20 : 25, fontWeight: 700, color: C.forestGreen, marginBottom: 4 }}>
-                  {fb.label}
-                </div>
-                <div style={{ fontSize: 13, color: C.textMuted, marginBottom: fb.ready ? 10 : 0 }}>
-                  {fb.subtitle}
-                </div>
-                {fb.ready && (
-                  <div style={{
-                    display: "inline-flex", alignItems: "center", gap: 7,
-                    padding: "7px 14px", borderRadius: 8,
-                    background: "#e2ffec", border: "0.5px solid #ace890",
-                    fontSize: 13,
-                  }}>
-                    <div style={{ width: 7, height: 7, borderRadius: "50%", background: C.jungleTeal }} />
-                    <span style={{ color: C.textSecondary }}>Model health: </span>
-                    <span style={{ fontWeight: 600, color: C.forestGreen }}>82.3% Good confidence</span>
+                <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", alignItems: isMobile ? "flex-start" : "flex-end", justifyContent: "space-between", gap: isMobile ? 10 : 0, marginBottom: 16 }}>
+                  <div>
+                    <div style={{ fontSize: isMobile ? 20 : 25, fontWeight: 700, color: C.forestGreen, marginBottom: 4 }}>
+                      {fb.label}
+                    </div>
+                    <div style={{ fontSize: 13, color: C.textMuted, marginBottom: fb.ready ? 10 : 0 }}>
+                      {fb.subtitle}
+                    </div>
                   </div>
+                  {fb.ready && (
+                    <div style={{
+                      display: "inline-flex", alignItems: "center", gap: 7,
+                      padding: "7px 14px", borderRadius: 8,
+                      background: "#e2ffec", border: "0.5px solid #ace890",
+                      fontSize: 13,
+                    }}>
+                      <div style={{ width: 7, height: 7, borderRadius: "50%", background: C.jungleTeal }} />
+                      <span style={{ color: C.textSecondary }}>Model health: </span>
+                      <span style={{ fontWeight: 600, color: C.forestGreen }}>82.3% Good confidence</span>
+                    </div>
                 )}
+                </div>
               </>
             );
           })()}

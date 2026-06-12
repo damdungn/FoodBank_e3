@@ -277,7 +277,7 @@ export default function AIInsights() {
               AI insights
             </div>
             <div style={{ fontSize: isMobile ? 13 : 15, color: C.textMuted, lineHeight: 1.5 }}>
-              Ask anything about food bank demand, forecasts, or what's driving signals this month · open to everyone
+              Ask anything about food bank demand, forecasts, or what's driving signals this month
             </div>
           </div>
           {/* Public badge */}
@@ -410,7 +410,7 @@ export default function AIInsights() {
           </button>
         </div>
         <div style={{ fontSize: 12, color: "#cef9e4", marginTop: 8 }}>
-          AI insights using OpenAI GPT-4 model · Monthly forecasts only · Cannot provide raw operational figures
+          AI insights powered by OpenAI GPT-4 model · Monthly forecasts only · Cannot provide raw operational figures
         </div>
       </div>
 

@@ -47,9 +47,9 @@ const DRIVERS = [
   },
   {
     icon:    "school",
-    color:   "#6030a0",
-    bg:      "#f3eefb",
-    border:  "#c0a8e8",
+    color:   "#a03030",
+    bg:      "#fbeeee",
+    border:  "#e8a8a8",
     title:   "Student-specific factors",
     desc:    "Campus food banks face different demand cycles tied to academic life such as exam stress, tuition deadlines, and surges when international students arrive each semester.",
     factors: ["Exam periods", "Tuition deadlines", "International arrivals"],
@@ -89,7 +89,7 @@ const FOOD_BANKS = [
     logo: "/aberta_fb.jpg",
     color: C.forestGreen,
     bg: C.surfaceGreen,
-    border: C.borderLight,
+    border: C.teaGreen,
     data: "Provincial model trained · 2021–2026",
   },
   {
@@ -109,9 +109,9 @@ const FOOD_BANKS = [
     role: "Regional partner · serving Edmonton metro area",
     icon: "map-2",
     logo: "/edmonton_fb.jpg",
-    color: "#7a5ca8",
-    bg: "#f3eefb",
-    border: "#d0c0f0",
+    color: "#a85c5c",
+    bg: "#fbeeee",
+    border: "#f0c0c0",
     data: "Used as a research partner",
   },
   {
@@ -123,7 +123,7 @@ const FOOD_BANKS = [
     color: "#8a6020",
     bg: "#fffbee",
     border: "#e8d890",
-    data: "Dataset integration pending · May 2023–Apr 2026",
+    data: "Dataset pending · May 2023–Apr 2026",
   },
 ];
 
@@ -352,27 +352,28 @@ export default function Dashboard({ onNavigate }) {
                 borderRadius: 14, padding: "24px 22px",
                 display: "flex", flexDirection: "column", gap: 14,
               }}>
-                <div style={{
-                  width: 44, height: 44, borderRadius: 10,
-                  background: "rgba(255,255,255,0.7)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                }}>
-                  <i className={`ti ti-${w.icon}`} style={{ fontSize: 20, color: w.color }} aria-hidden="true" />
-                </div>
-                <div>
-                  <div style={{ fontSize: 17, fontWeight: 700, color: w.color, marginBottom: 6 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                  <div style={{
+                    width: 56, height: 56, borderRadius: 14, flexShrink: 0,
+                    background: `linear-gradient(135deg, ${w.color}22 0%, ${w.color}44 100%)`,
+                    border: `1.5px solid ${w.color}55`,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    <i className={`ti ti-${w.icon}`} style={{ fontSize: 26, color: w.color }} aria-hidden="true" />
+                  </div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: w.color, lineHeight: 1.25 }}>
                     {w.title}
                   </div>
-                  <div style={{ fontSize: 14, color: C.textSecondary, lineHeight: 1.65 }}>
-                    {w.desc}
-                  </div>
+                </div>
+                <div style={{ fontSize: 14, color: C.textSecondary, lineHeight: 1.65 }}>
+                  {w.desc}
                 </div>
                 <button
                   onClick={() => onNavigate?.(w.page)}
                   style={{
                     marginTop: "auto",
                     display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                    padding: "9px 0", borderRadius: 8,
+                    padding: "9px 0", borderRadius: 8, 
                     background: w.color, color: "#fff",
                     border: "none", cursor: "pointer",
                     fontSize: 14, fontWeight: 600, fontFamily: "inherit",
@@ -393,7 +394,7 @@ export default function Dashboard({ onNavigate }) {
           <h2 style={{ fontSize: 25, fontWeight: 700, color: C.forestGreen, margin: "0 0 6px" }}>
             What drives food bank demand?
           </h2>
-          <p style={{ fontSize: 14, color: C.textMuted, margin: "0 0 20px", maxWidth: 850, lineHeight: 1.65 }}>
+          <p style={{ fontSize: 14, color: C.textMuted, margin: "0 0 20px", maxWidth: 900, lineHeight: 1.65 }}>
             Unlike simple trend lines, FEEDS analyses four categories of external factors that independently push demand up or down to give food banks earlier and more accurate warnings.
           </p>
 
@@ -404,18 +405,21 @@ export default function Dashboard({ onNavigate }) {
                 borderRadius: 14, padding: "22px 18px",
                 display: "flex", flexDirection: "column", gap: 12,
               }}>
-                <div style={{
-                  width: 42, height: 42, borderRadius: 10, flexShrink: 0,
-                  background: "rgba(255,255,255,0.7)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                }}>
-                  <i className={`ti ti-${d.icon}`} style={{ fontSize: 20, color: d.color }} aria-hidden="true" />
-                </div>
-                <div>
-                  <div style={{ fontSize: 16, fontWeight: 700, color: d.color, marginBottom: 5 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <div style={{
+                    width: 52, height: 52, borderRadius: 13, flexShrink: 0,
+                    background: `linear-gradient(135deg, ${d.color}22 0%, ${d.color}45 100%)`,
+                    border: `1.5px solid ${d.color}55`,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    <i className={`ti ti-${d.icon}`} style={{ fontSize: 24, color: d.color }} aria-hidden="true" />
+                  </div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: d.color, lineHeight: 1.3 }}>
                     {d.title}
                   </div>
-                  <div style={{ fontSize: 14, color: C.textSecondary, lineHeight: 1.6, marginBottom: 10 }}>
+                </div>
+                <div>
+                  <div style={{ fontSize: 13, color: C.textSecondary, lineHeight: 1.6, marginBottom: 10 }}>
                     {d.desc}
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -484,41 +488,44 @@ export default function Dashboard({ onNavigate }) {
                 background: fb.bg,
                 border: `1px solid ${fb.border}`,
                 borderRadius: 12, padding: "20px 18px",
+                display: "flex", flexDirection: "column", gap: 12,
               }}>
-                {/* Logo container — circular, fixed size so all logos align */}
-                <div style={{
-                  width: 72, height: 72, borderRadius: "50%", marginBottom: 14, marginLeft: "auto", marginRight: "auto",
-                  background: "#fff",
-                  border: `1.5px solid ${fb.border}`,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  overflow: "hidden", padding: "8px", boxSizing: "border-box",
-                }}>
-                  <img
-                    src={fb.logo}
-                    alt={`${fb.name} logo`}
-                    onError={e => {
-                      e.currentTarget.style.display = "none";
-                      e.currentTarget.nextSibling.style.display = "flex";
-                    }}
-                    style={{
-                      maxWidth: "100%", maxHeight: "100%",
-                      objectFit: "contain",
-                      display: "block",
-                    }}
-                  />
-                  {/* Fallback icon if logo missing */}
-                  <div style={{ display: "none", alignItems: "center", justifyContent: "center", width: "100%", height: "100%" }}>
-                    <i className={`ti ti-${fb.icon}`} style={{ fontSize: 26, color: fb.color }} aria-hidden="true" />
+                {/* Logo + Name row */}
+                <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                  <div style={{
+                    width: isMobile ? 60 : 76, height: isMobile ? 60 : 76,
+                    borderRadius: "50%", flexShrink: 0,
+                    background: "#fff",
+                    border: `1.5px solid ${fb.border}`,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    overflow: "hidden", padding: "7px", boxSizing: "border-box",
+                  }}>
+                    <img
+                      src={fb.logo}
+                      alt={`${fb.name} logo`}
+                      onError={e => {
+                        e.currentTarget.style.display = "none";
+                        e.currentTarget.nextSibling.style.display = "flex";
+                      }}
+                      style={{
+                        maxWidth: "100%", maxHeight: "100%",
+                        objectFit: "contain",
+                        display: "block",
+                      }}
+                    />
+                    <div style={{ display: "none", alignItems: "center", justifyContent: "center", width: "100%", height: "100%" }}>
+                      <i className={`ti ti-${fb.icon}`} style={{ fontSize: 28, color: fb.color }} aria-hidden="true" />
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: fb.color, lineHeight: 1.3 }}>
+                    {fb.name}
                   </div>
                 </div>
-                <div style={{ fontSize: 16, fontWeight: 700, color: fb.color, marginBottom: 5 }}>
-                  {fb.name}
-                </div>
-                <div style={{ fontSize: 14, color: C.textSecondary, lineHeight: 1.6, marginBottom: 10 }}>
+                <div style={{ fontSize: 13, color: C.textSecondary, lineHeight: 1.6 }}>
                   {fb.role}
                 </div>
                 <div style={{
-                  fontSize: 14, color: C.textMuted,
+                  fontSize: 12, color: C.textMuted,
                   borderTop: `1px solid ${fb.border}`, paddingTop: 8,
                 }}>
                   {fb.data}

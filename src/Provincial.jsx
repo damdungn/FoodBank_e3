@@ -281,7 +281,7 @@ export default function Provincial() {
             <div style={{ width: 7, height: 7, borderRadius: "50%", background: C.jungleTeal }} />
             <span style={{ color: C.textSecondary }}>Model health: </span>
             <span style={{ fontWeight: 600, color: C.forestGreen }}>
-              {confidence ? `${confPct}% ${confLabel} confidence` : "—"}
+              {confidence ? `Good confidence` : "—"}
             </span>
           </div>
         </div>
@@ -402,15 +402,15 @@ export default function Provincial() {
                   return (
                     <Panel>
                       <SectionTitle
-                        title="Supply gap — actual + 3-month forecast"
-                        sub="Solid = 3-month rolling avg of actual gap · dashed = model fit + 3-month forecast"
+                        title="Supply gap (actual + 3-month forecast)"
+                        sub="Solid = 3-month average of actual gap · dashed = model fit + 3-month forecast"
                       />
                       <ResponsiveContainer width="100%" height={280}>
                         <ComposedChart data={gapChartData} margin={{ top: 4, right: 16, bottom: 20, left: 10 }}>
                           <CartesianGrid strokeDasharray="3 3" stroke={C.teaGreen} />
                           <XAxis
                             dataKey="date"
-                            tick={{ fontSize: 11, fill: C.textMuted }}
+                            tick={{ fontSize: 12, fill: C.textMuted }}
                             axisLine={false} tickLine={false}
                             interval={0}
                             angle={-30} textAnchor="end"
@@ -418,7 +418,7 @@ export default function Provincial() {
                           <YAxis
                             domain={["auto", "auto"]}
                             tickFormatter={v => `${v > 0 ? "+" : ""}${(v / 1000).toFixed(0)}K`}
-                            tick={{ fontSize: 11, fill: C.textMuted }}
+                            tick={{ fontSize: 12, fill: C.textMuted }}
                             axisLine={false} tickLine={false} width={46}
                           />
                           <Tooltip content={<ChartTooltip />} />
@@ -440,8 +440,8 @@ export default function Provincial() {
                           </span>
                         ))}
                       </div>
-                      <p style={{ fontSize: 11, color: C.textMuted, fontStyle: "italic", marginTop: 10, lineHeight: 1.5 }}>
-                        Negative values mark months where the model forecasts a provincial supply shortfall — more food distributed than donated.
+                      <p style={{ fontSize: 12, color: C.textMuted, fontStyle: "italic", marginTop: 10, lineHeight: 1.5 }}>
+                        Negative values mark months where the model forecasts a provincial supply shortfall which means more food distributed than donated.
                       </p>
                     </Panel>
                   );
@@ -452,7 +452,7 @@ export default function Provincial() {
                   <Panel>
                     <SectionTitle
                       title="3-month supply-demand outlook"
-                      sub="Will we have enough food to meet demand? Projected shortfall or surplus per month."
+                      sub="Predicted shortfall or surplus per month."
                     />
                     <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0,1fr))", gap: 12 }}>
                       {gapForecast.map((row) => {
@@ -530,8 +530,8 @@ export default function Provincial() {
                 {/* Feature importance chart */}
                 <Panel>
                   <SectionTitle
-                    title="Feature importance — provincial model (Prophet + Random Forest)"
-                    sub="Random Forest feature importance · colour = category · all targets pooled"
+                    title="Feature importance using provincial model (Prophet + Random Forest)"
+                    sub="Random Forest feature importance"
                   />
                   {featureData.length === 0 ? (
                     <div style={{ fontSize: 13, color: C.textMuted, textAlign: "center", padding: "20px 0" }}>
