@@ -159,6 +159,7 @@ def _pretty(col: str) -> str:
         "n_gst": "GST payment days", "n_ccb": "CCB payment days",
         "n_acwb": "ACWB payment days", "n_holidays": "Holiday days",
         "EDMONTON_AISH_CASELOAD": "Edmonton AISH caseload",
+        "n_ramadan_lag1": "Post-Ramadan donation effect",
     }
     return label_map.get(col, col.replace("_", " ").title())
 
