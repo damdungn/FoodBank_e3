@@ -687,7 +687,7 @@ export default function Regional() {
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
 
             <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(3, minmax(0,1fr))", gap: 14 }}>
-              {(metrics?.modelStats ?? modelStats).map((s) => (
+              {(metrics?.modelStats?.length ? metrics.modelStats : modelStats).map((s) => (
                 <div key={s.label} style={{
                   background: C.surfaceGreen, border: `0.5px solid ${C.borderLight}`,
                   borderRadius: 12, padding: "14px 16px",
@@ -705,7 +705,7 @@ export default function Regional() {
                 sub="SHAP values from AFB model applied to RDFB · Same economic drivers, regional target"
               />
               <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={features?.featureData ?? featureData} layout="vertical" margin={{ top: 4, right: isMobile ? 20 : 50, bottom: 0, left: isMobile ? 75 : 110 }}>
+                <BarChart data={features?.featureData?.length ? features.featureData : featureData} layout="vertical" margin={{ top: 4, right: isMobile ? 20 : 50, bottom: 0, left: isMobile ? 75 : 110 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke={C.teaGreen} horizontal={false} />
                   <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 13, fill: C.textMuted }} axisLine={false} tickLine={false} />
                   <YAxis type="category" dataKey="name" tick={{ fontSize: isMobile ? 10 : 13, fill: C.textSecondary }} axisLine={false} tickLine={false} width={isMobile ? 75 : 110} />

@@ -243,5 +243,47 @@
       "lower_80": 995.3,
       "upper_80": 1199.3
     }
-  ]
+  ],
+  "metrics": {
+    "mae": 58.6,
+    "mape": 10.8,
+    "cv_mae": 118.0,
+    "cv_mape": 17.7,
+    "trainingMonths": 185,
+    "trainingWindow": "2011-01-01 \u2192 2026-05-01"
+  },
+  "featureImportance": [
+    {
+      "name": "EDMONTON_AISH_CASELOAD",
+      "shap": 104
+    },
+    {
+      "name": "SINGLE_AISH_TOTAL",
+      "shap": 32
+    },
+    {
+      "name": "CPI All-items",
+      "shap": 26
+    },
+    {
+      "name": "CPI Food",
+      "shap": 7.5
+    },
+    {
+      "name": "School_In_Session",
+      "shap": 7.0
+    }
+  ],
+  "seasonality": {
+    "peakMonths": [
+      "Jan",
+      "Mar",
+      "Nov"
+    ],
+    "troughMonths": [
+      "Jul",
+      "Sep",
+      "Dec"
+    ]
+  }
 }

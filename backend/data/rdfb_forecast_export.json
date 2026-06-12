@@ -1,0 +1,131 @@
+{
+  "generatedAt": "2026-06-09",
+  "metrics": {
+    "mae": 58.6,
+    "mape": 10.8,
+    "cv_mae": 118.0,
+    "cv_mape": 17.7,
+    "trainingMonths": 185,
+    "trainingWindow": "2011-01-01 \u2192 2026-05-01"
+  },
+  "featureImportance": [
+    {
+      "name": "EDMONTON_AISH_CASELOAD",
+      "shap": 104
+    },
+    {
+      "name": "SINGLE_AISH_TOTAL",
+      "shap": 32
+    },
+    {
+      "name": "CPI All-items",
+      "shap": 26
+    },
+    {
+      "name": "CPI Food",
+      "shap": 7.5
+    },
+    {
+      "name": "School_In_Session",
+      "shap": 7.0
+    }
+  ],
+  "forecast": [
+    {
+      "month": "Jun 2026",
+      "yhat": 1027,
+      "lower": 931,
+      "upper": 1122,
+      "afbGap": 1
+    },
+    {
+      "month": "Jul 2026",
+      "yhat": 969,
+      "lower": 875,
+      "upper": 1068,
+      "afbGap": 1
+    },
+    {
+      "month": "Aug 2026",
+      "yhat": 1044,
+      "lower": 951,
+      "upper": 1141,
+      "afbGap": 1
+    },
+    {
+      "month": "Sep 2026",
+      "yhat": 1001,
+      "lower": 909,
+      "upper": 1099,
+      "afbGap": 1
+    },
+    {
+      "month": "Oct 2026",
+      "yhat": 1053,
+      "lower": 962,
+      "upper": 1160,
+      "afbGap": 1
+    },
+    {
+      "month": "Nov 2026",
+      "yhat": 1103,
+      "lower": 1008,
+      "upper": 1209,
+      "afbGap": 1
+    },
+    {
+      "month": "Dec 2026",
+      "yhat": 1012,
+      "lower": 908,
+      "upper": 1111,
+      "afbGap": 0
+    },
+    {
+      "month": "Jan 2027",
+      "yhat": 1165,
+      "lower": 1072,
+      "upper": 1257,
+      "afbGap": 0
+    },
+    {
+      "month": "Feb 2027",
+      "yhat": 1072,
+      "lower": 972,
+      "upper": 1170,
+      "afbGap": 0
+    },
+    {
+      "month": "Mar 2027",
+      "yhat": 1064,
+      "lower": 962,
+      "upper": 1159,
+      "afbGap": 0
+    },
+    {
+      "month": "Apr 2027",
+      "yhat": 1064,
+      "lower": 960,
+      "upper": 1174,
+      "afbGap": 0
+    },
+    {
+      "month": "May 2027",
+      "yhat": 1098,
+      "lower": 997,
+      "upper": 1203,
+      "afbGap": 0
+    }
+  ],
+  "seasonality": {
+    "peakMonths": [
+      "Jan",
+      "Mar",
+      "Nov"
+    ],
+    "troughMonths": [
+      "Jul",
+      "Sep",
+      "Dec"
+    ]
+  }
+}
