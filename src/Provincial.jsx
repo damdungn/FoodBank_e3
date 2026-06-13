@@ -316,14 +316,6 @@ export default function Provincial() {
               Predicts provincial inbound donations and outbound to regional FBs
             </div>
           </div>
-          {/* Model health badge */}
-          <div style={{
-            display: "flex", alignItems: "center", gap: 7,
-            padding: "7px 14px", borderRadius: 8,
-            background: "#e2ffec", color: "#1a8b20", border: "0.5px solid #ace890",
-            fontSize: 13,
-          }}>
-          </div>
         </div>
 
         {/* Tabs */}
@@ -456,7 +448,7 @@ export default function Provincial() {
                           />
                           <YAxis
                             domain={["auto", "auto"]}
-                            tickFormatter={v => `${v > 0 ? "+" : ""}${(v / 1000).toFixed(0)} K`}
+                            tickFormatter={v => v === 0 ? "0" : `${v > 0 ? "+" : ""}${(v / 1000).toFixed(0)}K`}
                             tick={{ fontSize: 12, fill: C.textMuted }}
                             axisLine={false} tickLine={false} width={46}
                           />
@@ -499,6 +491,7 @@ export default function Provincial() {
                         const isGap  = rowGap < 0;
                         const isCrit = row.alert === "Critical";
                         const isWarn = row.alert === "Warning";
+                        const alertLabel  = isCrit ? "Critical" : isWarn ? "Warning" : isGap ? "Caution" : "Stable";
                         const accentColor = isCrit ? "#e8a090" : isWarn ? "#d4c060" : isGap ? "#c9d8e8" : "#ace890";
                         const badgeBg     = isCrit ? "#fdecea" : isWarn ? "#fdf6d8" : isGap ? "#ddeaf8" : "#e2ffec";
                         const badgeColor  = isCrit ? "#8b2e1a" : isWarn ? "#7a6010" : isGap ? "#2d5a9e" : "#1a8b20";
@@ -515,7 +508,7 @@ export default function Provincial() {
                               <span style={{
                                 fontSize: 11, fontWeight: 500, padding: "2px 8px", borderRadius: 20,
                                 background: badgeBg, color: badgeColor,
-                              }}>{row.alert}</span>
+                              }}>{alertLabel}</span>
                             </div>
                             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
                               <div>
