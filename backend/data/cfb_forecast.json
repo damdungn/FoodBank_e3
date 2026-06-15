@@ -1,0 +1,341 @@
+{
+  "model": "CFB Prophet",
+  "generated": "2026-06-15",
+  "units": "visits per month",
+  "accuracy": {
+    "cv_mape": 13.8,
+    "cv_mae": 144,
+    "in_sample_mape": 1.4
+  },
+  "top_drivers": [
+    {
+      "feature": "Exam_Period",
+      "correlation": 0.482
+    },
+    {
+      "feature": "School_In_Session",
+      "correlation": 0.362
+    }
+  ],
+  "trends": {
+    "avg_hh_size_2023": 1.66,
+    "avg_hh_size_2026": 2.11,
+    "lbs_per_person_2023": 12.98,
+    "lbs_per_person_2026": 10.71,
+    "pressure_index_2023": 7.74,
+    "pressure_index_2026": 9.35
+  },
+  "historical": [
+    {
+      "month": "2024-04-01",
+      "label": "Apr 2024",
+      "actual": 1071,
+      "fitted": 1069.2,
+      "people_served": 1801,
+      "lbs_per_person": 11.45,
+      "pressure_index": 8.73
+    },
+    {
+      "month": "2024-05-01",
+      "label": "May 2024",
+      "actual": 1164,
+      "fitted": 1145.1,
+      "people_served": 2059,
+      "lbs_per_person": 9.97,
+      "pressure_index": 10.03
+    },
+    {
+      "month": "2024-06-01",
+      "label": "Jun 2024",
+      "actual": 1041,
+      "fitted": 1034.7,
+      "people_served": 1825,
+      "lbs_per_person": 11.14,
+      "pressure_index": 8.98
+    },
+    {
+      "month": "2024-07-01",
+      "label": "Jul 2024",
+      "actual": 982,
+      "fitted": 994.8,
+      "people_served": 1784,
+      "lbs_per_person": 11.61,
+      "pressure_index": 8.61
+    },
+    {
+      "month": "2024-08-01",
+      "label": "Aug 2024",
+      "actual": 1123,
+      "fitted": 1081.0,
+      "people_served": 2032,
+      "lbs_per_person": 11.0,
+      "pressure_index": 9.09
+    },
+    {
+      "month": "2024-09-01",
+      "label": "Sep 2024",
+      "actual": 1107,
+      "fitted": 1121.3,
+      "people_served": 1908,
+      "lbs_per_person": 10.54,
+      "pressure_index": 9.49
+    },
+    {
+      "month": "2024-10-01",
+      "label": "Oct 2024",
+      "actual": 1177,
+      "fitted": 1187.3,
+      "people_served": 2043,
+      "lbs_per_person": 11.38,
+      "pressure_index": 8.79
+    },
+    {
+      "month": "2024-11-01",
+      "label": "Nov 2024",
+      "actual": 1134,
+      "fitted": 1128.9,
+      "people_served": 1984,
+      "lbs_per_person": 11.89,
+      "pressure_index": 8.41
+    },
+    {
+      "month": "2024-12-01",
+      "label": "Dec 2024",
+      "actual": 792,
+      "fitted": 810.0,
+      "people_served": 1426,
+      "lbs_per_person": 11.81,
+      "pressure_index": 8.47
+    },
+    {
+      "month": "2025-01-01",
+      "label": "Jan 2025",
+      "actual": 1085,
+      "fitted": 1104.1,
+      "people_served": 1926,
+      "lbs_per_person": 11.71,
+      "pressure_index": 8.54
+    },
+    {
+      "month": "2025-02-01",
+      "label": "Feb 2025",
+      "actual": 1025,
+      "fitted": 1015.7,
+      "people_served": 1813,
+      "lbs_per_person": 11.43,
+      "pressure_index": 8.75
+    },
+    {
+      "month": "2025-03-01",
+      "label": "Mar 2025",
+      "actual": 1167,
+      "fitted": 1134.7,
+      "people_served": 2036,
+      "lbs_per_person": 11.01,
+      "pressure_index": 9.08
+    },
+    {
+      "month": "2025-04-01",
+      "label": "Apr 2025",
+      "actual": 1075,
+      "fitted": 1071.7,
+      "people_served": 1990,
+      "lbs_per_person": 11.04,
+      "pressure_index": 9.06
+    },
+    {
+      "month": "2025-05-01",
+      "label": "May 2025",
+      "actual": 1102,
+      "fitted": 1126.6,
+      "people_served": 2079,
+      "lbs_per_person": 10.38,
+      "pressure_index": 9.63
+    },
+    {
+      "month": "2025-06-01",
+      "label": "Jun 2025",
+      "actual": 1007,
+      "fitted": 1013.0,
+      "people_served": 1876,
+      "lbs_per_person": 10.06,
+      "pressure_index": 9.94
+    },
+    {
+      "month": "2025-07-01",
+      "label": "Jul 2025",
+      "actual": 928,
+      "fitted": 906.7,
+      "people_served": 1772,
+      "lbs_per_person": 10.02,
+      "pressure_index": 9.98
+    },
+    {
+      "month": "2025-08-01",
+      "label": "Aug 2025",
+      "actual": 941,
+      "fitted": 1002.6,
+      "people_served": 1800,
+      "lbs_per_person": 10.6,
+      "pressure_index": 9.44
+    },
+    {
+      "month": "2025-09-01",
+      "label": "Sep 2025",
+      "actual": 1085,
+      "fitted": 1062.7,
+      "people_served": 2045,
+      "lbs_per_person": 10.28,
+      "pressure_index": 9.73
+    },
+    {
+      "month": "2025-10-01",
+      "label": "Oct 2025",
+      "actual": 1141,
+      "fitted": 1125.8,
+      "people_served": 2232,
+      "lbs_per_person": 11.17,
+      "pressure_index": 8.96
+    },
+    {
+      "month": "2025-11-01",
+      "label": "Nov 2025",
+      "actual": 1069,
+      "fitted": 1076.9,
+      "people_served": 2057,
+      "lbs_per_person": 11.71,
+      "pressure_index": 8.54
+    },
+    {
+      "month": "2025-12-01",
+      "label": "Dec 2025",
+      "actual": 767,
+      "fitted": 739.9,
+      "people_served": 1590,
+      "lbs_per_person": 11.2,
+      "pressure_index": 8.93
+    },
+    {
+      "month": "2026-01-01",
+      "label": "Jan 2026",
+      "actual": 1133,
+      "fitted": 1103.8,
+      "people_served": 2261,
+      "lbs_per_person": 10.35,
+      "pressure_index": 9.66
+    },
+    {
+      "month": "2026-02-01",
+      "label": "Feb 2026",
+      "actual": 958,
+      "fitted": 969.9,
+      "people_served": 2023,
+      "lbs_per_person": 10.36,
+      "pressure_index": 9.66
+    },
+    {
+      "month": "2026-03-01",
+      "label": "Mar 2026",
+      "actual": 1140,
+      "fitted": 1159.4,
+      "people_served": 2389,
+      "lbs_per_person": 11.33,
+      "pressure_index": 8.83
+    },
+    {
+      "month": "2026-04-01",
+      "label": "Apr 2026",
+      "actual": 1007,
+      "fitted": 1012.1,
+      "people_served": 2190,
+      "lbs_per_person": 10.82,
+      "pressure_index": 9.25
+    }
+  ],
+  "forecast": [
+    {
+      "month": "2026-05-01",
+      "label": "May 2026",
+      "forecast": 1103.0,
+      "lower_80": 1078.5,
+      "upper_80": 1126.8
+    },
+    {
+      "month": "2026-06-01",
+      "label": "Jun 2026",
+      "forecast": 1012.5,
+      "lower_80": 988.0,
+      "upper_80": 1035.8
+    },
+    {
+      "month": "2026-07-01",
+      "label": "Jul 2026",
+      "forecast": 853.4,
+      "lower_80": 829.5,
+      "upper_80": 878.4
+    },
+    {
+      "month": "2026-08-01",
+      "label": "Aug 2026",
+      "forecast": 985.9,
+      "lower_80": 959.1,
+      "upper_80": 1011.4
+    },
+    {
+      "month": "2026-09-01",
+      "label": "Sep 2026",
+      "forecast": 1054.7,
+      "lower_80": 1024.4,
+      "upper_80": 1083.0
+    },
+    {
+      "month": "2026-10-01",
+      "label": "Oct 2026",
+      "forecast": 1109.4,
+      "lower_80": 1078.9,
+      "upper_80": 1138.8
+    },
+    {
+      "month": "2026-11-01",
+      "label": "Nov 2026",
+      "forecast": 1062.4,
+      "lower_80": 1026.5,
+      "upper_80": 1096.7
+    },
+    {
+      "month": "2026-12-01",
+      "label": "Dec 2026",
+      "forecast": 729.0,
+      "lower_80": 691.3,
+      "upper_80": 764.7
+    },
+    {
+      "month": "2027-01-01",
+      "label": "Jan 2027",
+      "forecast": 1111.2,
+      "lower_80": 1066.3,
+      "upper_80": 1150.8
+    },
+    {
+      "month": "2027-02-01",
+      "label": "Feb 2027",
+      "forecast": 944.8,
+      "lower_80": 897.1,
+      "upper_80": 986.8
+    },
+    {
+      "month": "2027-03-01",
+      "label": "Mar 2027",
+      "forecast": 1144.9,
+      "lower_80": 1090.9,
+      "upper_80": 1194.6
+    },
+    {
+      "month": "2027-04-01",
+      "label": "Apr 2027",
+      "forecast": 1005.1,
+      "lower_80": 947.7,
+      "upper_80": 1059.6
+    }
+  ]
+}

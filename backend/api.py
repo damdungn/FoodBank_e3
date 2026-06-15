@@ -201,6 +201,7 @@ def health():
         "status": "ok",
         "provincial_trained": models_are_trained(PROVINCIAL_DIR),
         "regional_trained":   _regional_available(),
+        "campus_trained":     _cfb_available(),
     }
 
 
@@ -620,6 +621,7 @@ def model_summary():
 # Drop rdfb_forecast.json into backend/data/ to activate these endpoints.
 
 REGIONAL_JSON = Path(__file__).parent / "data" / "rdfb_forecast.json"
+CFB_JSON      = Path(__file__).parent / "data" / "cfb_forecast.json"
 
 
 def _regional_available() -> bool:
@@ -721,6 +723,94 @@ def regional_metrics():
 def regional_history():
     """Alias for /api/regional/forecast (kept for backwards compat)."""
     return regional_forecast()
+
+
+# ── Campus Food Bank — Prophet forecast JSON ──────────────────────────────────
+# Drop cfb_forecast.json into backend/data/ to activate these endpoints.
+
+def _cfb_available() -> bool:
+    return CFB_JSON.exists()
+
+
+def _load_cfb() -> dict:
+    if "cfb_json" not in _cache:
+        if not _cfb_available():
+            raise HTTPException(
+                status_code=503,
+                detail="Campus FB forecast not available. Save cfb_forecast.json to backend/data/.",
+            )
+        with open(CFB_JSON) as f:
+            _cache["cfb_json"] = json.load(f)
+    return _cache["cfb_json"]
+
+
+@app.get("/api/campus/forecast")
+def campus_forecast():
+    """25 months historical (actual + fitted) + 12-month visit forecast with 80% CI."""
+    data = _load_cfb()
+    raw_fc = data.get("forecast", [])
+    forecast_norm = [
+        {
+            "month":  r.get("label", r.get("month", "")),
+            "yhat":   round(float(r.get("forecast", r.get("yhat", 0))), 1),
+            "lower":  round(float(r.get("lower_80",  r.get("lower",  0))), 1),
+            "upper":  round(float(r.get("upper_80",  r.get("upper",  0))), 1),
+        }
+        for r in raw_fc
+    ]
+    return {
+        "historical":  data.get("historical", []),
+        "forecast":    forecast_norm,
+        "seasonality": data.get("seasonality", {}),
+        "generatedAt": data.get("generated"),
+    }
+
+
+@app.get("/api/campus/features")
+def campus_features():
+    """Top demand drivers by Pearson correlation for the CFB Prophet model."""
+    data = _load_cfb()
+    drivers  = data.get("top_drivers", [])
+    max_corr = max((d["correlation"] for d in drivers), default=1.0)
+    return {
+        "featureData": [
+            {
+                "name":        d["feature"].replace("_", " ").title(),
+                "importance":  round((d["correlation"] / max_corr) * 100, 1),
+                "correlation": round(d["correlation"], 3),
+            }
+            for d in drivers
+        ]
+    }
+
+
+@app.get("/api/campus/metrics")
+def campus_metrics():
+    """Model performance stats for the CFB Prophet model."""
+    data = _load_cfb()
+    m    = data.get("accuracy", {})
+    return {
+        "modelStats": [
+            {"label": "CV MAE",           "value": f"{m.get('cv_mae',         'N/A')} visits/month"},
+            {"label": "CV MAPE",          "value": f"{m.get('cv_mape',        'N/A')}%"},
+            {"label": "In-sample MAPE",   "value": f"{m.get('in_sample_mape', 'N/A')}%"},
+            {"label": "Training months",  "value": "36"},
+            {"label": "Training window",  "value": "May 2023 → Apr 2026"},
+            {"label": "Model type",       "value": "Prophet + academic calendar"},
+            {"label": "Forecast horizon", "value": "12 months"},
+            {"label": "Generated",        "value": data.get("generated", "N/A")},
+        ]
+    }
+
+
+@app.get("/api/campus/trends")
+def campus_trends():
+    """Food security trend indicators from CFB historical data (2023 vs 2026)."""
+    data = _load_cfb()
+    return {
+        "trends":    data.get("trends", {}),
+        "historical": data.get("historical", []),
+    }
 
 
 # ── Dev runner ────────────────────────────────────────────────────────────────

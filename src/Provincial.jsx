@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { API_BASE } from "./config";
 import {
-  ComposedChart, LineChart, BarChart,
-  Line, Bar, Area, Cell, XAxis, YAxis, CartesianGrid,
+  ComposedChart, BarChart,
+  Line, Bar, Cell, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, ReferenceLine,
 } from "recharts";
 
@@ -232,14 +232,14 @@ function DataInputForm({ isMobile }) {
 export default function Provincial() {
   const [activeTab, setActiveTab] = useState("overview");
 
-  const [historyData, setHistoryData] = useState([]);
-  const [featureData, setFeatureData] = useState([]);
-  const [modelStats,  setModelStats]  = useState([]);
-  const [signals,     setSignals]     = useState([]);
-  const [confidence,  setConfidence]  = useState(null);
-  const [gapForecast, setGapForecast] = useState([]);
-  const [loading,     setLoading]     = useState(true);
-  const [isMobile,    setIsMobile]    = useState(() => window.innerWidth < 768);
+  const [historyData,     setHistoryData]     = useState([]);
+  const [featureData,     setFeatureData]     = useState([]);
+  const [modelStats,      setModelStats]      = useState([]);
+  const [confidence,      setConfidence]      = useState(null);
+  const [gapForecast,     setGapForecast]     = useState([]);
+  const [regionalOutlook, setRegionalOutlook] = useState({ rdfb: null, campus: null });
+  const [loading,         setLoading]         = useState(true);
+  const [isMobile,        setIsMobile]        = useState(() => window.innerWidth < 768);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -247,20 +247,27 @@ export default function Provincial() {
     return () => window.removeEventListener("resize", check);
   }, []);
 
+  // Fetch regional forecasts for the outlook cards (independent of main load)
+  useEffect(() => {
+    const get = url => fetch(url).then(r => r.ok ? r.json() : null).catch(() => null);
+    Promise.all([
+      get(`${API_BASE}/api/regional/forecast`),
+      get(`${API_BASE}/api/campus/forecast`),
+    ]).then(([rdfb, campus]) => setRegionalOutlook({ rdfb, campus }));
+  }, []);
+
   useEffect(() => {
     Promise.all([
       fetch(`${API_BASE}/api/provincial/history`).then(r => r.json()),
       fetch(`${API_BASE}/api/provincial/features`).then(r => r.json()),
       fetch(`${API_BASE}/api/provincial/metrics`).then(r => r.json()),
-      fetch(`${API_BASE}/api/signals`).then(r => r.json()),
       fetch(`${API_BASE}/api/model_summary`).then(r => r.json()),
       fetch(`${API_BASE}/api/gap`).then(r => r.json()),
     ])
-      .then(([hist, feats, metrics, sigs, summary, gap]) => {
+      .then(([hist, feats, metrics, summary, gap]) => {
         setHistoryData(hist.historyData ?? []);
         setFeatureData(feats.featureData ?? []);
         setModelStats(metrics.modelStats ?? []);
-        setSignals(sigs.signals ?? []);
         setConfidence(summary);
         setGapForecast(gap.forecastGap ?? []);
       })
@@ -276,22 +283,7 @@ export default function Provincial() {
   ];
 
   // Stat card derivations
-  const actualRows = historyData.filter(d => d.inbound !== null);
-  const lastTwo    = actualRows.slice(-2);
-  const pctIn = lastTwo.length === 2
-    ? ((lastTwo[1].inbound - lastTwo[0].inbound) / (lastTwo[0].inbound || 1) * 100).toFixed(1)
-    : null;
-
-  const topLevel = signals.find(s => s.level === "High") ? "High"
-    : signals.find(s => s.level === "Medium") ? "Medium"
-    : "Low";
-  const demandLabel = { High: "Elevated", Medium: "Moderate", Low: "Stable" }[topLevel] ?? "—";
-  const demandStyle = LEVEL_STYLE[topLevel] ?? LEVEL_STYLE.Low;
-
-  const detectionRate = modelStats.find(s => s.label === "Shortfall detection accuracy")?.value ?? "N/A";
-
   const topGapAlert = gapForecast[0]?.alert ?? "OK";
-  const gapLabel    = (topGapAlert === "Critical" || topGapAlert === "Warning") ? "Caution" : "Stable";
   const gapStyle    = (topGapAlert === "Critical" || topGapAlert === "Warning") ? LEVEL_STYLE.High : LEVEL_STYLE.Low;
 
   const confPct   = confidence?.confidence_pct ?? "—";
@@ -541,6 +533,61 @@ export default function Provincial() {
 
               </div>
             )}
+
+          {/* Regional outlook */}
+                <Panel>
+                  <SectionTitle
+                    title="Regional outlook"
+                    sub="Next-month demand forecast from downstream food banks"
+                  />
+                  <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12 }}>
+                    {[
+                      { key: "rdfb",   label: "Red Deer Community FB",    icon: "map-pin", unit: "hampers", color: C.dustyDenim, data: regionalOutlook.rdfb   },
+                      { key: "campus", label: "Campus Food Bank (U of A)", icon: "school",  unit: "visits",  color: "#7a5ca8",    data: regionalOutlook.campus },
+                    ].map(fb => {
+                      const _MO = {Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
+                      const _parseLabel = lbl => { const [m,y] = lbl.split(" "); return new Date(+y, _MO[m]??0, 1); };
+                      const _floor = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+                      const nextRow = fb.data?.forecast?.find(r => _parseLabel(r.month) >= _floor)
+                                   ?? fb.data?.forecast?.[0];
+                      const yhat    = nextRow?.yhat;
+                      const peak    = fb.data?.forecast?.length
+                        ? fb.data.forecast.reduce((best, r) => r.yhat > best.yhat ? r : best)
+                        : null;
+                      return (
+                        <div key={fb.key} style={{
+                          padding: "14px 16px", borderRadius: 10,
+                          background: C.surfaceGreen, border: `1px solid ${C.borderLight}`,
+                          borderLeft: `4px solid ${fb.color}`,
+                        }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                            <i className={`ti ti-${fb.icon}`} style={{ fontSize: 14, color: fb.color }} aria-hidden="true" />
+                            <span style={{ fontSize: 13, fontWeight: 600, color: C.textPrimary }}>{fb.label}</span>
+                          </div>
+                          <div style={{ fontSize: 22, fontWeight: 700, color: C.textPrimary, marginBottom: 2 }}>
+                            {yhat != null ? yhat.toLocaleString() : "—"}
+                            <span style={{ fontSize: 13, fontWeight: 400, color: C.textMuted }}> {fb.unit}</span>
+                          </div>
+                          <div style={{ fontSize: 12, color: C.textMuted, marginBottom: 6 }}>
+                            {nextRow?.month ?? "Next month"} forecast
+                          </div>
+                          {peak && (
+                            <div style={{ fontSize: 12, color: C.textSecondary }}>
+                              Peak: <strong>{peak.month}</strong> · {peak.yhat.toLocaleString()} {fb.unit}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div style={{
+                    marginTop: 12, padding: "8px 12px", borderRadius: 8,
+                    background: C.surfaceWhite, border: `0.5px solid ${C.borderLight}`,
+                    fontSize: 12, color: C.textMuted, lineHeight: 1.6,
+                  }}>
+                    When provincial supply is under pressure, these regional food banks are first to feel reduced allocation.
+                  </div>
+                </Panel>
 
             {/* ── MODEL DETAIL TAB ── */}
             {activeTab === "model" && (

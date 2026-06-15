@@ -123,7 +123,7 @@ const FOOD_BANKS = [
     color: "#8a6020",
     bg: "#fffbee",
     border: "#e8d890",
-    data: "Dataset pending · May 2023–Apr 2026",
+    data: "Regional model trained · May 2023–Apr 2026",
   },
 ];
 
