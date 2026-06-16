@@ -362,6 +362,7 @@ export default function Regional() {
   const [metrics,     setMetrics]     = useState(null);
   const [trends,      setTrends]      = useState(null);
   const [gapContext,  setGapContext]   = useState(null);
+  const [loading,     setLoading]     = useState(false);
 
   // Fetch provincial gap once on mount for the context banner
   useEffect(() => {
@@ -376,6 +377,7 @@ export default function Regional() {
     const fb = FOOD_BANKS.find(b => b.key === selectedFB);
     if (!fb?.ready) return;
     setForecast(null); setFeatures(null); setMetrics(null); setTrends(null);
+    setLoading(true);
     const BASE = (import.meta.env.VITE_API_URL ?? "");
     const get  = url => fetch(url).then(r => r.ok ? r.json() : null).catch(() => null);
     const reqs = [
@@ -384,12 +386,14 @@ export default function Regional() {
       get(`${BASE}${fb.api.metrics}`),
       fb.api.trends ? get(`${BASE}${fb.api.trends}`) : Promise.resolve(null),
     ];
-    Promise.all(reqs).then(([fc, feat, met, tr]) => {
-      if (fc)   setForecast(fc);
-      if (feat) setFeatures(feat);
-      if (met)  setMetrics(met);
-      if (tr)   setTrends(tr);
-    });
+    Promise.all(reqs)
+      .then(([fc, feat, met, tr]) => {
+        if (fc)   setForecast(fc);
+        if (feat) setFeatures(feat);
+        if (met)  setMetrics(met);
+        if (tr)   setTrends(tr);
+      })
+      .finally(() => setLoading(false));
   }, [selectedFB]);
 
   // Derived values for hamper tab
@@ -656,14 +660,16 @@ export default function Regional() {
         {/* ── HAMPER FORECAST TAB ── */}
         {fbReady && activeTab === "hamper" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            {!forecast ? (
+            {loading ? (
+              <div style={{ textAlign: "center", padding: "60px 0", color: C.textMuted, fontSize: 13 }}>
+                Loading model data…
+              </div>
+            ) : !forecast ? (
               <Panel>
                 <div style={{ padding: "40px 0", textAlign: "center" }}>
                   <i className="ti ti-database-off" style={{ fontSize: 28, color: C.textMuted, display: "block", marginBottom: 10 }} />
                   <div style={{ fontSize: 13, color: C.textMuted }}>
-                    Forecast not available — ensure the backend is running and{" "}
-                    <code style={{ background: C.surfaceGreen, padding: "1px 5px", borderRadius: 4 }}>rdfb_forecast.json</code>{" "}
-                    is in{" "}
+                    Forecast not available — ensure the backend is running and the data files are in{" "}
                     <code style={{ background: C.surfaceGreen, padding: "1px 5px", borderRadius: 4 }}>backend/data/</code>.
                   </div>
                 </div>
