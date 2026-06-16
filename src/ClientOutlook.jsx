@@ -150,7 +150,7 @@ export default function ClientOutlook() {
               {thisMonth && (
                 <BusynessCard
                   title={`This month (${thisMonth.month})`}
-                  sub="Based on 12-month forecast model"
+                  sub="number of visits"
                   level={thisMonth.busyness}
                   visits={thisMonth.val}
                 />
@@ -158,36 +158,15 @@ export default function ClientOutlook() {
               {nextMonth && (
                 <BusynessCard
                   title={`Next month (${nextMonth.month})`}
-                  sub="One month ahead · wider uncertainty"
+                  sub="month ahead "
                   level={nextMonth.busyness}
                   visits={nextMonth.val}
                 />
               )}
-              <div style={{
-                background: C.surfaceGreenBold, borderRadius: 12,
-                border: `0.5px solid ${C.borderLight}`,
-                padding: "18px 20px", flex: 1,
-              }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 10 }}>
-                  <i className="ti ti-bulb" style={{ fontSize: 15, color: C.forestGreen }} aria-hidden="true" />
-                  <span style={{ fontSize: 13, fontWeight: 700, color: C.textSecondary, textTransform: "uppercase", letterSpacing: "0.07em" }}>
-                    What this means for you
-                  </span>
-                </div>
-                <p style={{ fontSize: 14, color: C.textSecondary, lineHeight: 1.75, margin: 0 }}>
-                  {whatItMeans[thisMonth?.busyness ?? "moderate"]}
-                </p>
-                {quietMonths.length > 0 && (
-                  <p style={{ fontSize: 14, color: C.textSecondary, lineHeight: 1.75, margin: "10px 0 0" }}>
-                    <strong style={{ color: C.forestGreen }}>Best upcoming months:</strong>{" "}
-                    {quietMonths.map(r => r.month).join(", ")} — quieter than average.
-                  </p>
-                )}
-              </div>
             </div>
 
             {/* Summary stat cards */}
-            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,minmax(0,1fr))", gap: 12, marginBottom: 20 }}>
+            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(3,minmax(0,1fr))", gap: 12, marginBottom: 20 }}>
               {[
                 {
                   label: "Best time to visit",
@@ -206,12 +185,6 @@ export default function ClientOutlook() {
                   value: `~${Math.round(mean).toLocaleString()}`,
                   sub: "forecast · next 12 months",
                   accent: C.dustyDenim, icon: "users",
-                },
-                {
-                  label: "Food pressure index",
-                  value: `${trendsObj.pressure_index_2026 ?? 9.35} / 10`,
-                  sub: `up from ${trendsObj.pressure_index_2023 ?? 7.74} in 2023`,
-                  accent: "#8b2e1a", icon: "trending-up",
                 },
               ].map(s => (
                 <div key={s.label} style={{
@@ -233,10 +206,7 @@ export default function ClientOutlook() {
               background: C.surfaceWhite, border: `0.5px solid ${C.borderLight}`,
               borderRadius: 12, padding: isMobile ? "16px 12px" : 24, marginBottom: 16,
             }}>
-              <div style={{ fontSize: 15, fontWeight: 700, color: C.textPrimary, marginBottom: 4 }}>Monthly busyness forecast</div>
-              <div style={{ fontSize: 13, color: C.textMuted, marginBottom: 18 }}>
-                Next 12 months · colour shows expected busyness level
-              </div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: C.textPrimary, marginBottom: 18 }}>Monthly busyness forecast</div>
               <ResponsiveContainer width="100%" height={210}>
                 <BarChart data={enriched} margin={{ top: 4, right: 12, bottom: 24, left: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke={C.teaGreen} vertical={false} />
@@ -301,13 +271,6 @@ export default function ClientOutlook() {
                       to: trendsObj.lbs_per_person_2026 ?? 10.71,
                       unit: "lbs", worrying: false,
                       note: "Each person is receiving less food per visit",
-                    },
-                    {
-                      label: "Pressure index",
-                      from: trendsObj.pressure_index_2023 ?? 7.74,
-                      to: trendsObj.pressure_index_2026 ?? 9.35,
-                      unit: "/ 10", worrying: true,
-                      note: "Composite indicator of demand vs supply stress",
                     },
                   ].map(row => (
                     <div key={row.label}>

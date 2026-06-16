@@ -144,20 +144,15 @@ export default function Dashboard({ onNavigate }) {
     Promise.all([
       fetch(`${API_BASE}/api/dashboard`).then(r => r.json()),
       fetch(`${API_BASE}/api/gap`).then(r => r.json()),
+      fetch(`${API_BASE}/api/signals`).then(r => r.json()),
     ])
-      .then(([dash, gap]) => {
+      .then(([dash, gap, sig]) => {
         setKpis(dash.kpis ?? null);
         setGapForecast(gap.forecastGap ?? []);
+        setSignals(sig.signals ?? sig);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
-
-  useEffect(() => {
-    fetch(`${API_BASE}/api/signals`)
-      .then(r => r.json())
-      .then(d => setSignals(d.signals ?? d))
-      .catch(() => {});
   }, []);
 
   const pctOut   = kpis?.pctChange?.outbound ?? 0;

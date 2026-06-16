@@ -55,6 +55,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+@app.on_event("startup")
+def _startup():
+    if models_are_trained(PROVINCIAL_DIR):
+        _cache["prov_models"] = load_models(PROVINCIAL_DIR)
+        _cache["prov_fc"]     = load_feature_cols(PROVINCIAL_DIR)
+    if _MONTHLY_JSON.exists():
+        df = pd.read_json(_MONTHLY_JSON, orient="records")
+        df["Date"] = pd.to_datetime(df["Date"])
+        _cache["monthly"] = df.sort_values("Date").reset_index(drop=True)
+    if _SIGNALS_JSON.exists():
+        _cache["daily"] = pd.DataFrame([json.load(open(_SIGNALS_JSON))])
+
 # ── Cache ─────────────────────────────────────────────────────────────────────
 
 _cache: dict = {}
