@@ -67,6 +67,14 @@ def _startup():
         _cache["monthly"] = df.sort_values("Date").reset_index(drop=True)
     if _SIGNALS_JSON.exists():
         _cache["daily"] = pd.DataFrame([json.load(open(_SIGNALS_JSON))])
+    # Pre-compute expensive Prophet predictions once at startup so every request hits the cache.
+    if "prov_models" in _cache and "monthly" in _cache:
+        _cache["prov_hist"]     = predict_historical(
+            _cache["monthly"], _cache["prov_models"], _cache["prov_fc"]
+        )
+        _cache["prov_forecast"] = forecast_monthly(
+            _cache["monthly"], _cache["prov_models"], _cache["prov_fc"], months=3
+        )
 
 # ── Cache ─────────────────────────────────────────────────────────────────────
 
@@ -243,7 +251,7 @@ def dashboard():
     ]
 
     # 3-month forecast appended (includes prediction intervals)
-    forecasts = forecast_monthly(df, models, fc, months=3)
+    forecasts = _cache["prov_forecast"] if "prov_forecast" in _cache else forecast_monthly(df, models, fc, months=3)
     for fc_row in forecasts:
         trend_data.append({
             "month":          fc_row["month"],
@@ -422,7 +430,7 @@ def gap_forecast():
     df = _monthly_df()
     models, fc = _require_prov()
     gap_stats = load_gap_stats()
-    forecasts = forecast_monthly(df, models, fc, months=3)
+    forecasts = _cache["prov_forecast"] if "prov_forecast" in _cache else forecast_monthly(df, models, fc, months=3)
 
     enriched = []
     for row in forecasts:
@@ -458,7 +466,7 @@ def provincial_history():
     df     = _monthly_df()
     models, fc = _require_prov()
 
-    hist = predict_historical(df, models, fc)
+    hist = _cache["prov_hist"] if "prov_hist" in _cache else predict_historical(df, models, fc)
     result = [
         {
             "date":           row.Date.strftime("%b %Y"),
@@ -471,7 +479,7 @@ def provincial_history():
     ]
 
     # Append 3-month forecast (inbound/outbound = null → dashed in chart)
-    for fc_row in forecast_monthly(df, models, fc, months=3):
+    for fc_row in (_cache.get("prov_forecast") or forecast_monthly(df, models, fc, months=3)):
         result.append({
             "date":           fc_row["month"],
             "inbound":        None,
