@@ -28,7 +28,7 @@ const NAV = [
   {
     section: "Overview",
     items: [
-      { icon: "layout-dashboard", label: "Dashboard",       page: "dashboard"      },
+      { icon: "layout-dashboard", label: "Home",       page: "dashboard"      },
       { icon: "map-pin",          label: "Client outlook",  page: "client-outlook"},
       { icon: "brain",            label: "AI insights",     page: "ai-insights"    },
       { icon: "info-circle",     label: "About FEEDS",     page: "about-feeds"    },
@@ -88,9 +88,11 @@ function PasswordModal({ targetPage, onSuccess, onClose }) {
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          background: "#fff", borderRadius: 16, padding: "36px 32px",
-          width: 380, boxShadow: "0 20px 60px rgba(0,0,0,0.18)",
+          background: "#fff", borderRadius: 16, padding: "32px 24px",
+          width: "min(380px, calc(100vw - 32px))",
+          boxShadow: "0 20px 60px rgba(0,0,0,0.18)",
           animation: shake ? "shake 0.4s ease" : "none",
+          boxSizing: "border-box",
         }}
       >
         {/* Icon + label */}
@@ -345,7 +347,7 @@ export default function App() {
           <div style={{ width: 7, height: 7, borderRadius: "50%", background: C.teaGreen, flexShrink: 0 }} />
           <div>
             <div style={{ fontSize: 12, fontWeight: 600, color: C.teaGreen }}>Model confidence</div>
-            <div style={{ fontSize: 11, color: "#d6ffce", marginTop: 1 }}>84% · XGBoost + Prophet</div>
+            <div style={{ fontSize: 11, color: "#d6ffce", marginTop: 1 }}>84% · Prophet</div>
           </div>
         </div>
       </div>
@@ -356,10 +358,10 @@ export default function App() {
     <div style={{
       display: "flex",
       flexDirection: isMobile ? "column" : "row",
-      height: "100vh", margin: 0, padding: 0,
+      height: "100dvh", margin: 0, padding: 0,
       fontFamily: "'DM Sans', system-ui, sans-serif",
       background: "#fbfcf6",
-      overflowX: "hidden",
+      overflow: "hidden",
     }}>
 
       {/* ── Mobile top bar ─────────────────────────────────────── */}
@@ -560,13 +562,13 @@ export default function App() {
 
       {/* ── Page content ───────────────────────────────────────── */}
       {/* ── Page content ───────────────────────────────────────── */}
-      <main style={{ 
-        flex: 1, 
-        display: "flex", 
-        flexDirection: "column", 
+      <main style={{
+        flex: 1,
+        display: "flex",
+        flexDirection: "column",
         overflow: "hidden",
-        width: "100%",          // Explicitly ask it to take up the remaining width
-        alignItems: "stretch"   // Forces children components to span the full width
+        overflowX: "hidden",
+        minWidth: 0,
       }}>
         {renderPage()}
       </main>
