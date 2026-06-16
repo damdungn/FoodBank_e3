@@ -450,7 +450,7 @@ export default function Provincial() {
                         </div>
                       ) : (
                         <>
-                          <ResponsiveContainer width="100%" height={280}>
+                          <ResponsiveContainer width="100%" height={280} style={{ outline: "none" }}>
                             <ComposedChart data={gapChartData} margin={{ top: 4, right: 16, bottom: isMobile ? 40 : 20, left: 10 }}>
                               <CartesianGrid strokeDasharray="3 3" stroke={C.teaGreen} />
                               <XAxis
@@ -643,11 +643,11 @@ export default function Provincial() {
                       No feature data available
                     </div>
                   ) : (
-                    <ResponsiveContainer width="100%" height={Math.max(280, featureData.length * 22)}>
-                      <BarChart data={featureData} layout="vertical" margin={{ top: 4, right: isMobile ? 20 : 50, bottom: 0, left: isMobile ? 80 : 120 }}>
+                    <ResponsiveContainer width="100%" height={Math.max(280, featureData.length * 22)} style={{ outline: "none" }}>
+                      <BarChart data={featureData} layout="vertical" margin={{ top: 4, right: isMobile ? 40 : 50, bottom: 0, left: isMobile ? 104 : 120 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke={C.teaGreen} horizontal={false} />
                         <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 13, fill: C.textMuted }} axisLine={false} tickLine={false} />
-                        <YAxis type="category" dataKey="name" tick={{ fontSize: isMobile ? 10 : 12, fill: C.textSecondary }} axisLine={false} tickLine={false} width={isMobile ? 80 : 120} />
+                        <YAxis type="category" dataKey="name" tick={{ fontSize: isMobile ? 9 : 12, fill: C.textSecondary }} axisLine={false} tickLine={false} width={isMobile ? 104 : 120} />
                         <Bar dataKey="importance" name="Importance %" radius={[0, 4, 4, 0]} barSize={14} fill={C.jungleTeal}
                           label={{ position: "right", fontSize: 13, fill: C.textMuted, formatter: v => `${v}%` }}
                         >

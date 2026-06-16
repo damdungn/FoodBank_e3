@@ -281,9 +281,9 @@ export default function ClientOutlook() {
                     },
                   ].map(row => (
                     <div key={row.label}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 3 }}>
+                      <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", justifyContent: "space-between", alignItems: isMobile ? "flex-start" : "center", marginBottom: 3, gap: isMobile ? 4 : 0 }}>
                         <div style={{ fontSize: 15, color: C.textSecondary, fontWeight: 500 }}>{row.label}</div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 15 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: isMobile ? 14 : 15 }}>
                           <span style={{ color: C.textMuted }}>{row.from} {row.unit}</span>
                           <span style={{ color: C.textMuted }}>→</span>
                           <span style={{ fontWeight: 700, color: row.worrying ? "#8b2e1a" : C.jungleTeal }}>{row.to} {row.unit}</span>

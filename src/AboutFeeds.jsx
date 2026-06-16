@@ -55,7 +55,7 @@ const SECTIONS = [
     summary: "Consistent patterns emerged from model development and analysis.",
     points: [
       "The same economic pressures (CPI, AISH caseload) show up across the entire food bank network",
-      "Campus food insecurity is getting worse: visits saw 27% increase in 3 years while food distribution shrank.",
+      "The provincial supply gap follows a repeating seasonal pattern, which means early action is possible.",
       "Campus food banks operate on a different schedule than other food banks where demand is influenced by the academic calendar.",
       "A small number of donors provide most of the food at the regional level which pose risks to supply stability.",
     ],

@@ -53,6 +53,11 @@
 body {
   margin: 0;
 }
+
+.recharts-wrapper *:focus,
+.recharts-wrapper *:focus-visible {
+  outline: none;
+}
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
