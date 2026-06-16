@@ -1,16 +1,58 @@
-# React + Vite
+# FEEDS — Forecasting Engine for Estimating Demand and Supply
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+An AI-powered forecasting platform that helps Alberta food banks anticipate demand before it arrives.
 
-Currently, two official plugins are available:
+Built by team e3 · University of Alberta · AI4Good Lab 2026
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+## The Problem
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Food banks across Alberta plan reactively. Staff estimate upcoming demand from experience and recent history alone, with no tools to look ahead. When food prices rise, government benefits shift, or a university semester begins, demand can spike faster than food banks are prepared for.
 
-## Expanding the ESLint configuration
+This affects every level of the network: provincial supply allocation, regional hamper preparation, and campus visit surges.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+---
+
+## How We Solve It
+
+FEEDS combines each food bank's historical records with external signals, such as inflation, benefit schedules, weather, academic calendars, to generate monthly demand forecasts.
+
+Three tiers are currently supported:
+
+| Level | Organization | Forecasts |
+|-------|-------------|-----------|
+| Provincial | Food Banks Alberta | Inbound donations vs. outbound need; supply gap alerts |
+| Regional | Red Deer Food Bank | Monthly hamper demand |
+| Campus | U of A Campus Food Bank | Monthly student visit demand |
+
+---
+
+## Key Features
+
+- **3-tier forecasting**: Provincial → Regional → Campus, each with its own model
+- **Supply gap alerts**: flags months where provincial donations may fall short of member needs
+- **Academic calendar model**: campus visits driven by exam periods and semester schedule, not economics
+- **Model health indicators**: confidence scores shown per forecast
+- **Cross-tier context**: regional page surfaces provincial gap status; provincial page shows downstream outlook
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React + Vite, Recharts, inline styles |
+| Backend | Python, FastAPI, uvicorn |
+| Forecasting | Facebook Prophet, RandomForest (scikit-learn) |
+| Data | Statistics Canada (CPI, AISH), U of A academic calendar, food bank operational records |
+| Deployment | Vercel (frontend), Render (backend) |
+
+---
+
+## Future Implementation
+
+- Add Edmonton Food Bank data to extend regional coverage
+- Refine all three models as new monthly data arrives
+- Test model portability to additional food banks across Alberta with minimal retraining
+- Build staff-facing planning tools: recommendations, donor outreach triggers, and allocation summaries
