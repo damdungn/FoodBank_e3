@@ -290,7 +290,7 @@ function DataInputForm({ isMobile }) {
       </div>
 
       {/* Boolean flags */}
-      <div style={{ display: "flex", gap: 24, marginBottom: 12 }}>
+      <div style={{ display: "flex", gap: isMobile ? 12 : 24, marginBottom: 12, flexWrap: "wrap" }}>
         {[
           { key: "aish_week", label: "AISH disbursement week" },
           { key: "ccb_week",  label: "CCB payment week"       },
@@ -318,7 +318,7 @@ function DataInputForm({ isMobile }) {
         />
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
         <button
           onClick={handleSubmit}
           style={{
@@ -335,9 +335,11 @@ function DataInputForm({ isMobile }) {
             <i className="ti ti-circle-check" aria-hidden="true" /> Row queued
           </span>
         )}
-        <span style={{ fontSize: 13, color: C.textMuted, marginLeft: "auto" }}>
-          Full CSV upload coming soon
-        </span>
+        {!isMobile && (
+          <span style={{ fontSize: 13, color: C.textMuted, marginLeft: "auto" }}>
+            Full CSV upload coming soon
+          </span>
+        )}
       </div>
     </Panel>
   );
@@ -718,7 +720,7 @@ export default function Regional({ defaultBank = "rdfb", lockedBank = null }) {
                     title="Model performance & 12-month forecast"
                     sub="Prophet model · last 25 months observed & predicted · 80% CI on forecast"
                   />
-                  <ResponsiveContainer width="100%" height={280}>
+                  <ResponsiveContainer width="100%" height={280} style={{ outline: "none" }}>
                     <ComposedChart data={chartData} margin={{ top: 4, right: 16, bottom: isMobile ? 40 : 20, left: 10 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke={C.teaGreen} />
                       <XAxis
@@ -810,7 +812,7 @@ export default function Regional({ defaultBank = "rdfb", lockedBank = null }) {
                             up: false,
                           },
                         ].map(row => (
-                          <div key={row.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+                          <div key={row.label} style={{ display: "flex", flexDirection: isMobile ? "column" : "row", justifyContent: "space-between", alignItems: isMobile ? "flex-start" : "center", gap: isMobile ? 4 : 10 }}>
                             <div style={{ fontSize: 14, color: C.textSecondary }}>{row.label}</div>
                             <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 14 }}>
                               <span style={{ color: C.textMuted }}>{row.from} {row.unit}</span>
@@ -894,11 +896,11 @@ export default function Regional({ defaultBank = "rdfb", lockedBank = null }) {
                   ? "Normalized correlation with monthly visit volume · May 2023 – Apr 2026"
                   : "SHAP values from FBA model applied to RDFB · Same economic drivers, regional target"}
               />
-              <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={features?.featureData?.length ? features.featureData : featureData} layout="vertical" margin={{ top: 4, right: isMobile ? 20 : 50, bottom: 0, left: isMobile ? 75 : 110 }}>
+              <ResponsiveContainer width="100%" height={250} style={{ outline: "none" }}>
+                <BarChart data={features?.featureData?.length ? features.featureData : featureData} layout="vertical" margin={{ top: 4, right: isMobile ? 40 : 50, bottom: 0, left: isMobile ? 100 : 110 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke={C.teaGreen} horizontal={false} />
                   <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 14, fill: C.textMuted }} axisLine={false} tickLine={false} />
-                  <YAxis type="category" dataKey="name" tick={{ fontSize: isMobile ? 10 : 13, fill: C.textSecondary }} axisLine={false} tickLine={false} width={isMobile ? 75 : 110} />
+                  <YAxis type="category" dataKey="name" tick={{ fontSize: isMobile ? 9 : 13, fill: C.textSecondary }} axisLine={false} tickLine={false} width={isMobile ? 100 : 110} />
                   <Tooltip content={<ChartTooltip />} />
                   <Bar dataKey="importance" name="Importance %" fill={C.dustyDenim} radius={[0, 4, 4, 0]} barSize={14}
                     label={{ position: "right", fontSize: 14, fill: C.textMuted, formatter: v => `${v}%` }}

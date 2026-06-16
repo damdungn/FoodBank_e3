@@ -343,13 +343,6 @@ export default function App() {
             )}
           </div>
         )}
-        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 11px", background: "rgba(82,130,84,0.25)", borderRadius: 8, border: `0.5px solid ${C.sidebarBorder}` }}>
-          <div style={{ width: 7, height: 7, borderRadius: "50%", background: C.teaGreen, flexShrink: 0 }} />
-          <div>
-            <div style={{ fontSize: 12, fontWeight: 600, color: C.teaGreen }}>Model confidence</div>
-            <div style={{ fontSize: 11, color: "#d6ffce", marginTop: 1 }}>84% · Prophet</div>
-          </div>
-        </div>
       </div>
     );
   }
