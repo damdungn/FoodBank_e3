@@ -18,15 +18,10 @@ const C = {
   lockedText:     "#6a9e80",
 };
 
-// Which password each page requires — null = public
-const PAGE_AUTH = {
-  "dashboard":     null,
-  "client-outlook":null,
-  "ai-insights":   null,
-  "about-feeds":   null,
-  "provincial":    "VITE_PROVINCIAL_PASS",
-  "regional":      "VITE_REGIONAL_PASS",
-  "reports":       null,
+const PASSWORDS = {
+  "provincial":     import.meta.env.VITE_PROVINCIAL_PASS,
+  "regional-rdfb":  import.meta.env.VITE_RDFB_PASS,
+  "regional-campus":import.meta.env.VITE_CAMPUS_PASS,
 };
 
 const NAV = [
@@ -64,18 +59,20 @@ function PasswordModal({ targetPage, onSuccess, onClose }) {
 
   const isProvincial = targetPage === "provincial";
   const label = isProvincial ? "Provincial staff" : "Regional staff";
-  const envKey = PAGE_AUTH[targetPage];
 
   function attempt() {
-    const correct = import.meta.env[envKey];
-    if (input === correct) {
-      onSuccess(targetPage);
-    } else {
-      setError(true);
-      setShake(true);
-      setInput("");
-      setTimeout(() => setShake(false), 500);
+    if (targetPage === "provincial" && input === PASSWORDS["provincial"]) {
+      onSuccess("provincial");
+      return;
     }
+    if (targetPage === "regional") {
+      if (input === PASSWORDS["regional-rdfb"])   { onSuccess("regional-rdfb");   return; }
+      if (input === PASSWORDS["regional-campus"])  { onSuccess("regional-campus");  return; }
+    }
+    setError(true);
+    setShake(true);
+    setInput("");
+    setTimeout(() => setShake(false), 500);
   }
 
   return (
@@ -203,21 +200,32 @@ export default function App() {
 
   // Track which pages are unlocked independently
   const [unlocked, setUnlocked] = useState({
-    provincial: false,
-    regional:   false,
+    provincial:      false,
+    "regional-rdfb":   false,
+    "regional-campus": false,
   });
 
-  function isLocked(page) {
-    const authKey = PAGE_AUTH[page];
-    if (!authKey) return false;                        // public page
-    if (page === "provincial") return !unlocked.provincial;
-    if (page === "regional")   return !unlocked.regional;
+  function isLocked(p) {
+    if (p === "provincial") return !unlocked.provincial;
+    if (p === "regional")   return !unlocked["regional-rdfb"] && !unlocked["regional-campus"];
     return false;
+  }
+
+  function isActivePage(itemPage) {
+    if (itemPage === "regional") return page === "regional-rdfb" || page === "regional-campus";
+    return page === itemPage;
   }
 
   function handleNavClick(item) {
     if (item.disabled) return;
     setMenuOpen(false);
+    if (item.page === "regional") {
+      if (unlocked["regional-rdfb"])   { setPage("regional-rdfb");   return; }
+      if (unlocked["regional-campus"]) { setPage("regional-campus"); return; }
+      setPendingPage("regional");
+      setShowModal(true);
+      return;
+    }
     if (isLocked(item.page)) {
       setPendingPage(item.page);
       setShowModal(true);
@@ -229,7 +237,8 @@ export default function App() {
   function handleUnlock(unlockedPage) {
     setUnlocked(prev => ({ ...prev, [unlockedPage]: true }));
     setShowModal(false);
-    if (pendingPage) { setPage(pendingPage); setPendingPage(null); }
+    setPendingPage(null);
+    setPage(unlockedPage);
   }
 
   function handleLock(targetPage) {
@@ -239,13 +248,14 @@ export default function App() {
 
   function renderPage() {
     switch (page) {
-      case "dashboard":     return <Dashboard onNavigate={p => handleNavClick({ page: p })} />;
-      case "client-outlook":return <ClientOutlook />;
-      case "ai-insights":   return <AIInsights />;
-      case "about-feeds":   return <AboutFeeds />;
-      case "provincial":    return <Provincial />;
-      case "regional":      return <Regional />;
-      default:              return <Placeholder title={NAV.flatMap(s => s.items).find(i => i.page === page)?.label || page} />;
+      case "dashboard":      return <Dashboard onNavigate={p => handleNavClick({ page: p })} />;
+      case "client-outlook": return <ClientOutlook />;
+      case "ai-insights":    return <AIInsights />;
+      case "about-feeds":    return <AboutFeeds />;
+      case "provincial":     return <Provincial />;
+      case "regional-rdfb":  return <Regional defaultBank="rdfb"   lockedBank="rdfb" />;
+      case "regional-campus":return <Regional defaultBank="campus" lockedBank="campus" />;
+      default:               return <Placeholder title={NAV.flatMap(s => s.items).find(i => i.page === page)?.label || page} />;
     }
   }
 
@@ -261,7 +271,7 @@ export default function App() {
           {sec.section}
         </div>
         {sec.items.map((item) => {
-          const active   = page === item.page;
+          const active   = isActivePage(item.page);
           const locked   = isLocked(item.page);
           const disabled = item.disabled;
           const lockColor = item.page === "provincial" ? "#7bb782" : "#7899c7";
@@ -306,7 +316,7 @@ export default function App() {
   function NavFooter() {
     return (
       <div style={{ padding: "12px 10px 16px", borderTop: `1px solid ${C.sidebarBorder}` }}>
-        {(unlocked.provincial || unlocked.regional) && (
+        {(unlocked.provincial || unlocked["regional-rdfb"] || unlocked["regional-campus"]) && (
           <div style={{ marginBottom: 10 }}>
             {unlocked.provincial && (
               <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 8px 5px 10px", marginBottom: 4, background: "rgba(255,255,255,0.06)", borderRadius: 6 }}>
@@ -315,11 +325,18 @@ export default function App() {
                 <button onClick={() => handleLock("provincial")} style={{ fontSize: 12, color: C.lockedText, background: "none", border: "none", cursor: "pointer", textDecoration: "underline", fontFamily: "inherit" }}>Lock</button>
               </div>
             )}
-            {unlocked.regional && (
+            {unlocked["regional-rdfb"] && (
+              <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 8px 5px 10px", marginBottom: 4, background: "rgba(255,255,255,0.06)", borderRadius: 6 }}>
+                <i className="ti ti-shield-check" style={{ fontSize: 12, color: "#9ab8e8" }} aria-hidden="true" />
+                <span style={{ fontSize: 13, color: "#9ab8e8", flex: 1 }}>Red Deer unlocked</span>
+                <button onClick={() => handleLock("regional-rdfb")} style={{ fontSize: 12, color: C.lockedText, background: "none", border: "none", cursor: "pointer", textDecoration: "underline", fontFamily: "inherit" }}>Lock</button>
+              </div>
+            )}
+            {unlocked["regional-campus"] && (
               <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 8px 5px 10px", background: "rgba(255,255,255,0.06)", borderRadius: 6 }}>
                 <i className="ti ti-shield-check" style={{ fontSize: 12, color: "#9ab8e8" }} aria-hidden="true" />
-                <span style={{ fontSize: 13, color: "#9ab8e8", flex: 1 }}>Regional unlocked</span>
-                <button onClick={() => handleLock("regional")} style={{ fontSize: 13, color: C.lockedText, background: "none", border: "none", cursor: "pointer", textDecoration: "underline", fontFamily: "inherit" }}>Lock</button>
+                <span style={{ fontSize: 13, color: "#9ab8e8", flex: 1 }}>Campus FB unlocked</span>
+                <button onClick={() => handleLock("regional-campus")} style={{ fontSize: 12, color: C.lockedText, background: "none", border: "none", cursor: "pointer", textDecoration: "underline", fontFamily: "inherit" }}>Lock</button>
               </div>
             )}
           </div>
@@ -431,7 +448,7 @@ export default function App() {
               </div>
 
               {sec.items.map((item) => {
-                const active   = page === item.page;
+                const active   = isActivePage(item.page);
                 const locked   = isLocked(item.page);
                 const disabled = item.disabled;
 
@@ -485,7 +502,7 @@ export default function App() {
         <div style={{ padding: "12px 10px 16px", borderTop: `1px solid ${C.sidebarBorder}` }}>
 
           {/* Session status — show each unlocked partner separately */}
-          {(unlocked.provincial || unlocked.regional) && (
+          {(unlocked.provincial || unlocked["regional-rdfb"] || unlocked["regional-campus"]) && (
             <div style={{ marginBottom: 10 }}>
               {unlocked.provincial && (
                 <div style={{
@@ -503,17 +520,33 @@ export default function App() {
                   </button>
                 </div>
               )}
-              {unlocked.regional && (
+              {unlocked["regional-rdfb"] && (
+                <div style={{
+                  display: "flex", alignItems: "center", gap: 6,
+                  padding: "5px 8px 5px 10px", marginBottom: 4,
+                  background: "rgba(255,255,255,0.06)", borderRadius: 6,
+                }}>
+                  <i className="ti ti-shield-check" style={{ fontSize: 12, color: "#9ab8e8" }} aria-hidden="true" />
+                  <span style={{ fontSize: 13, color: "#9ab8e8", flex: 1 }}>Red Deer unlocked</span>
+                  <button
+                    onClick={() => handleLock("regional-rdfb")}
+                    style={{ fontSize: 12, color: C.lockedText, background: "none", border: "none", cursor: "pointer", textDecoration: "underline", fontFamily: "inherit" }}
+                  >
+                    Lock
+                  </button>
+                </div>
+              )}
+              {unlocked["regional-campus"] && (
                 <div style={{
                   display: "flex", alignItems: "center", gap: 6,
                   padding: "5px 8px 5px 10px",
                   background: "rgba(255,255,255,0.06)", borderRadius: 6,
                 }}>
                   <i className="ti ti-shield-check" style={{ fontSize: 12, color: "#9ab8e8" }} aria-hidden="true" />
-                  <span style={{ fontSize: 13, color: "#9ab8e8", flex: 1 }}>Regional unlocked</span>
+                  <span style={{ fontSize: 13, color: "#9ab8e8", flex: 1 }}>Campus FB unlocked</span>
                   <button
-                    onClick={() => handleLock("regional")}
-                    style={{ fontSize: 13, color: C.lockedText, background: "none", border: "none", cursor: "pointer", textDecoration: "underline", fontFamily: "inherit" }}
+                    onClick={() => handleLock("regional-campus")}
+                    style={{ fontSize: 12, color: C.lockedText, background: "none", border: "none", cursor: "pointer", textDecoration: "underline", fontFamily: "inherit" }}
                   >
                     Lock
                   </button>

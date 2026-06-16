@@ -346,9 +346,9 @@ function DataInputForm({ isMobile }) {
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 
-export default function Regional() {
+export default function Regional({ defaultBank = "rdfb", lockedBank = null }) {
   const [activeTab,  setActiveTab]  = useState("hamper");
-  const [selectedFB, setSelectedFB] = useState("rdfb");
+  const [selectedFB, setSelectedFB] = useState(defaultBank);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
 
   useEffect(() => {
@@ -485,35 +485,37 @@ export default function Regional() {
             );
           })()}
 
-          {/* Food bank selector */}
-          <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
-            {FOOD_BANKS.map(fb => (
-              <button
-                key={fb.key}
-                onClick={() => fb.ready && setSelectedFB(fb.key)}
-                disabled={!fb.ready}
-                style={{
-                  padding: "5px 14px", borderRadius: 20, fontSize: 13, cursor: fb.ready ? "pointer" : "default",
-                  border: `1.5px solid ${selectedFB === fb.key ? C.jungleTeal : C.borderLight}`,
-                  background: selectedFB === fb.key ? C.jungleTeal : fb.ready ? C.surfaceWhite : C.surfaceGreen,
-                  color: selectedFB === fb.key ? "#fff" : fb.ready ? C.textPrimary : C.textMuted,
-                  fontFamily: "inherit", fontWeight: selectedFB === fb.key ? 600 : 400,
-                  opacity: fb.ready ? 1 : 0.65,
-                  display: "flex", alignItems: "center", gap: 6,
-                }}
-              >
-                {fb.label}
-                {!fb.ready && (
-                  <span style={{
-                    fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 8,
-                    background: C.lightGold, color: C.forestGreen, letterSpacing: "0.04em",
-                  }}>
-                    SOON
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
+          {/* Food bank selector — hidden when locked to a specific bank */}
+          {!lockedBank && (
+            <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
+              {FOOD_BANKS.map(fb => (
+                <button
+                  key={fb.key}
+                  onClick={() => fb.ready && setSelectedFB(fb.key)}
+                  disabled={!fb.ready}
+                  style={{
+                    padding: "5px 14px", borderRadius: 20, fontSize: 13, cursor: fb.ready ? "pointer" : "default",
+                    border: `1.5px solid ${selectedFB === fb.key ? C.jungleTeal : C.borderLight}`,
+                    background: selectedFB === fb.key ? C.jungleTeal : fb.ready ? C.surfaceWhite : C.surfaceGreen,
+                    color: selectedFB === fb.key ? "#fff" : fb.ready ? C.textPrimary : C.textMuted,
+                    fontFamily: "inherit", fontWeight: selectedFB === fb.key ? 600 : 400,
+                    opacity: fb.ready ? 1 : 0.65,
+                    display: "flex", alignItems: "center", gap: 6,
+                  }}
+                >
+                  {fb.label}
+                  {!fb.ready && (
+                    <span style={{
+                      fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 8,
+                      background: C.lightGold, color: C.forestGreen, letterSpacing: "0.04em",
+                    }}>
+                      SOON
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Dynamic title + subtitle */}
           {(() => {
@@ -698,16 +700,6 @@ export default function Regional() {
                       sub:    "cross-validated forecast error",
                       accent: C.dustyDenim,
                     },
-                    selectedFB === "campus"
-                      ? {
-                          label:  "Pressure index",
-                          value:  trends?.trends?.pressure_index_2026 != null
-                                    ? `${trends.trends.pressure_index_2026} / 10`
-                                    : "9.35 / 10",
-                          sub:    `up from ${trends?.trends?.pressure_index_2023 ?? 7.74} in 2023`,
-                          accent: "#8b2e1a",
-                        }
-                      : null,
                   ].filter(Boolean).map(s => (
                     <div key={s.label} style={{
                       background: C.surfaceWhite, border: `0.5px solid ${C.borderLight}`,
@@ -815,13 +807,6 @@ export default function Regional() {
                             to:    trends?.trends?.lbs_per_person_2026 ?? 10.71,
                             unit:  "lbs",
                             up: false,
-                          },
-                          {
-                            label: "Pressure index",
-                            from:  trends?.trends?.pressure_index_2023 ?? 7.74,
-                            to:    trends?.trends?.pressure_index_2026 ?? 9.35,
-                            unit:  "/ 10",
-                            up: true,
                           },
                         ].map(row => (
                           <div key={row.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
