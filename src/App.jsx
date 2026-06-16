@@ -34,7 +34,7 @@ const NAV = [
     section: "Overview",
     items: [
       { icon: "layout-dashboard", label: "Dashboard",       page: "dashboard"      },
-      { icon: "map-pin",          label: "Client outlook",  page: "client-outlook", disabled: true  },
+      { icon: "map-pin",          label: "Client outlook",  page: "client-outlook"},
       { icon: "brain",            label: "AI insights",     page: "ai-insights"    },
       { icon: "info-circle",     label: "About FEEDS",     page: "about-feeds"    },
     ],

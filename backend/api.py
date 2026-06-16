@@ -752,6 +752,7 @@ def campus_forecast():
     forecast_norm = [
         {
             "month":  r.get("label", r.get("month", "")),
+            "date":   r.get("month", ""),
             "yhat":   round(float(r.get("forecast", r.get("yhat", 0))), 1),
             "lower":  round(float(r.get("lower_80",  r.get("lower",  0))), 1),
             "upper":  round(float(r.get("upper_80",  r.get("upper",  0))), 1),

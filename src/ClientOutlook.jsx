@@ -85,26 +85,21 @@ export default function ClientOutlook() {
 
   // ── Derived values ──────────────────────────────────────────────────────────
   const fcRows    = forecast?.forecast ?? [];
-  const vals      = fcRows.map(r => r.yhat ?? 0);
+  const vals      = fcRows.map(r => r.forecast ?? r.yhat ?? 0);
   const mean      = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 1010;
-
-  // Only show months from next month onwards (skip past/current month)
-  const startOfNextMonth = new Date();
-  startOfNextMonth.setDate(1);
-  startOfNextMonth.setMonth(startOfNextMonth.getMonth() + 1);
-  startOfNextMonth.setHours(0, 0, 0, 0);
-
-  const enriched = fcRows
-    .map(r => {
-      const val = r.yhat ?? 0;
-      return { ...r, val, busyness: classify(val, mean) };
-    })
-    .filter(r => new Date(r.month) >= startOfNextMonth);
-
+  const enriched  = fcRows.map(r => {
+    const val = r.forecast ?? r.yhat ?? 0;
+    return { ...r, val, busyness: classify(val, mean) };
+  });
   const quietMonths = enriched.filter(r => r.busyness === "quiet");
   const busyMonths  = enriched.filter(r => r.busyness === "busy");
-  const thisMonth   = enriched[0];
-  const nextMonth   = enriched[1];
+
+  const _now = new Date();
+  const _thisPrefix = `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, "0")}`;
+  const _nextDate   = new Date(_now.getFullYear(), _now.getMonth() + 1, 1);
+  const _nextPrefix = `${_nextDate.getFullYear()}-${String(_nextDate.getMonth() + 1).padStart(2, "0")}`;
+  const thisMonth   = enriched.find(r => r.date?.startsWith(_thisPrefix)) ?? enriched[0];
+  const nextMonth   = enriched.find(r => r.date?.startsWith(_nextPrefix)) ?? enriched[1];
   const trendsObj   = forecast?.trends ?? {};
   const cvMape      = forecast?.accuracy?.cv_mape ?? 13.8;
 
@@ -154,7 +149,7 @@ export default function ClientOutlook() {
             <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: 14, marginBottom: 20 }}>
               {thisMonth && (
                 <BusynessCard
-                  title={`This month (${thisMonth.label})`}
+                  title={`This month (${thisMonth.month})`}
                   sub="Based on 12-month forecast model"
                   level={thisMonth.busyness}
                   visits={thisMonth.val}
@@ -162,7 +157,7 @@ export default function ClientOutlook() {
               )}
               {nextMonth && (
                 <BusynessCard
-                  title={`Next month (${nextMonth.label})`}
+                  title={`Next month (${nextMonth.month})`}
                   sub="One month ahead · wider uncertainty"
                   level={nextMonth.busyness}
                   visits={nextMonth.val}
@@ -196,13 +191,13 @@ export default function ClientOutlook() {
               {[
                 {
                   label: "Best time to visit",
-                  value: quietMonths[0]?.label ?? "—",
+                  value: quietMonths[0]?.month ?? "—",
                   sub: quietMonths[0] ? `~${Math.round(quietMonths[0].val).toLocaleString()} visits forecast` : "",
                   accent: C.jungleTeal, icon: "calendar-check",
                 },
                 {
                   label: "Busiest period ahead",
-                  value: busyMonths[0]?.label ?? "—",
+                  value: busyMonths[0]?.month ?? "—",
                   sub: busyMonths[0] ? `~${Math.round(busyMonths[0].val).toLocaleString()} visits` : "No peak detected",
                   accent: "#a03030", icon: "alert-triangle",
                 },
