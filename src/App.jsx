@@ -131,7 +131,7 @@ function PasswordModal({ targetPage, onSuccess, onClose }) {
           placeholder={`Enter ${label.toLowerCase()} password`}
           autoFocus
           style={{
-            width: "100%", padding: "10px 14px", fontSize: 14,
+            width: "100%", padding: "10px 14px", fontSize: 16,
             border: `1.5px solid ${error ? "#e88080" : "#dde8d8"}`,
             borderRadius: 8, outline: "none", marginBottom: 8,
             background: error ? "#fff5f5" : "#fbfcf6",
