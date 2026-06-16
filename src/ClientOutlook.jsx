@@ -118,7 +118,7 @@ export default function ClientOutlook() {
       {/* Header */}
       <header style={{ padding: isMobile ? "20px 16px 16px" : "32px 28px 20px", background: C.pageBg, flexShrink: 0 }}>
         <div style={{ fontSize: isMobile ? 20 : 25, fontWeight: 700, color: C.forestGreen, marginBottom: 4 }}>
-          Student Outlook
+          Client (Campus) Outlook
         </div>
         <div style={{ fontSize: 14, color: C.textMuted }}>
           Campus Food Bank (U of A) · How busy is the food bank? · Based on 12-month visit forecast
