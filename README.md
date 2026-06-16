@@ -1,10 +1,13 @@
+<img width="1408" height="768" alt="Gemini_Generated_Image_" src="https://github.com/user-attachments/assets/ca64fc0f-0aeb-4612-962a-bbd446d9030d" />
+
 # FEEDS — Forecasting Engine for Estimating Demand and Supply
 
 An AI-powered forecasting platform that helps Alberta food banks anticipate demand before it arrives.
 
-Built by team e3 · University of Alberta · AI4Good Lab 2026
+Live Site: https://food-bank-forecast.vercel.app
 
----
+Built by team E3 · AI4Good Lab 2026
+
 
 ## The Problem
 
@@ -12,7 +15,6 @@ Food banks across Alberta plan reactively. Staff estimate upcoming demand from e
 
 This affects every level of the network: provincial supply allocation, regional hamper preparation, and campus visit surges.
 
----
 
 ## How We Solve It
 
@@ -26,7 +28,6 @@ Three tiers are currently supported:
 | Regional | Red Deer Food Bank | Monthly hamper demand |
 | Campus | U of A Campus Food Bank | Monthly student visit demand |
 
----
 
 ## Key Features
 
@@ -36,7 +37,6 @@ Three tiers are currently supported:
 - **Model health indicators**: confidence scores shown per forecast
 - **Cross-tier context**: regional page surfaces provincial gap status; provincial page shows downstream outlook
 
----
 
 ## Tech Stack
 
@@ -48,7 +48,6 @@ Three tiers are currently supported:
 | Data | Statistics Canada (CPI, AISH), U of A academic calendar, food bank operational records |
 | Deployment | Vercel (frontend), Render (backend) |
 
----
 
 ## Future Implementation
 
