@@ -4,6 +4,8 @@
 
 An AI-powered forecasting platform that helps Alberta food banks anticipate demand before it arrives.
 
+Live Site: https://food-bank-forecast.vercel.app
+
 Built by team E3 · AI4Good Lab 2026
 
 
