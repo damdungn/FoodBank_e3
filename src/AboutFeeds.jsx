@@ -18,8 +18,8 @@ const SECTIONS = [
     icon:    "alert-circle",
     color:   "#8b2e1a",
     iconBg:  "#fdecea",
-    image:   "/problem.jpg",
-    credit:  "https://www.cpr.org/2024/11/27/inflation-affecting-local-food-banks/",
+    image:   "/EFB.jpg",
+    credit:  "Photo from Edmonton Food Bank's inventory",
     title:   "The problem",
     summary: "Food banks plan reactively with limited tools to anticipate demand before it arrives.",
     points: [
@@ -33,8 +33,8 @@ const SECTIONS = [
     icon:    "bulb",
     color:   C.jungleTeal,
     iconBg:  C.surfaceGreen,
-    image:   "/solution.jpg",
-    credit:  "https://engineering.fb.com/2016/05/10/ai-research/ai-revealed/",
+    image:   "/Board.jpg",
+    credit:  "Photo from group revising model approach on whiteboard",
     title:   "Our solution",
     summary: "FEEDS combines food bank records with external indicators to forecast demand and supply.",
     points: [
@@ -49,14 +49,15 @@ const SECTIONS = [
     icon:    "chart-bar",
     color:   "#7a5ca8",
     iconBg:  "#f3eefb",
-    image:   "/findings.jpg",
-    credit:  "https://www.effective-states.org/why-should-i-care-about-economic-growth/",
+    image:   "/EFB_visit.jpg",
+    credit:  "Photo from group visiting Edmonton Food Bank ",
     title:   "Key findings",
     summary: "Consistent patterns emerged from model development and analysis.",
     points: [
-      "Economic conditions strongly influence food bank demand.",
-      "AISH (Assured Income for the Severely Handicapped) caseload can act as an early warning signal.",
-      "External features (weather, calendar events) improve forecasts beyond historical trends alone.",
+      "The same economic pressures (CPI, AISH caseload) show up across the entire food bank network",
+      "Campus food insecurity is getting worse: visits saw 27% increase in 3 years while food distribution shrank.",
+      "Campus food banks operate on a different schedule than other food banks where demand is influenced by the academic calendar.",
+      "A small number of donors provide most of the food at the regional level which pose risks to supply stability.",
     ],
   },
   {
@@ -68,9 +69,9 @@ const SECTIONS = [
     title:   "Impact & next steps",
     summary: "FEEDS helps food banks plan ahead so they can focus on the communities they serve.",
     points: [
-      "FEEDS helps food banks plan ahead and reduce last-minute pressure.",
+      "FEEDS helps food banks plan ahead and reduce last minute pressure.",
       "Forecasts can improve food allocation, staffing, and storage planning.",
-      "Next: add Edmonton Food Bank data and finish the Campus Food Bank model.",
+      "Next: add Edmonton Food Bank data and continue model refinement.",
       "Future: improve explainability, generalization, client outlook, and donor engagement.",
     ],
   },
@@ -259,18 +260,25 @@ export default function AboutFeeds() {
                   <div style={{
                     width: isMobile ? "100%" : "32%",
                     flexShrink: 0,
-                    minHeight: isMobile ? 150 : "auto",
+                    height: isMobile ? 200 : "auto",
+                    minHeight: 220,
                     overflow: "hidden",
                     background: C.surfaceGreen,
-                    display: "flex", flexDirection: "column",
+                    position: "relative",
                   }}>
                     <img
                       src={s.image}
                       alt={s.title}
-                      style={{ width: "100%", flex: 1, objectFit: "cover", display: "block", minHeight: 0 }}
+                      style={{
+                        position: "absolute", top: 0, left: 0,
+                        width: "100%", height: "100%",
+                        objectFit: "cover", objectPosition: "center",
+                        display: "block",
+                      }}
                     />
                     {s.credit && (
                       <div style={{
+                        position: "absolute", bottom: 0, left: 0, right: 0,
                         padding: "4px 8px",
                         background: "rgba(0,0,0,0.45)",
                         fontSize: 9,
@@ -280,15 +288,18 @@ export default function AboutFeeds() {
                         whiteSpace: "nowrap",
                         textOverflow: "ellipsis",
                       }}>
-                        Image:{" "}
-                        <a
-                          href={s.credit}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{ color: "rgba(255,255,255,0.65)", textDecoration: "underline" }}
-                        >
-                          {s.credit}
-                        </a>
+                        {s.credit.startsWith("http") ? (
+                          <>Image:{" "}
+                            <a
+                              href={s.credit}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{ color: "rgba(255,255,255,0.65)", textDecoration: "underline" }}
+                            >
+                              {s.credit}
+                            </a>
+                          </>
+                        ) : s.credit}
                       </div>
                     )}
                   </div>

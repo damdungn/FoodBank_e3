@@ -762,6 +762,8 @@ def campus_forecast():
         "historical":  data.get("historical", []),
         "forecast":    forecast_norm,
         "seasonality": data.get("seasonality", {}),
+        "trends":      data.get("trends", {}),
+        "accuracy":    data.get("accuracy", {}),
         "generatedAt": data.get("generated"),
     }
 
