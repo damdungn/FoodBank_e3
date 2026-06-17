@@ -1006,7 +1006,7 @@ export default function Regional({ defaultBank = "rdfb", lockedBank = null }) {
               }}>
                 {selectedFB === "campus"
                   ? <><strong style={{ color: C.textPrimary }}>The connection:</strong> Unlike the RDFB model, the Campus Food Bank model is driven primarily by academic calendar rather than provincial economic indicators. Student food insecurity peaks around exam periods and drops in summer — a pattern distinct from the broader Alberta economic cycle.</>
-                  : <><strong style={{ color: C.textPrimary }}>The connection:</strong> FBA forecasts provincial supply. Both Red Deer and Campus FBs are downstream consumers of that supply. Red Deer demand is driven by the same provincial economic signals (AISH caseload, CPI, school calendar) as the FBA model — when FBA signals a supply gap, it directly affects Red Deer operations.</>
+                  : <><strong style={{ color: C.textPrimary }}>The connection:</strong> FBA forecasts provincial supply. Both Red Deer and Campus FBs are downstream consumers of that supply. Red Deer demand is driven by the same provincial economic signals (AISH caseload, CPI, school calendar) as the FBA model when FBA signals a supply gap, it directly affects Red Deer operations.</>
                 }
               </div>
             </Panel>
@@ -1014,11 +1014,38 @@ export default function Regional({ defaultBank = "rdfb", lockedBank = null }) {
             {/* What gets unlocked with donation data */}
             <Panel>
               <SectionTitle
-                title="What opens up with Red Deer donation data (2011–2026)"
+                title={selectedFB === "campus"
+                  ? "What opens up with Campus FB donation data"
+                  : "What opens up with Red Deer donation data (2011–2026)"}
                 sub="Planned additions once inbound donation history is available"
               />
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {[
+                {(selectedFB === "campus" ? [
+                  {
+                    icon: "trending-up",
+                    label: "Donation trend forecast",
+                    detail: "Prophet pipeline applied to inbound food donations. Shows whether donations are keeping pace with rising student visit demand across each academic term.",
+                    ready: false,
+                  },
+                  {
+                    icon: "circle-minus",
+                    label: "Campus supply and demand gap",
+                    detail: "Visits needed vs food donated, forecasted monthly. Enables targeted donation drives aligned with exam period demand spikes.",
+                    ready: false,
+                  },
+                  {
+                    icon: "chart-bar",
+                    label: "Visit food allocation trend",
+                    detail: "Tracks lbs of food distributed per visit over time. Currently shows a declining trend (12.98 -> 10.71 lbs/person) with richer donation data would allow cause analysis.",
+                    ready: false,
+                  },
+                  {
+                    icon: "calendar-stats",
+                    label: "Academic calendar donation alignment",
+                    detail: "Which months see donation surges vs demand spikes, to inform campaign timing around semester starts, exam periods, and summertime.",
+                    ready: false,
+                  },
+                ] : [
                   {
                     icon: "trending-up",
                     label: "Donation trend forecast",
@@ -1027,7 +1054,7 @@ export default function Regional({ defaultBank = "rdfb", lockedBank = null }) {
                   },
                   {
                     icon: "circle-minus",
-                    label: "Red Deer supply-demand gap",
+                    label: "Red Deer supply and demand gap",
                     detail: "Hampers needed minus donations received, forecasted monthly. Mirrors the FBA gap model but at the regional level which enables local donor alerts.",
                     ready: false,
                   },
@@ -1043,7 +1070,7 @@ export default function Regional({ defaultBank = "rdfb", lockedBank = null }) {
                     detail: "Which months historically receive more donations vs which months see demand spikes to support campaign planning.",
                     ready: false,
                   },
-                ].map(item => (
+                ]).map(item => (
                   <div key={item.label} style={{
                     display: "flex", gap: 12, alignItems: "flex-start",
                     padding: "12px 14px", borderRadius: 9,
