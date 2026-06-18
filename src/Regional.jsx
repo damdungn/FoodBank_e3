@@ -1097,18 +1097,19 @@ export default function Regional({ defaultBank = "rdfb", lockedBank = null }) {
           </div>
         )}
 
-      </div>
-
-      </div>{/* end mobile scroll wrapper */}
-      <footer style={{
-        background: `linear-gradient(135deg, ${C.forestGreen} 40%, #2d6a50 75%, #3f826d 100%)`,
-        padding: isMobile ? "28px 20px 32px" : "36px 44px 40px",
-        display: "flex",
-        flexDirection: isMobile ? "column" : "row",
-        alignItems: isMobile ? "flex-start" : "center",
-        gap: isMobile ? 28 : 0,
-        borderTop: `1px solid rgba(208,239,177,0.15)`,
-      }}>
+        {/* Footer */}
+        <footer style={{
+          background: `linear-gradient(135deg, ${C.forestGreen} 40%, #2d6a50 75%, #3f826d 100%)`,
+          padding: isMobile ? "28px 20px 32px" : "36px 44px 40px",
+          display: "flex",
+          flexDirection: isMobile ? "column" : "row",
+          alignItems: isMobile ? "flex-start" : "center",
+          gap: isMobile ? 28 : 0,
+          borderTop: `1px solid rgba(208,239,177,0.15)`,
+          marginLeft:   isMobile ? -14 : -28,
+          marginRight:  isMobile ? -14 : -28,
+          marginBottom: isMobile ? -24 : -32,
+        }}>
 
         {/* Left — Contact */}
         <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "flex-start", marginLeft: isMobile ? 0 : 40 }}>
@@ -1164,6 +1165,8 @@ export default function Regional({ defaultBank = "rdfb", lockedBank = null }) {
         </div>
 
       </footer>
+      </div>{/* end content */}
+      </div>{/* end mobile scroll wrapper */}
     </div>
   );
 }
