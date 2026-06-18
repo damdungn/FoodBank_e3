@@ -142,16 +142,16 @@ function StatCard({ label, value, sub, tooltip }) {
         cursor: "default",
       }}
     >
-      <div style={{ fontSize: 14, color: C.textSecondary, marginBottom: 6 }}>{label}</div>
-      <div style={{ fontSize: 16, fontWeight: 600, color: C.textPrimary, lineHeight: 1.3 }}>{value}</div>
-      {sub && <div style={{ fontSize: 12, color: C.textMuted, marginTop: 3 }}>{sub}</div>}
+      <div style={{ fontSize: 15, color: C.textSecondary, marginBottom: 6 }}>{label}</div>
+      <div style={{ fontSize: 17, fontWeight: 600, color: C.textPrimary, lineHeight: 1.3 }}>{value}</div>
+      {sub && <div style={{ fontSize: 13, color: C.textMuted, marginTop: 3 }}>{sub}</div>}
       {hovered && tooltip && (
         <div style={{
           position: "absolute", bottom: "calc(100% + 8px)", left: 0,
           width: 240, zIndex: 10,
           background: C.forestGreen, color: "#e8f5e2",
           borderRadius: 8, padding: "9px 12px",
-          fontSize: 12, lineHeight: 1.55,
+          fontSize: 13, lineHeight: 1.55,
           boxShadow: "0 4px 16px rgba(0,0,0,0.18)",
           pointerEvents: "none",
         }}>
@@ -181,8 +181,8 @@ function Panel({ children, style = {} }) {
 function SectionTitle({ title, sub }) {
   return (
     <div style={{ marginBottom: 18 }}>
-      <div style={{ fontSize: 15, fontWeight: 600, color: C.textPrimary }}>{title}</div>
-      {sub && <div style={{ fontSize: 14, color: C.textMuted, marginTop: 2 }}>{sub}</div>}
+      <div style={{ fontSize: 16, fontWeight: 600, color: C.textPrimary }}>{title}</div>
+      {sub && <div style={{ fontSize: 15, color: C.textMuted, marginTop: 2 }}>{sub}</div>}
     </div>
   );
 }
@@ -193,7 +193,7 @@ const ChartTooltip = ({ active, payload, label }) => {
   return (
     <div style={{
       background: C.forestGreen, border: `1px solid ${C.jungleTeal}`,
-      borderRadius: 8, padding: "8px 13px", fontSize: 12, color: "#fff",
+      borderRadius: 8, padding: "8px 13px", fontSize: 13, color: "#fff",
     }}>
       <div style={{ fontWeight: 600, color: C.teaGreen, marginBottom: 4 }}>{label}</div>
       {payload.map((p) => p.value != null && p.name !== "CI band" && (
@@ -213,7 +213,7 @@ const makeHamperTooltip = (unit) => ({ active, payload, label }) => {
   return (
     <div style={{
       background: C.forestGreen, border: `1px solid ${C.jungleTeal}`,
-      borderRadius: 8, padding: "8px 13px", fontSize: 13, color: "#fff",
+      borderRadius: 8, padding: "8px 13px", fontSize: 14, color: "#fff",
     }}>
       <div style={{ fontWeight: 600, color: C.teaGreen, marginBottom: 5 }}>{label}</div>
       {!isForecast ? (
@@ -225,7 +225,7 @@ const makeHamperTooltip = (unit) => ({ active, payload, label }) => {
         <>
           <div style={{ opacity: 0.9 }}>Forecast: <strong>{pt.yhat?.toLocaleString()}</strong> {unit}</div>
           {pt.bandBot != null && (
-            <div style={{ opacity: 0.65, fontSize: 12, marginTop: 2 }}>
+            <div style={{ opacity: 0.65, fontSize: 13, marginTop: 2 }}>
               80% CI: {pt.bandBot?.toLocaleString()} – {(pt.bandBot + pt.band)?.toLocaleString()}
             </div>
           )}
@@ -255,7 +255,7 @@ function DataInputForm({ isMobile }) {
   ];
 
   const inputStyle = {
-    width: "100%", padding: "8px 11px", fontSize: 14,
+    width: "100%", padding: "8px 11px", fontSize: 15,
     border: `1px solid ${C.borderLight}`, borderRadius: 8,
     background: C.surfaceGreen, color: C.textPrimary,
     outline: "none", fontFamily: "inherit",
@@ -277,7 +277,7 @@ function DataInputForm({ isMobile }) {
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(3, minmax(0,1fr))", gap: 12, marginBottom: 12 }}>
         {fields.map((f) => (
           <div key={f.key}>
-            <div style={{ fontSize: 12, color: C.textSecondary, marginBottom: 4, fontWeight: 500 }}>{f.label}</div>
+            <div style={{ fontSize: 13, color: C.textSecondary, marginBottom: 4, fontWeight: 500 }}>{f.label}</div>
             <input
               type={f.type}
               value={form[f.key]}
@@ -290,12 +290,12 @@ function DataInputForm({ isMobile }) {
       </div>
 
       {/* Boolean flags */}
-      <div style={{ display: "flex", gap: 24, marginBottom: 12 }}>
+      <div style={{ display: "flex", gap: isMobile ? 12 : 24, marginBottom: 12, flexWrap: "wrap" }}>
         {[
           { key: "aish_week", label: "AISH disbursement week" },
           { key: "ccb_week",  label: "CCB payment week"       },
         ].map((f) => (
-          <label key={f.key} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: C.textSecondary, cursor: "pointer" }}>
+          <label key={f.key} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: C.textSecondary, cursor: "pointer" }}>
             <input
               type="checkbox"
               checked={form[f.key]}
@@ -308,7 +308,7 @@ function DataInputForm({ isMobile }) {
       </div>
 
       <div style={{ marginBottom: 14 }}>
-        <div style={{ fontSize: 12, color: C.textSecondary, marginBottom: 4, fontWeight: 500 }}>Notes (optional)</div>
+        <div style={{ fontSize: 13, color: C.textSecondary, marginBottom: 4, fontWeight: 500 }}>Notes (optional)</div>
         <textarea
           value={form.notes}
           onChange={e => setForm(p => ({ ...p, notes: e.target.value }))}
@@ -318,11 +318,11 @@ function DataInputForm({ isMobile }) {
         />
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
         <button
           onClick={handleSubmit}
           style={{
-            padding: "9px 20px", fontSize: 13, fontWeight: 600,
+            padding: "9px 20px", fontSize: 14, fontWeight: 600,
             background: C.forestGreen, color: C.teaGreen,
             border: "none", borderRadius: 8, cursor: "pointer",
           }}
@@ -331,13 +331,15 @@ function DataInputForm({ isMobile }) {
           Submit row
         </button>
         {submitted && (
-          <span style={{ fontSize: 12, color: C.jungleTeal, display: "flex", alignItems: "center", gap: 5 }}>
+          <span style={{ fontSize: 13, color: C.jungleTeal, display: "flex", alignItems: "center", gap: 5 }}>
             <i className="ti ti-circle-check" aria-hidden="true" /> Row queued
           </span>
         )}
-        <span style={{ fontSize: 12, color: C.textMuted, marginLeft: "auto" }}>
-          Full CSV upload coming soon
-        </span>
+        {!isMobile && (
+          <span style={{ fontSize: 13, color: C.textMuted, marginLeft: "auto" }}>
+            Full CSV upload coming soon
+          </span>
+        )}
       </div>
     </Panel>
   );
@@ -346,9 +348,9 @@ function DataInputForm({ isMobile }) {
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 
-export default function Regional() {
+export default function Regional({ defaultBank = "rdfb", lockedBank = null }) {
   const [activeTab,  setActiveTab]  = useState("hamper");
-  const [selectedFB, setSelectedFB] = useState("rdfb");
+  const [selectedFB, setSelectedFB] = useState(defaultBank);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
 
   useEffect(() => {
@@ -441,7 +443,7 @@ export default function Regional() {
     <div style={{ display: "flex", flexDirection: "column", height: "100%", background: C.pageBg, overflow: "hidden" }}>
 
       {/* On mobile: header + content scroll together. On desktop: display:contents is transparent. */}
-      <div style={isMobile ? { flex: 1, overflowY: "auto" } : { display: "contents" }}>
+      <div style={isMobile ? { flex: 1, overflowY: "auto", overflowX: "hidden" } : { display: "contents" }}>
 
       {/* Header */}
       <header style={{ padding: isMobile ? "16px 14px 0" : "32px 28px 0", background: C.pageBg, flexShrink: 0 }}>
@@ -461,9 +463,9 @@ export default function Regional() {
                 padding: "8px 14px", borderRadius: 8, marginBottom: 14,
                 background: isWarn ? "#fffbeb" : "#f2f9ec",
                 border: `1px solid ${isWarn ? "#d4c060" : "#ace890"}`,
-                fontSize: 13,
+                fontSize: 14,
               }}>
-                <i className="ti ti-building-warehouse" style={{ fontSize: 14, color: C.textMuted, flexShrink: 0 }} aria-hidden="true" />
+                <i className="ti ti-building-warehouse" style={{ fontSize: 15, color: C.textMuted, flexShrink: 0 }} aria-hidden="true" />
                 <span style={{ color: C.textSecondary }}>
                   <strong style={{ color: C.textPrimary }}>FBA provincial · {gapContext.month}:</strong>{" "}
                   {gapAbs != null
@@ -472,48 +474,50 @@ export default function Regional() {
                   }
                 </span>
                 <span style={{
-                  fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 20, flexShrink: 0,
+                  fontSize: 12, fontWeight: 600, padding: "2px 8px", borderRadius: 20, flexShrink: 0,
                   background: isWarn ? "#fdf6d8" : "#e2ffec",
                   color:      isWarn ? "#7a6010" : "#1a8b20",
                 }}>
                   {alert}
                 </span>
-                <span style={{ marginLeft: "auto", fontSize: 12, color: C.textMuted }}>
+                <span style={{ marginLeft: "auto", fontSize: 13, color: C.textMuted }}>
                   FBA provincial model
                 </span>
               </div>
             );
           })()}
 
-          {/* Food bank selector */}
-          <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
-            {FOOD_BANKS.map(fb => (
-              <button
-                key={fb.key}
-                onClick={() => fb.ready && setSelectedFB(fb.key)}
-                disabled={!fb.ready}
-                style={{
-                  padding: "5px 14px", borderRadius: 20, fontSize: 13, cursor: fb.ready ? "pointer" : "default",
-                  border: `1.5px solid ${selectedFB === fb.key ? C.jungleTeal : C.borderLight}`,
-                  background: selectedFB === fb.key ? C.jungleTeal : fb.ready ? C.surfaceWhite : C.surfaceGreen,
-                  color: selectedFB === fb.key ? "#fff" : fb.ready ? C.textPrimary : C.textMuted,
-                  fontFamily: "inherit", fontWeight: selectedFB === fb.key ? 600 : 400,
-                  opacity: fb.ready ? 1 : 0.65,
-                  display: "flex", alignItems: "center", gap: 6,
-                }}
-              >
-                {fb.label}
-                {!fb.ready && (
-                  <span style={{
-                    fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 8,
-                    background: C.lightGold, color: C.forestGreen, letterSpacing: "0.04em",
-                  }}>
-                    SOON
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
+          {/* Food bank selector — hidden when locked to a specific bank */}
+          {!lockedBank && (
+            <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
+              {FOOD_BANKS.map(fb => (
+                <button
+                  key={fb.key}
+                  onClick={() => fb.ready && setSelectedFB(fb.key)}
+                  disabled={!fb.ready}
+                  style={{
+                    padding: "5px 14px", borderRadius: 20, fontSize: 14, cursor: fb.ready ? "pointer" : "default",
+                    border: `1.5px solid ${selectedFB === fb.key ? C.jungleTeal : C.borderLight}`,
+                    background: selectedFB === fb.key ? C.jungleTeal : fb.ready ? C.surfaceWhite : C.surfaceGreen,
+                    color: selectedFB === fb.key ? "#fff" : fb.ready ? C.textPrimary : C.textMuted,
+                    fontFamily: "inherit", fontWeight: selectedFB === fb.key ? 600 : 400,
+                    opacity: fb.ready ? 1 : 0.65,
+                    display: "flex", alignItems: "center", gap: 6,
+                  }}
+                >
+                  {fb.label}
+                  {!fb.ready && (
+                    <span style={{
+                      fontSize: 11, fontWeight: 600, padding: "1px 6px", borderRadius: 8,
+                      background: C.lightGold, color: C.forestGreen, letterSpacing: "0.04em",
+                    }}>
+                      SOON
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Dynamic title + subtitle */}
           {(() => {
@@ -525,7 +529,7 @@ export default function Regional() {
                     <div style={{ fontSize: isMobile ? 20 : 25, fontWeight: 700, color: C.forestGreen, marginBottom: 4 }}>
                       {fb.label}
                     </div>
-                    <div style={{ fontSize: 13, color: C.textMuted, marginBottom: fb.ready ? 10 : 0 }}>
+                    <div style={{ fontSize: 14, color: C.textMuted, marginBottom: fb.ready ? 10 : 0 }}>
                       {fb.subtitle}
                     </div>
                   </div>
@@ -534,7 +538,7 @@ export default function Regional() {
                       display: "inline-flex", alignItems: "center", gap: 7,
                       padding: "7px 14px", borderRadius: 8,
                       background: "#e2ffec", border: "0.5px solid #ace890",
-                      fontSize: 13,
+                      fontSize: 14,
                     }}>
                       <div style={{ width: 7, height: 7, borderRadius: "50%", background: C.jungleTeal }} />
                       <span style={{ color: C.textSecondary }}>Model health: </span>
@@ -551,7 +555,7 @@ export default function Regional() {
         <div style={{ display: fbReady ? "flex" : "none", gap: 2, borderBottom: `1px solid ${C.borderLight}`, overflowX: "auto" }}>
           {tabs.map((t) => (
             <button key={t.key} onClick={() => setActiveTab(t.key)} style={{
-              padding: "8px 18px", fontSize: 14, cursor: "pointer",
+              padding: "8px 18px", fontSize: 15, cursor: "pointer",
               border: "none", background: "none", fontFamily: "inherit",
               color: activeTab === t.key ? C.forestGreen : C.textMuted,
               fontWeight: activeTab === t.key ? 600 : 400,
@@ -565,7 +569,7 @@ export default function Regional() {
       </header>
 
       {/* Content */}
-      <div style={{ flex: isMobile ? undefined : 1, overflowY: isMobile ? undefined : "auto", padding: isMobile ? "16px 14px 24px" : "24px 28px 32px" }}>
+      <div style={{ flex: isMobile ? undefined : 1, overflowY: isMobile ? undefined : "auto", overflowX: "hidden", padding: isMobile ? "16px 14px 24px" : "24px 28px 32px" }}>
 
         {/* ── COMING SOON PLACEHOLDER (shown when selected FB is not ready) ── */}
         {!fbReady && (() => {
@@ -580,12 +584,12 @@ export default function Regional() {
                 borderRadius: 12, padding: "18px 22px",
                 display: "flex", alignItems: "flex-start", gap: 14,
               }}>
-                <i className="ti ti-clock-hour-4" style={{ fontSize: 22, color: "#b45309", marginTop: 2 }} />
+                <i className="ti ti-clock-hour-4" style={{ fontSize: 24, color: "#b45309", marginTop: 2 }} />
                 <div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: "#92400e", marginBottom: 4 }}>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: "#92400e", marginBottom: 4 }}>
                     Dataset received — model integration pending
                   </div>
-                  <div style={{ fontSize: 13, color: "#a16207", lineHeight: 1.6 }}>
+                  <div style={{ fontSize: 14, color: "#a16207", lineHeight: 1.6 }}>
                     The Edmonton Campus Food Bank dataset is in hand and covers <strong>{ds?.period}</strong>.
                     Forecasting tabs will appear here once the model is trained and the backend endpoints are wired up.
                   </div>
@@ -597,8 +601,8 @@ export default function Regional() {
                 background: C.surfaceWhite, border: `0.5px solid ${C.borderLight}`,
                 borderRadius: 12, padding: "20px 22px",
               }}>
-                <div style={{ fontSize: 15, fontWeight: 700, color: C.textPrimary, marginBottom: 4 }}>Dataset overview</div>
-                <div style={{ fontSize: 13, color: C.textMuted, marginBottom: 18 }}>
+                <div style={{ fontSize: 16, fontWeight: 700, color: C.textPrimary, marginBottom: 4 }}>Dataset overview</div>
+                <div style={{ fontSize: 14, color: C.textMuted, marginBottom: 18 }}>
                   {ds?.period} · {ds?.granularity} records · aggregated non-identifying operational metrics
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
@@ -612,11 +616,11 @@ export default function Regional() {
                         background: C.surfaceWhite, border: `0.5px solid ${C.borderLight}`,
                         display: "flex", alignItems: "center", justifyContent: "center",
                       }}>
-                        <i className={`ti ti-${m.icon}`} style={{ fontSize: 15, color: C.jungleTeal }} />
+                        <i className={`ti ti-${m.icon}`} style={{ fontSize: 16, color: C.jungleTeal }} />
                       </div>
                       <div>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: C.textPrimary }}>{m.label}</div>
-                        <div style={{ fontSize: 12, color: C.textMuted, marginTop: 2 }}>{m.desc}</div>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: C.textPrimary }}>{m.label}</div>
+                        <div style={{ fontSize: 13, color: C.textMuted, marginTop: 2 }}>{m.desc}</div>
                       </div>
                     </div>
                   ))}
@@ -628,8 +632,8 @@ export default function Regional() {
                 background: C.surfaceWhite, border: `0.5px solid ${C.borderLight}`,
                 borderRadius: 12, padding: "20px 22px",
               }}>
-                <div style={{ fontSize: 15, fontWeight: 700, color: C.textPrimary, marginBottom: 4 }}>Planned analysis</div>
-                <div style={{ fontSize: 13, color: C.textMuted, marginBottom: 16 }}>
+                <div style={{ fontSize: 16, fontWeight: 700, color: C.textPrimary, marginBottom: 4 }}>Planned analysis</div>
+                <div style={{ fontSize: 14, color: C.textMuted, marginBottom: 16 }}>
                   Tabs that will be available once the model is integrated
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -643,11 +647,11 @@ export default function Regional() {
                         width: 20, height: 20, borderRadius: "50%", flexShrink: 0,
                         border: `1.5px dashed ${C.textMuted}`,
                         display: "flex", alignItems: "center", justifyContent: "center",
-                        fontSize: 10, color: C.textMuted, fontWeight: 600,
+                        fontSize: 11, color: C.textMuted, fontWeight: 600,
                       }}>
                         {i + 1}
                       </div>
-                      <div style={{ fontSize: 13, color: C.textSecondary }}>{t}</div>
+                      <div style={{ fontSize: 14, color: C.textSecondary }}>{t}</div>
                     </div>
                   ))}
                 </div>
@@ -661,14 +665,14 @@ export default function Regional() {
         {fbReady && activeTab === "hamper" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             {loading ? (
-              <div style={{ textAlign: "center", padding: "60px 0", color: C.textMuted, fontSize: 13 }}>
+              <div style={{ textAlign: "center", padding: "60px 0", color: C.textMuted, fontSize: 14 }}>
                 Loading model data…
               </div>
             ) : !forecast ? (
               <Panel>
                 <div style={{ padding: "40px 0", textAlign: "center" }}>
-                  <i className="ti ti-database-off" style={{ fontSize: 28, color: C.textMuted, display: "block", marginBottom: 10 }} />
-                  <div style={{ fontSize: 13, color: C.textMuted }}>
+                  <i className="ti ti-database-off" style={{ fontSize: 30, color: C.textMuted, display: "block", marginBottom: 10 }} />
+                  <div style={{ fontSize: 14, color: C.textMuted }}>
                     Forecast not available — ensure the backend is running and the data files are in{" "}
                     <code style={{ background: C.surfaceGreen, padding: "1px 5px", borderRadius: 4 }}>backend/data/</code>.
                   </div>
@@ -698,24 +702,14 @@ export default function Regional() {
                       sub:    "cross-validated forecast error",
                       accent: C.dustyDenim,
                     },
-                    selectedFB === "campus"
-                      ? {
-                          label:  "Pressure index",
-                          value:  trends?.trends?.pressure_index_2026 != null
-                                    ? `${trends.trends.pressure_index_2026} / 10`
-                                    : "9.35 / 10",
-                          sub:    `up from ${trends?.trends?.pressure_index_2023 ?? 7.74} in 2023`,
-                          accent: "#8b2e1a",
-                        }
-                      : null,
                   ].filter(Boolean).map(s => (
                     <div key={s.label} style={{
                       background: C.surfaceWhite, border: `0.5px solid ${C.borderLight}`,
                       borderTop: `3px solid ${s.accent}`, borderRadius: 12, padding: "14px 16px",
                     }}>
-                      <div style={{ fontSize: 13, color: C.textMuted, marginBottom: 6 }}>{s.label}</div>
-                      <div style={{ fontSize: 20, fontWeight: 700, color: C.textPrimary, marginBottom: 3 }}>{s.value}</div>
-                      <div style={{ fontSize: 13, color: C.textMuted }}>{s.sub}</div>
+                      <div style={{ fontSize: 14, color: C.textMuted, marginBottom: 6 }}>{s.label}</div>
+                      <div style={{ fontSize: 22, fontWeight: 700, color: C.textPrimary, marginBottom: 3 }}>{s.value}</div>
+                      <div style={{ fontSize: 14, color: C.textMuted }}>{s.sub}</div>
                     </div>
                   ))}
                 </div>
@@ -726,18 +720,19 @@ export default function Regional() {
                     title="Model performance & 12-month forecast"
                     sub="Prophet model · last 25 months observed & predicted · 80% CI on forecast"
                   />
-                  <ResponsiveContainer width="100%" height={280}>
-                    <ComposedChart data={chartData} margin={{ top: 4, right: 16, bottom: 20, left: 10 }}>
+                  <ResponsiveContainer width="100%" height={280} style={{ outline: "none" }}>
+                    <ComposedChart data={chartData} margin={{ top: 4, right: 16, bottom: isMobile ? 40 : 20, left: 10 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke={C.teaGreen} />
                       <XAxis
                         dataKey="month"
-                        tick={{ fontSize: 11, fill: C.textMuted }}
+                        tick={{ fontSize: isMobile ? 10 : 12, fill: C.textMuted }}
                         axisLine={false} tickLine={false}
-                        interval={4}
+                        interval={isMobile ? 6 : 4}
                         angle={-30} textAnchor="end"
+                        tickFormatter={isMobile ? (v) => { const [m, y] = v.split(" "); return y ? `${m} '${y.slice(2)}` : v; } : undefined}
                       />
                       <YAxis
-                        tick={{ fontSize: 12, fill: C.textMuted }} axisLine={false} tickLine={false}
+                        tick={{ fontSize: 13, fill: C.textMuted }} axisLine={false} tickLine={false}
                         tickFormatter={v => v.toLocaleString()} domain={["auto", "auto"]}
                       />
                       <Tooltip content={makeHamperTooltip(unit)} />
@@ -774,7 +769,7 @@ export default function Regional() {
                       { color: C.dustyDenim, label: "Forecast (next 12 mo.)",  line: true,   dash: false },
                       { color: "#ddeaf8",    label: "80% confidence interval", square: true              },
                     ].map(({ color, label, line, dash }) => (
-                      <span key={label} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: C.textMuted }}>
+                      <span key={label} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: C.textMuted }}>
                         {line ? (
                           <svg width="18" height="10">
                             <line
@@ -816,24 +811,17 @@ export default function Regional() {
                             unit:  "lbs",
                             up: false,
                           },
-                          {
-                            label: "Pressure index",
-                            from:  trends?.trends?.pressure_index_2023 ?? 7.74,
-                            to:    trends?.trends?.pressure_index_2026 ?? 9.35,
-                            unit:  "/ 10",
-                            up: true,
-                          },
                         ].map(row => (
-                          <div key={row.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
-                            <div style={{ fontSize: 13, color: C.textSecondary }}>{row.label}</div>
-                            <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13 }}>
+                          <div key={row.label} style={{ display: "flex", flexDirection: isMobile ? "column" : "row", justifyContent: "space-between", alignItems: isMobile ? "flex-start" : "center", gap: isMobile ? 4 : 10 }}>
+                            <div style={{ fontSize: 14, color: C.textSecondary }}>{row.label}</div>
+                            <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 14 }}>
                               <span style={{ color: C.textMuted }}>{row.from} {row.unit}</span>
                               <span style={{ color: C.textMuted }}>→</span>
                               <span style={{ fontWeight: 700, color: row.up ? "#8b2e1a" : C.jungleTeal }}>
                                 {row.to} {row.unit}
                               </span>
                               <i className={`ti ti-arrow-${row.up ? "up" : "down"}`}
-                                style={{ fontSize: 12, color: row.up ? "#8b2e1a" : C.jungleTeal }}
+                                style={{ fontSize: 13, color: row.up ? "#8b2e1a" : C.jungleTeal }}
                                 aria-hidden="true" />
                             </div>
                           </div>
@@ -850,7 +838,7 @@ export default function Regional() {
                         ].map(row => (
                           <div key={row.label} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
                             <div style={{ width: 8, height: 8, borderRadius: "50%", background: row.color, flexShrink: 0, marginTop: 5 }} />
-                            <div style={{ fontSize: 14, color: C.textSecondary }}>
+                            <div style={{ fontSize: 15, color: C.textSecondary }}>
                               <strong style={{ color: C.textPrimary }}>{row.label}:</strong>{" "}
                               {(row.months ?? []).join(", ") || "—"}
                             </div>
@@ -861,7 +849,7 @@ export default function Regional() {
                   )}
                   <Panel>
                     <SectionTitle title="About this forecast" sub="" />
-                    <div style={{ fontSize: 13, color: C.textSecondary, lineHeight: 1.7 }}>
+                    <div style={{ fontSize: 14, color: C.textSecondary, lineHeight: 1.7 }}>
                       {selectedFB === "campus"
                         ? "Trained on 36 months of Campus Food Bank visit data (May 2023 – Apr 2026) using Prophet with academic calendar regressors. Exam periods and school-in-session flags are the dominant drivers (Pearson r = 0.48 and 0.36). CV MAPE of 13.8% on 6-month rolling holdouts."
                         : "Trained on 185 months of Red Deer FB data using Prophet with provincial economic regressors (AISH caseload, CPI, school calendar). Features were selected via SHAP analysis on the FBA provincial model where the same drivers predict both provincial outbound and regional hamper demand."
@@ -890,7 +878,7 @@ export default function Regional() {
             <div style={{
               padding: "10px 14px",
               background: C.surfaceGreen, borderRadius: 8, border: `0.5px solid ${C.borderLight}`,
-              fontSize: 13, color: C.textSecondary, lineHeight: 1.6,
+              fontSize: 14, color: C.textSecondary, lineHeight: 1.6,
             }}>
               {selectedFB === "campus"
                 ? "Cross-validation used a 6-month rolling holdout window. CV MAPE of 13.8% reflects forecast error on held-out months. In-sample MAPE (1.4%) reflects fit on the training window."
@@ -908,21 +896,21 @@ export default function Regional() {
                   ? "Normalized correlation with monthly visit volume · May 2023 – Apr 2026"
                   : "SHAP values from FBA model applied to RDFB · Same economic drivers, regional target"}
               />
-              <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={features?.featureData?.length ? features.featureData : featureData} layout="vertical" margin={{ top: 4, right: isMobile ? 20 : 50, bottom: 0, left: isMobile ? 75 : 110 }}>
+              <ResponsiveContainer width="100%" height={250} style={{ outline: "none" }}>
+                <BarChart data={features?.featureData?.length ? features.featureData : featureData} layout="vertical" margin={{ top: 4, right: isMobile ? 40 : 50, bottom: 0, left: isMobile ? 100 : 110 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke={C.teaGreen} horizontal={false} />
-                  <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 13, fill: C.textMuted }} axisLine={false} tickLine={false} />
-                  <YAxis type="category" dataKey="name" tick={{ fontSize: isMobile ? 10 : 13, fill: C.textSecondary }} axisLine={false} tickLine={false} width={isMobile ? 75 : 110} />
+                  <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 14, fill: C.textMuted }} axisLine={false} tickLine={false} />
+                  <YAxis type="category" dataKey="name" tick={{ fontSize: isMobile ? 9 : 13, fill: C.textSecondary }} axisLine={false} tickLine={false} width={isMobile ? 100 : 110} />
                   <Tooltip content={<ChartTooltip />} />
                   <Bar dataKey="importance" name="Importance %" fill={C.dustyDenim} radius={[0, 4, 4, 0]} barSize={14}
-                    label={{ position: "right", fontSize: 13, fill: C.textMuted, formatter: v => `${v}%` }}
+                    label={{ position: "right", fontSize: 14, fill: C.textMuted, formatter: v => `${v}%` }}
                   />
                 </BarChart>
               </ResponsiveContainer>
               <div style={{
                 marginTop: 14, padding: "10px 14px",
                 background: C.surfaceGreen, borderRadius: 8, border: `0.5px solid ${C.borderLight}`,
-                fontSize: 13, color: C.textSecondary, lineHeight: 1.6,
+                fontSize: 14, color: C.textSecondary, lineHeight: 1.6,
               }}>
                 {selectedFB === "campus"
                   ? <><strong style={{ color: C.textPrimary }}>Note:</strong> Importance is normalized Pearson correlation with monthly visit volume. Exam Period (r&nbsp;=&nbsp;0.48) and School In Session (r&nbsp;=&nbsp;0.36) are the top drivers — confirming that academic calendar is the primary demand signal at the Campus Food Bank.</>
@@ -1001,24 +989,24 @@ export default function Regional() {
                     background: C.surfaceGreen, border: `1.5px solid ${fb.border}`,
                   }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                      <i className={`ti ti-${fb.icon}`} style={{ fontSize: 16, color: fb.statusColor }} aria-hidden="true" />
+                      <i className={`ti ti-${fb.icon}`} style={{ fontSize: 17, color: fb.statusColor }} aria-hidden="true" />
                       <div>
-                        <div style={{ fontSize: 14, fontWeight: 600, color: C.textPrimary }}>{fb.label}</div>
-                        <div style={{ fontSize: 12, color: fb.statusColor, fontWeight: 500 }}>{fb.status}</div>
+                        <div style={{ fontSize: 15, fontWeight: 600, color: C.textPrimary }}>{fb.label}</div>
+                        <div style={{ fontSize: 13, color: fb.statusColor, fontWeight: 500 }}>{fb.status}</div>
                       </div>
                     </div>
-                    <div style={{ fontSize: 13, color: C.textSecondary, lineHeight: 1.6 }}>{fb.detail}</div>
+                    <div style={{ fontSize: 14, color: C.textSecondary, lineHeight: 1.6 }}>{fb.detail}</div>
                   </div>
                 ))}
               </div>
               <div style={{
                 marginTop: 14, padding: "10px 14px",
                 background: C.surfaceWhite, borderRadius: 8, border: `0.5px solid ${C.borderLight}`,
-                fontSize: 13, color: C.textSecondary, lineHeight: 1.6,
+                fontSize: 14, color: C.textSecondary, lineHeight: 1.6,
               }}>
                 {selectedFB === "campus"
                   ? <><strong style={{ color: C.textPrimary }}>The connection:</strong> Unlike the RDFB model, the Campus Food Bank model is driven primarily by academic calendar rather than provincial economic indicators. Student food insecurity peaks around exam periods and drops in summer — a pattern distinct from the broader Alberta economic cycle.</>
-                  : <><strong style={{ color: C.textPrimary }}>The connection:</strong> FBA forecasts provincial supply. Both Red Deer and Campus FBs are downstream consumers of that supply. Red Deer demand is driven by the same provincial economic signals (AISH caseload, CPI, school calendar) as the FBA model — when FBA signals a supply gap, it directly affects Red Deer operations.</>
+                  : <><strong style={{ color: C.textPrimary }}>The connection:</strong> FBA forecasts provincial supply. Both Red Deer and Campus FBs are downstream consumers of that supply. Red Deer demand is driven by the same provincial economic signals (AISH caseload, CPI, school calendar) as the FBA model when FBA signals a supply gap, it directly affects Red Deer operations.</>
                 }
               </div>
             </Panel>
@@ -1026,11 +1014,38 @@ export default function Regional() {
             {/* What gets unlocked with donation data */}
             <Panel>
               <SectionTitle
-                title="What opens up with Red Deer donation data (2011–2026)"
+                title={selectedFB === "campus"
+                  ? "What opens up with Campus FB donation data"
+                  : "What opens up with Red Deer donation data (2011–2026)"}
                 sub="Planned additions once inbound donation history is available"
               />
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {[
+                {(selectedFB === "campus" ? [
+                  {
+                    icon: "trending-up",
+                    label: "Donation trend forecast",
+                    detail: "Prophet pipeline applied to inbound food donations. Shows whether donations are keeping pace with rising student visit demand across each academic term.",
+                    ready: false,
+                  },
+                  {
+                    icon: "circle-minus",
+                    label: "Campus supply and demand gap",
+                    detail: "Visits needed vs food donated, forecasted monthly. Enables targeted donation drives aligned with exam period demand spikes.",
+                    ready: false,
+                  },
+                  {
+                    icon: "chart-bar",
+                    label: "Visit food allocation trend",
+                    detail: "Tracks lbs of food distributed per visit over time. Currently shows a declining trend (12.98 -> 10.71 lbs/person) with richer donation data would allow cause analysis.",
+                    ready: false,
+                  },
+                  {
+                    icon: "calendar-stats",
+                    label: "Academic calendar donation alignment",
+                    detail: "Which months see donation surges vs demand spikes, to inform campaign timing around semester starts, exam periods, and summertime.",
+                    ready: false,
+                  },
+                ] : [
                   {
                     icon: "trending-up",
                     label: "Donation trend forecast",
@@ -1039,7 +1054,7 @@ export default function Regional() {
                   },
                   {
                     icon: "circle-minus",
-                    label: "Red Deer supply-demand gap",
+                    label: "Red Deer supply and demand gap",
                     detail: "Hampers needed minus donations received, forecasted monthly. Mirrors the FBA gap model but at the regional level which enables local donor alerts.",
                     ready: false,
                   },
@@ -1055,7 +1070,7 @@ export default function Regional() {
                     detail: "Which months historically receive more donations vs which months see demand spikes to support campaign planning.",
                     ready: false,
                   },
-                ].map(item => (
+                ]).map(item => (
                   <div key={item.label} style={{
                     display: "flex", gap: 12, alignItems: "flex-start",
                     padding: "12px 14px", borderRadius: 9,
@@ -1066,11 +1081,11 @@ export default function Regional() {
                       background: C.surfaceWhite, border: `0.5px solid ${C.borderLight}`,
                       display: "flex", alignItems: "center", justifyContent: "center",
                     }}>
-                      <i className={`ti ti-${item.icon}`} style={{ fontSize: 14, color: C.textMuted }} aria-hidden="true" />
+                      <i className={`ti ti-${item.icon}`} style={{ fontSize: 15, color: C.textMuted }} aria-hidden="true" />
                     </div>
                     <div>
-                      <div style={{ fontSize: 15, fontWeight: 600, color: C.textPrimary, marginBottom: 2 }}>{item.label}</div>
-                      <div style={{ fontSize: 13, color: C.textSecondary, lineHeight: 1.5 }}>{item.detail}</div>
+                      <div style={{ fontSize: 16, fontWeight: 600, color: C.textPrimary, marginBottom: 2 }}>{item.label}</div>
+                      <div style={{ fontSize: 14, color: C.textSecondary, lineHeight: 1.5 }}>{item.detail}</div>
                     </div>
                   </div>
                 ))}
@@ -1082,8 +1097,75 @@ export default function Regional() {
           </div>
         )}
 
-      </div>
+        {/* Footer */}
+        <footer style={{
+          background: `linear-gradient(135deg, ${C.forestGreen} 40%, #2d6a50 75%, #3f826d 100%)`,
+          padding: isMobile ? "28px 20px 32px" : "36px 44px 40px",
+          display: "flex",
+          flexDirection: isMobile ? "column" : "row",
+          alignItems: isMobile ? "flex-start" : "center",
+          gap: isMobile ? 28 : 0,
+          borderTop: `1px solid rgba(208,239,177,0.15)`,
+          marginLeft:   isMobile ? -14 : -28,
+          marginRight:  isMobile ? -14 : -28,
+          marginBottom: isMobile ? -24 : -32,
+        }}>
 
+        {/* Left — Contact */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "flex-start", marginLeft: isMobile ? 0 : 40 }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: C.teaGreen, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 12 }}>
+            Contact us
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <a
+              href="mailto:feeds4good@gmail.com"
+              style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 15, color: "rgba(255,255,255,0.75)", textDecoration: "none" }}
+            >
+              <i className="ti ti-mail" style={{ fontSize: 17, color: C.teaGreen, flexShrink: 0 }} aria-hidden="true" />
+              feeds4good@gmail.com
+            </a>
+            <a
+              href="https://www.instagram.com/feeds4good/"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, color: "rgba(255,255,255,0.75)", textDecoration: "none" }}
+            >
+              <i className="ti ti-brand-instagram" style={{ fontSize: 16, color: C.teaGreen, flexShrink: 0 }} aria-hidden="true" />
+              @feeds4good
+            </a>
+          </div>
+        </div>
+
+        {/* Center — Logo */}
+        <div style={{
+          flex: 1, display: "flex", justifyContent: "center", alignItems: "center",
+          order: isMobile ? -1 : 0,
+          marginBottom: isMobile ? 4 : 0,
+        }}>
+          <img
+            src="/logo-removebg.png"
+            alt="FEEDS logo"
+            style={{ height: isMobile ? 70 : 90, objectFit: "contain", filter: "brightness(0) invert(1)", opacity: 0.9 }}
+          />
+        </div>
+
+        {/* Right — Collaboration */}
+        <div style={{ flex: 1, display: "flex", justifyContent: "flex-start" }}>
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 10, maxWidth: 400 }}>
+            <i className="ti ti-heart-handshake" style={{ fontSize: 18, color: C.teaGreen, flexShrink: 0, marginTop: 2 }} aria-hidden="true" />
+            <div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: "#fff", marginBottom: 5 }}>
+                Built in collaboration with food banks
+              </div>
+              <div style={{ fontSize: 14, color: "rgba(255,255,255,0.6)", lineHeight: 1.65 }}>
+                Developed in partnership with Food Banks Alberta and Red Deer Food Bank to improve food security outcomes across Alberta.
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </footer>
+      </div>{/* end content */}
       </div>{/* end mobile scroll wrapper */}
     </div>
   );

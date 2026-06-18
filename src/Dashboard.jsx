@@ -21,6 +21,7 @@ const DRIVERS = [
     bg:      "#edfaf0",
     border:  "#b0d8b8",
     title:   "Economic indicators",
+    sub:     "Cost of living & income support",
     desc:    "Rising food and housing costs push families toward food banks. FEEDS tracks CPI components, income-support caseloads, and net migration signals month by month.",
     factors: ["Food & shelter CPI", "AISH caseload", "Unemployment rate", "Net migration"],
     signalKeys: [],
@@ -31,6 +32,7 @@ const DRIVERS = [
     bg:      "#eaf5fb",
     border:  "#a8d4f0",
     title:   "Weather & climate",
+    sub:     "Temperature & precipitation patterns",
     desc:    "Cold weather and extreme precipitation affect both client travel and volunteer capacity. The model uses monthly temperature and precipitation averages as features.",
     factors: ["Average temperature (°C)", "Total precipitation (mm)", "Snowfall (cm)"],
     signalKeys: [],
@@ -41,6 +43,7 @@ const DRIVERS = [
     bg:      "#fdf6d8",
     border:  "#e0cc70",
     title:   "Calendar & benefits",
+    sub:     "Payment dates & stat holidays",
     desc:    "Government benefit payment dates create predictable demand spikes. FEEDS flags GST credit days, CCB payments, stat holidays, and end-of-month patterns.",
     factors: ["GST credit days", "CCB payment days", "Stat holidays", "Month-end pressure"],
     signalKeys: ["gst_day", "ccb_day", "is_holiday", "is_stat_day"],
@@ -51,6 +54,7 @@ const DRIVERS = [
     bg:      "#fbeeee",
     border:  "#e8a8a8",
     title:   "Student-specific factors",
+    sub:     "Academic cycles & tuition deadlines",
     desc:    "Campus food banks face different demand cycles tied to academic life such as exam stress, tuition deadlines, and surges when international students arrive each semester.",
     factors: ["Exam periods", "Tuition deadlines", "International arrivals"],
     signalKeys: ["is_exam_period", "is_tuition_deadline", "is_intl_arrival_period"],
@@ -127,6 +131,68 @@ const FOOD_BANKS = [
   },
 ];
 
+
+function DriverCard({ d }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        position: "relative",
+        background: d.bg, border: `1px solid ${hovered ? d.color : d.border}`,
+        borderRadius: 14, padding: "18px 18px",
+        display: "flex", alignItems: "center", gap: 12,
+        cursor: "default",
+        transition: "border-color 0.15s",
+      }}
+    >
+      <div style={{
+        width: 44, height: 44, borderRadius: 11, flexShrink: 0,
+        background: `linear-gradient(135deg, ${d.color}22 0%, ${d.color}45 100%)`,
+        border: `1.5px solid ${d.color}55`,
+        display: "flex", alignItems: "center", justifyContent: "center",
+      }}>
+        <i className={`ti ti-${d.icon}`} style={{ fontSize: 22, color: d.color }} aria-hidden="true" />
+      </div>
+      <div>
+        <div style={{ fontSize: 15, fontWeight: 700, color: d.color, lineHeight: 1.3 }}>
+          {d.title}
+        </div>
+        <div style={{ fontSize: 13, fontWeight: 600, color: d.color, opacity: 0.7, marginTop: 2, lineHeight: 1.3 }}>
+          {d.sub}
+        </div>
+      </div>
+      {hovered && (
+        <div style={{
+          position: "absolute", top: "calc(100% + 8px)", left: 0,
+          width: "100%", zIndex: 10,
+          background: d.bg, border: `1px solid ${d.border}`,
+          borderRadius: 10, padding: "12px 14px",
+          boxShadow: `0 4px 16px ${d.color}28`,
+          pointerEvents: "none",
+        }}>
+          <div style={{ position: "absolute", bottom: "100%", left: 22,
+            borderLeft: "6px solid transparent", borderRight: "6px solid transparent",
+            borderBottom: `6px solid ${d.border}`,
+          }} />
+          <div style={{ fontSize: 13, color: "#4a5568", lineHeight: 1.6, marginBottom: 8 }}>
+            {d.desc}
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+            {d.factors.map(f => (
+              <div key={f} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <div style={{ width: 4, height: 4, borderRadius: "50%", background: d.color, opacity: 0.6, flexShrink: 0 }} />
+                <span style={{ fontSize: 13, color: "#4a5568" }}>{f}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Dashboard({ onNavigate }) {
   const [kpis,        setKpis]        = useState(null);
   const [gapForecast, setGapForecast] = useState([]);
@@ -144,20 +210,15 @@ export default function Dashboard({ onNavigate }) {
     Promise.all([
       fetch(`${API_BASE}/api/dashboard`).then(r => r.json()),
       fetch(`${API_BASE}/api/gap`).then(r => r.json()),
+      fetch(`${API_BASE}/api/signals`).then(r => r.json()),
     ])
-      .then(([dash, gap]) => {
+      .then(([dash, gap, sig]) => {
         setKpis(dash.kpis ?? null);
         setGapForecast(gap.forecastGap ?? []);
+        setSignals(sig.signals ?? sig);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
-
-  useEffect(() => {
-    fetch(`${API_BASE}/api/signals`)
-      .then(r => r.json())
-      .then(d => setSignals(d.signals ?? d))
-      .catch(() => {});
   }, []);
 
   const pctOut   = kpis?.pctChange?.outbound ?? 0;
@@ -174,7 +235,7 @@ export default function Dashboard({ onNavigate }) {
       color: "#c39728",
       bg: "#f7f5ec",
       border: "#d8caa8",
-      btnLabel: "Provincial Access",
+      btnLabel: "Access",
       locked: true,
     },
     {
@@ -185,7 +246,7 @@ export default function Dashboard({ onNavigate }) {
       color: "#3a5ea8",
       bg: "#eef3fb",
       border: "#c8d8f0",
-      btnLabel: "Regional Access",
+      btnLabel: "Access",
       locked: true,
     },
     {
@@ -202,7 +263,7 @@ export default function Dashboard({ onNavigate }) {
 
   return (
     <div style={{
-      height: "100%", overflowY: "auto", background: C.pageBg,
+      height: "100%", overflowY: "auto", overflowX: "hidden", background: C.pageBg,
       fontFamily: "'DM Sans', system-ui, sans-serif",
     }}>
 
@@ -279,13 +340,13 @@ export default function Dashboard({ onNavigate }) {
               background: "rgba(208,239,177,0.15)",
               border: "1px solid rgba(208,239,177,0.25)",
               borderRadius: 20,
-              padding: "5px 15px", fontSize: 13, fontWeight: 600,
+              padding: "5px 15px", fontSize: 14, fontWeight: 600,
               color: C.teaGreen, marginBottom: 22, letterSpacing: "0.07em",
               textTransform: "uppercase",
               animation: "heroSlideUp 0.5s ease both",
               animationDelay: "0.05s",
             }}>
-              <i className="ti ti-welcome" style={{ fontSize: 13 }} aria-hidden="true" />
+              <i className="ti ti-welcome" style={{ fontSize: 14 }} aria-hidden="true" />
               Welcome!
             </div>
 
@@ -307,25 +368,23 @@ export default function Dashboard({ onNavigate }) {
 
             {/* Sub-line */}
             <p style={{
-              fontSize: 16, color: "rgba(208,239,177,0.75)",
+              fontSize: 18, fontWeight: 600, color: "rgba(208,239,177,0.85)",
               margin: 0, lineHeight: 1.6, maxWidth: 520,
               animation: "heroSlideUp 0.55s ease both",
               animationDelay: "1.2s",
-            }}>
-              AI supply &amp; demand forecasting tool to help Alberta food banks plan ahead, and serve more families.
-            </p>
+            }}> Behind every visit to the food bank is a family in need. FEEDS helps food banks see them coming, so no one arrives to empty shelves.</p>
           </div>
         </div>
       </div>
 
-      <div style={{ padding: isMobile ? "24px 16px 40px" : "36px 40px 52px", display: "flex", flexDirection: "column", gap: isMobile ? 28 : 40 }}>
+      <div style={{ padding: isMobile ? "24px 16px 40px" : "36px 40px 52px", display: "flex", flexDirection: "column", gap: isMobile ? 44 : 64 }}>
 
         {/* ── WHO ARE YOU ──────────────────────────────────────────────── */}
         <section>
-          <h2 style={{ fontSize: 25, fontWeight: 700, color: C.forestGreen, margin: "0 0 6px" }}>
+          <h2 style={{ fontSize: 27, fontWeight: 700, color: C.forestGreen, margin: "0 0 6px" }}>
             Who are you?
           </h2>
-          <p style={{ fontSize: 14, color: C.textMuted, margin: "0 0 20px" }}>
+          <p style={{ fontSize: 15, color: C.textMuted, margin: "0 0 20px" }}>
             Choose the section that best matches you.
           </p>
 
@@ -344,13 +403,13 @@ export default function Dashboard({ onNavigate }) {
                     border: `1.5px solid ${w.color}55`,
                     display: "flex", alignItems: "center", justifyContent: "center",
                   }}>
-                    <i className={`ti ti-${w.icon}`} style={{ fontSize: 26, color: w.color }} aria-hidden="true" />
+                    <i className={`ti ti-${w.icon}`} style={{ fontSize: 28, color: w.color }} aria-hidden="true" />
                   </div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: w.color, lineHeight: 1.25 }}>
+                  <div style={{ fontSize: 19, fontWeight: 700, color: w.color, lineHeight: 1.25 }}>
                     {w.title}
                   </div>
                 </div>
-                <div style={{ fontSize: 14, color: C.textSecondary, lineHeight: 1.65 }}>
+                <div style={{ fontSize: 15, color: C.textSecondary, lineHeight: 1.65 }}>
                   {w.desc}
                 </div>
                 <button
@@ -361,12 +420,12 @@ export default function Dashboard({ onNavigate }) {
                     padding: "9px 0", borderRadius: 8, 
                     background: w.color, color: "#fff",
                     border: "none", cursor: "pointer",
-                    fontSize: 14, fontWeight: 600, fontFamily: "inherit",
+                    fontSize: 15, fontWeight: 600, fontFamily: "inherit",
                   }}
                   onMouseEnter={e => e.currentTarget.style.opacity = "0.88"}
                   onMouseLeave={e => e.currentTarget.style.opacity = "1"}
                 >
-                  {w.locked && <i className="ti ti-lock" style={{ fontSize: 13 }} aria-hidden="true" />}
+                  {w.locked && <i className="ti ti-lock" style={{ fontSize: 14 }} aria-hidden="true" />}
                   {w.btnLabel}
                 </button>
               </div>
@@ -376,75 +435,40 @@ export default function Dashboard({ onNavigate }) {
 
         {/* ── WHAT DRIVES DEMAND ───────────────────────────────────────── */}
         <section>
-          <h2 style={{ fontSize: 25, fontWeight: 700, color: C.forestGreen, margin: "0 0 6px" }}>
+          <h2 style={{ fontSize: 27, fontWeight: 700, color: C.forestGreen, margin: "0 0 6px" }}>
             What drives food bank demand?
           </h2>
-          <p style={{ fontSize: 14, color: C.textMuted, margin: "0 0 20px", maxWidth: 900, lineHeight: 1.65 }}>
-            FEEDS analyses four categories of external factors that drive demand up or down to give food banks early and more accurate warnings.
+          <p style={{ fontSize: 15, color: C.textMuted, margin: "0 0 20px", maxWidth: 900, lineHeight: 1.65 }}>
+            Demand shifts fast, and planning is often reactive. FEEDS watches these signals so food banks can see it coming.
           </p>
 
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(4, 1fr)", gap: 14, marginBottom: 20 }}>
-            {DRIVERS.map(d => (
-              <div key={d.title} style={{
-                background: d.bg, border: `1px solid ${d.border}`,
-                borderRadius: 14, padding: "22px 18px",
-                display: "flex", flexDirection: "column", gap: 12,
-              }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <div style={{
-                    width: 52, height: 52, borderRadius: 13, flexShrink: 0,
-                    background: `linear-gradient(135deg, ${d.color}22 0%, ${d.color}45 100%)`,
-                    border: `1.5px solid ${d.color}55`,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                  }}>
-                    <i className={`ti ti-${d.icon}`} style={{ fontSize: 24, color: d.color }} aria-hidden="true" />
-                  </div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: d.color, lineHeight: 1.3 }}>
-                    {d.title}
-                  </div>
-                </div>
-                <div>
-                  <div style={{ fontSize: 13, color: C.textSecondary, lineHeight: 1.6, marginBottom: 10 }}>
-                    {d.desc}
-                  </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                    {d.factors.map(f => (
-                      <div key={f} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        <div style={{ width: 5, height: 5, borderRadius: "50%", background: d.color, opacity: 0.6, flexShrink: 0 }} />
-                        <span style={{ fontSize: 13, color: C.textSecondary }}>{f}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ))}
+            {DRIVERS.map(d => <DriverCard key={d.title} d={d} />)}
           </div>
         </section>
 
         {/* ── FOOD BANKS WE COVER ──────────────────────────────────────── */}
         <section>
-          <h2 style={{ fontSize: 25, fontWeight: 700, color: C.forestGreen, margin: "0 0 6px" }}>
+          <h2 style={{ fontSize: 27, fontWeight: 700, color: C.forestGreen, margin: "0 0 6px" }}>
             Food banks in this study
           </h2>
-          <p style={{ fontSize: 14, color: C.textMuted, margin: "0 0 20px" }}>
-            FEEDS used data from 2 Alberta food banks across provincial and regional levels and 2 research partners to build forecasting tools grounded in real-world needs. 
+          <p style={{ fontSize: 15, color: C.textMuted, margin: "0 0 20px" }}>
+            We visited these food banks expecting a supply problem. What we found was uncertainty. Their insights shaped how FEEDS works.
           </p>
 
-          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(4, 1fr)", gap: 14 }}>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(4, 1fr)", gap: 14 }}>
             {FOOD_BANKS.map(fb => (
               <div key={fb.key} style={{
+                minWidth: 0,
                 background: fb.bg,
                 border: `1px solid ${fb.border}`,
                 borderRadius: 12, padding: "20px 18px",
                 display: "flex", flexDirection: "column", gap: 12,
               }}>
-                {/* Logo + Name row */}
                 <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
                   <div style={{
-                    width: isMobile ? 60 : 76, height: isMobile ? 60 : 76,
-                    borderRadius: "50%", flexShrink: 0,
-                    background: "#fff",
-                    border: `1.5px solid ${fb.border}`,
+                    width: 76, height: 76, borderRadius: "50%", flexShrink: 0,
+                    background: "#fff", border: `1.5px solid ${fb.border}`,
                     display: "flex", alignItems: "center", justifyContent: "center",
                     overflow: "hidden", padding: "7px", boxSizing: "border-box",
                   }}>
@@ -455,27 +479,20 @@ export default function Dashboard({ onNavigate }) {
                         e.currentTarget.style.display = "none";
                         e.currentTarget.nextSibling.style.display = "flex";
                       }}
-                      style={{
-                        maxWidth: "100%", maxHeight: "100%",
-                        objectFit: "contain",
-                        display: "block",
-                      }}
+                      style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", display: "block" }}
                     />
                     <div style={{ display: "none", alignItems: "center", justifyContent: "center", width: "100%", height: "100%" }}>
-                      <i className={`ti ti-${fb.icon}`} style={{ fontSize: 28, color: fb.color }} aria-hidden="true" />
+                      <i className={`ti ti-${fb.icon}`} style={{ fontSize: 30, color: fb.color }} aria-hidden="true" />
                     </div>
                   </div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: fb.color, lineHeight: 1.3 }}>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: fb.color, lineHeight: 1.3 }}>
                     {fb.name}
                   </div>
                 </div>
-                <div style={{ fontSize: 13, color: C.textSecondary, lineHeight: 1.6 }}>
+                <div style={{ fontSize: 14, color: C.textSecondary, lineHeight: 1.6 }}>
                   {fb.role}
                 </div>
-                <div style={{
-                  fontSize: 12, color: C.textMuted,
-                  borderTop: `1px solid ${fb.border}`, paddingTop: 8,
-                }}>
+                <div style={{ fontSize: 13, color: C.textMuted, borderTop: `1px solid ${fb.border}`, paddingTop: 8 }}>
                   {fb.data}
                 </div>
               </div>
@@ -493,10 +510,10 @@ export default function Dashboard({ onNavigate }) {
           justifyContent: "space-between", gap: isMobile ? 16 : 24,
         }}>
           <div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: "#fff", marginBottom: 6 }}>
+            <div style={{ fontSize: 22, fontWeight: 700, color: "#fff", marginBottom: 6 }}>
               How does FEEDS work?
             </div>
-            <div style={{ fontSize: 14, color: "rgba(255,255,255,0.72)", maxWidth: 480, lineHeight: 1.7 }}>
+            <div style={{ fontSize: 15, color: "rgba(255,255,255,0.72)", maxWidth: 480, lineHeight: 1.7 }}>
               Learn about our problem statement, the models we built, and what we found.
             </div>
           </div>
@@ -508,7 +525,7 @@ export default function Dashboard({ onNavigate }) {
               padding: "10px 22px",
               background: C.teaGreen, color: C.forestGreen,
               border: "none", borderRadius: 8, cursor: "pointer",
-              fontSize: 13, fontWeight: 700, fontFamily: "inherit",
+              fontSize: 14, fontWeight: 700, fontFamily: "inherit",
               whiteSpace: "nowrap",
             }}
             onMouseEnter={e => e.currentTarget.style.opacity = "0.88"}
@@ -519,6 +536,70 @@ export default function Dashboard({ onNavigate }) {
         </section>
 
       </div>
+      <footer style={{
+        background: `linear-gradient(135deg, ${C.forestGreen} 40%, #2d6a50 75%, #3f826d 100%)`,
+        padding: isMobile ? "28px 20px 32px" : "36px 44px 40px",
+        display: "flex",
+        flexDirection: isMobile ? "column" : "row",
+        alignItems: isMobile ? "flex-start" : "center",
+        gap: isMobile ? 28 : 0,
+        borderTop: `1px solid rgba(208,239,177,0.15)`,
+      }}>
+
+        {/* Left — Contact */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "flex-start", marginLeft: isMobile ? 0 : 40 }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: C.teaGreen, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 12 }}>
+            Contact us
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <a
+              href="mailto:feeds4good@gmail.com"
+              style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 15, color: "rgba(255,255,255,0.75)", textDecoration: "none" }}
+            >
+              <i className="ti ti-mail" style={{ fontSize: 17, color: C.teaGreen, flexShrink: 0 }} aria-hidden="true" />
+              feeds4good@gmail.com
+            </a>
+            <a
+              href="https://www.instagram.com/feeds4good/"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, color: "rgba(255,255,255,0.75)", textDecoration: "none" }}
+            >
+              <i className="ti ti-brand-instagram" style={{ fontSize: 16, color: C.teaGreen, flexShrink: 0 }} aria-hidden="true" />
+              @feeds4good
+            </a>
+          </div>
+        </div>
+
+        {/* Center — Logo */}
+        <div style={{
+          flex: 1, display: "flex", justifyContent: "center", alignItems: "center",
+          order: isMobile ? -1 : 0,
+          marginBottom: isMobile ? 4 : 0,
+        }}>
+          <img
+            src="/logo-removebg.png"
+            alt="FEEDS logo"
+            style={{ height: isMobile ? 70 : 90, objectFit: "contain", filter: "brightness(0) invert(1)", opacity: 0.9 }}
+          />
+        </div>
+
+        {/* Right — Collaboration */}
+        <div style={{ flex: 1, display: "flex", justifyContent: "flex-start" }}>
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 10, maxWidth: 400 }}>
+            <i className="ti ti-heart-handshake" style={{ fontSize: 18, color: C.teaGreen, flexShrink: 0, marginTop: 2 }} aria-hidden="true" />
+            <div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: "#fff", marginBottom: 5 }}>
+                Built in collaboration with food banks
+              </div>
+              <div style={{ fontSize: 14, color: "rgba(255,255,255,0.6)", lineHeight: 1.65 }}>
+                Developed in partnership with Food Banks Alberta and Red Deer Food Bank to improve food security outcomes across Alberta.
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </footer>
     </div>
   );
 }

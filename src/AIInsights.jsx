@@ -368,7 +368,7 @@ export default function AIInsights() {
             <i className="ti ti-send" style={{ fontSize: 18 }} aria-hidden="true" />
           </button>
         </div>
-        <div style={{ fontSize: 12, color: "#cef9e4", marginTop: 8 }}>
+        <div style={{ fontSize: 14, color: "#cef9e4", marginTop: 8 }}>
           AI insights powered by OpenAI GPT-4 model · Monthly forecasts only · Cannot provide raw operational figures
         </div>
       </div>
@@ -379,6 +379,7 @@ export default function AIInsights() {
           40%            { opacity: 1;   transform: scale(1);   }
         }
       `}</style>
+      
     </div>
   );
 }

@@ -51,8 +51,8 @@ const CAT_LABEL = {
 function SectionTitle({ title, sub }) {
   return (
     <div style={{ marginBottom: 14 }}>
-      <div style={{ fontSize: 18, fontWeight: 600, color: C.textPrimary }}>{title}</div>
-      {sub && <div style={{ fontSize: 13, color: C.textMuted, marginTop: 2 }}>{sub}</div>}
+      <div style={{ fontSize: 19, fontWeight: 600, color: C.textPrimary }}>{title}</div>
+      {sub && <div style={{ fontSize: 14, color: C.textMuted, marginTop: 2 }}>{sub}</div>}
     </div>
   );
 }
@@ -72,7 +72,7 @@ function Badge({ children, bg, color }) {
   return (
     <span style={{
       display: "inline-block", padding: "2px 8px", borderRadius: 20,
-      fontSize: 11, fontWeight: 500, background: bg, color,
+      fontSize: 12, fontWeight: 500, background: bg, color,
     }}>
       {children}
     </span>
@@ -92,16 +92,16 @@ function MetricCard({ label, value, sub, tooltip }) {
         cursor: "default", transition: "background 0.15s, border-color 0.15s",
       }}
     >
-      <div style={{ fontSize: 13, color: C.textSecondary, marginBottom: 4 }}>{label}</div>
-      <div style={{ fontSize: 25, fontWeight: 700, color: C.textPrimary }}>{value}</div>
-      <div style={{ fontSize: 12, color: C.textMuted, marginTop: 2 }}>{sub}</div>
+      <div style={{ fontSize: 14, color: C.textSecondary, marginBottom: 4 }}>{label}</div>
+      <div style={{ fontSize: 27, fontWeight: 700, color: C.textPrimary }}>{value}</div>
+      <div style={{ fontSize: 13, color: C.textMuted, marginTop: 2 }}>{sub}</div>
       {hovered && tooltip && (
         <div style={{
           position: "absolute", bottom: "calc(100% + 8px)", left: 0,
           width: 220, zIndex: 10,
           background: C.forestGreen, color: "#e8f5e2",
           borderRadius: 8, padding: "9px 12px",
-          fontSize: 12, lineHeight: 1.55,
+          fontSize: 13, lineHeight: 1.55,
           boxShadow: "0 4px 16px rgba(0,0,0,0.18)",
           pointerEvents: "none",
         }}>
@@ -122,7 +122,7 @@ const ChartTooltip = ({ active, payload, label }) => {
   return (
     <div style={{
       background: C.forestGreen, border: `1px solid ${C.jungleTeal}`,
-      borderRadius: 8, padding: "8px 13px", fontSize: 12, color: "#fff",
+      borderRadius: 8, padding: "8px 13px", fontSize: 13, color: "#fff",
     }}>
       <div style={{ fontWeight: 600, color: C.teaGreen, marginBottom: 4 }}>{label}</div>
       {payload.map((p) => p.value != null && (
@@ -163,7 +163,7 @@ function DataInputForm({ isMobile }) {
   }
 
   const inputStyle = {
-    width: "100%", padding: "8px 11px", fontSize: 14,
+    width: "100%", padding: "8px 11px", fontSize: 15,
     border: `1px solid ${C.borderLight}`, borderRadius: 8,
     background: C.surfaceGreen, color: C.textPrimary, outline: "none",
     fontFamily: "inherit",
@@ -178,7 +178,7 @@ function DataInputForm({ isMobile }) {
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(3, minmax(0,1fr))", gap: 12, marginBottom: 12 }}>
         {fields.map((f) => (
           <div key={f.key}>
-            <div style={{ fontSize: 12, color: C.textSecondary, marginBottom: 4, fontWeight: 500 }}>
+            <div style={{ fontSize: 13, color: C.textSecondary, marginBottom: 4, fontWeight: 500 }}>
               {f.label}
             </div>
             <input
@@ -192,7 +192,7 @@ function DataInputForm({ isMobile }) {
         ))}
       </div>
       <div style={{ marginBottom: 14 }}>
-        <div style={{ fontSize: 12, color: C.textSecondary, marginBottom: 4, fontWeight: 500 }}>Notes (optional)</div>
+        <div style={{ fontSize: 13, color: C.textSecondary, marginBottom: 4, fontWeight: 500 }}>Notes (optional)</div>
         <textarea
           value={form.notes}
           onChange={e => setForm(prev => ({ ...prev, notes: e.target.value }))}
@@ -205,7 +205,7 @@ function DataInputForm({ isMobile }) {
         <button
           onClick={handleSubmit}
           style={{
-            padding: "9px 20px", fontSize: 14, fontWeight: 600,
+            padding: "9px 20px", fontSize: 15, fontWeight: 600,
             background: C.forestGreen, color: C.teaGreen,
             border: "none", borderRadius: 8, cursor: "pointer",
           }}
@@ -214,12 +214,12 @@ function DataInputForm({ isMobile }) {
           Submit row
         </button>
         {submitted && (
-          <span style={{ fontSize: 13, color: C.jungleTeal, display: "flex", alignItems: "center", gap: 5 }}>
+          <span style={{ fontSize: 14, color: C.jungleTeal, display: "flex", alignItems: "center", gap: 5 }}>
             <i className="ti ti-circle-check" aria-hidden="true" />
             Row queued successfully
           </span>
         )}
-        <span style={{ fontSize: 12, color: C.textMuted, marginLeft: "auto" }}>
+        <span style={{ fontSize: 13, color: C.textMuted, marginLeft: "auto" }}>
           Full CSV upload coming soon
         </span>
       </div>
@@ -238,7 +238,9 @@ export default function Provincial() {
   const [confidence,      setConfidence]      = useState(null);
   const [gapForecast,     setGapForecast]     = useState([]);
   const [regionalOutlook, setRegionalOutlook] = useState({ rdfb: null, campus: null });
-  const [loading,         setLoading]         = useState(true);
+
+  const [loadingStats,    setLoadingStats]    = useState(true);
+  const [loadingHistory,  setLoadingHistory]  = useState(true);
   const [isMobile,        setIsMobile]        = useState(() => window.innerWidth < 768);
 
   useEffect(() => {
@@ -246,6 +248,7 @@ export default function Provincial() {
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
   }, []);
+
 
   // Fetch regional forecasts for the outlook cards (independent of main load)
   useEffect(() => {
@@ -257,22 +260,73 @@ export default function Provincial() {
   }, []);
 
   useEffect(() => {
-    Promise.all([
-      fetch(`${API_BASE}/api/provincial/history`).then(r => r.json()),
+    const CACHE_KEY = "feeds_prov_v2";
+    const CACHE_TTL = 60 * 60 * 1000; // 1 hour
+
+    // Serve cache instantly if still fresh
+    let fromCache = false;
+    try {
+      const raw = localStorage.getItem(CACHE_KEY);
+      if (raw) {
+        const { ts, data } = JSON.parse(raw);
+        if (Date.now() - ts < CACHE_TTL && data) {
+          setHistoryData(data.hist    ?? []);
+          setFeatureData(data.feats   ?? []);
+          setModelStats (data.metrics ?? []);
+          setConfidence (data.summary ?? null);
+          setGapForecast(data.gap     ?? []);
+          setLoadingStats(false);
+          setLoadingHistory(false);
+          fromCache = true;
+        }
+      }
+    } catch (_) {}
+
+    // Always re-fetch — updates cache silently if cache was used, shows spinner if not
+    const histP = fetch(`${API_BASE}/api/provincial/history`)
+      .then(r => r.json()).catch(() => null);
+    const statsP = Promise.all([
       fetch(`${API_BASE}/api/provincial/features`).then(r => r.json()),
       fetch(`${API_BASE}/api/provincial/metrics`).then(r => r.json()),
       fetch(`${API_BASE}/api/model_summary`).then(r => r.json()),
       fetch(`${API_BASE}/api/gap`).then(r => r.json()),
-    ])
-      .then(([hist, feats, metrics, summary, gap]) => {
-        setHistoryData(hist.historyData ?? []);
+    ]).catch(() => null);
+
+    statsP
+      .then(res => {
+        if (!res) return;
+        const [feats, metrics, summary, gap] = res;
         setFeatureData(feats.featureData ?? []);
         setModelStats(metrics.modelStats ?? []);
         setConfidence(summary);
         setGapForecast(gap.forecastGap ?? []);
       })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+      .finally(() => { if (!fromCache) setLoadingStats(false); });
+
+    histP
+      .then(hist => {
+        if (!hist) return;
+        setHistoryData(hist.historyData ?? []);
+      })
+      .finally(() => { if (!fromCache) setLoadingHistory(false); });
+
+    // Write cache once both finish
+    Promise.all([statsP, histP]).then(([statsRes, hist]) => {
+      if (!statsRes || !hist) return;
+      const [feats, metrics, summary, gap] = statsRes;
+      try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify({
+          ts: Date.now(),
+          data: {
+            hist:    hist.historyData    ?? [],
+            feats:   feats.featureData   ?? [],
+            metrics: metrics.modelStats  ?? [],
+            summary: summary             ?? null,
+            gap:     gap.forecastGap     ?? [],
+          },
+        }));
+      } catch (_) {}
+    });
   }, []);
 
   const tabs = [
@@ -295,16 +349,16 @@ export default function Provincial() {
     <div style={{ display: "flex", flexDirection: "column", height: "100%", background: C.pageBg, overflow: "hidden" }}>
 
       {/* On mobile: header + content scroll together. On desktop: display:contents is transparent. */}
-      <div style={isMobile ? { flex: 1, overflowY: "auto" } : { display: "contents" }}>
+      <div style={isMobile ? { flex: 1, overflowY: "auto", overflowX: "hidden" } : { display: "contents" }}>
 
       {/* Header */}
       <header style={{ padding: isMobile ? "16px 14px 0" : "32px 28px 0", background: C.pageBg, flexShrink: 0 }}>
         <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", alignItems: isMobile ? "flex-start" : "flex-end", justifyContent: "space-between", gap: isMobile ? 10 : 0, marginBottom: 16 }}>
           <div>
-            <div style={{ fontSize: 25, fontWeight: 700, color: C.forestGreen, marginBottom: 4 }}>
+            <div style={{ fontSize: 27, fontWeight: 700, color: C.forestGreen, marginBottom: 4 }}>
               Provincial model
             </div>
-            <div style={{ fontSize: 13, color: C.textMuted }}>
+            <div style={{ fontSize: 14, color: C.textMuted }}>
               Predicts provincial inbound donations and outbound to regional FBs
             </div>
           </div>
@@ -317,13 +371,17 @@ export default function Provincial() {
               key={t.key}
               onClick={() => setActiveTab(t.key)}
               style={{
-                padding: "8px 18px", fontSize: 14, cursor: "pointer",
+                padding: isMobile ? "8px 10px" : "8px 18px",
+                fontSize: isMobile ? 13 : 15,
+                cursor: "pointer",
                 border: "none", background: "none",
                 color: activeTab === t.key ? C.forestGreen : C.textMuted,
                 fontWeight: activeTab === t.key ? 600 : 400,
                 borderBottom: activeTab === t.key ? `2px solid ${C.jungleTeal}` : "2px solid transparent",
                 marginBottom: -1,
                 fontFamily: "inherit",
+                flexShrink: 0,
+                whiteSpace: "nowrap",
               }}
             >
               {t.label}
@@ -333,10 +391,10 @@ export default function Provincial() {
       </header>
 
       {/* Content */}
-      <div style={{ flex: isMobile ? undefined : 1, overflowY: isMobile ? undefined : "auto", padding: isMobile ? "16px 14px 24px" : "24px 28px 32px" }}>
+      <div style={{ flex: isMobile ? undefined : 1, overflowY: isMobile ? undefined : "auto", overflowX: "hidden", padding: isMobile ? "16px 14px 24px" : "24px 28px 32px" }}>
 
-        {loading ? (
-          <div style={{ textAlign: "center", padding: "60px 0", color: C.textMuted, fontSize: 13 }}>
+        {loadingStats ? (
+          <div style={{ textAlign: "center", padding: "60px 0", color: C.textMuted, fontSize: 14 }}>
             Loading model data…
           </div>
         ) : (
@@ -395,8 +453,8 @@ export default function Provincial() {
                           background: C.surfaceWhite, border: `0.5px solid ${C.borderLight}`,
                           borderTop: `3px solid ${s.accent}`, borderRadius: 12, padding: "14px 16px",
                         }}>
-                          <div style={{ fontSize: 12, color: C.textMuted, marginBottom: 6 }}>{s.label}</div>
-                          <div style={{ fontSize: 19, fontWeight: 600, color: C.textPrimary, marginBottom: 6 }}>{s.value}</div>
+                          <div style={{ fontSize: 13, color: C.textMuted, marginBottom: 6 }}>{s.label}</div>
+                          <div style={{ fontSize: 20, fontWeight: 600, color: C.textPrimary, marginBottom: 6 }}>{s.value}</div>
                           <Badge bg={s.badgeBg} color={s.badgeColor}>{s.sub}</Badge>
                         </div>
                       ))}
@@ -427,45 +485,55 @@ export default function Provincial() {
                     <Panel>
                       <SectionTitle
                         title="Supply gap (observed + 3 month forecast)"
+                        sub="Prophet model · last 6 months observed & predicted · next 3 months forecast"
                       />
-                      <ResponsiveContainer width="100%" height={280}>
-                        <ComposedChart data={gapChartData} margin={{ top: 4, right: 16, bottom: 20, left: 10 }}>
-                          <CartesianGrid strokeDasharray="3 3" stroke={C.teaGreen} />
-                          <XAxis
-                            dataKey="date"
-                            tick={{ fontSize: 12, fill: C.textMuted }}
-                            axisLine={false} tickLine={false}
-                            interval={0}
-                            angle={-30} textAnchor="end"
-                          />
-                          <YAxis
-                            domain={["auto", "auto"]}
-                            tickFormatter={v => v === 0 ? "0" : `${v > 0 ? "+" : ""}${(v / 1000).toFixed(0)}K`}
-                            tick={{ fontSize: 12, fill: C.textMuted }}
-                            axisLine={false} tickLine={false} width={46}
-                          />
-                          <Tooltip content={<ChartTooltip />} />
-                          <ReferenceLine y={0} stroke="#a0b8a0" strokeWidth={1.5} />
-                          <Line type="monotone" dataKey="actualGap" name="Observed gap"   stroke={C.jungleTeal} strokeWidth={1.5} dot={{ r: 2.5, fill: C.jungleTeal }} connectNulls={false} />
-                          <Line type="monotone" dataKey="modelLine" name="Forecast line"    stroke={C.dustyDenim} strokeWidth={1.5} dot={{ r: 2.5, fill: C.dustyDenim }} strokeDasharray="5 3" connectNulls />
-                        </ComposedChart>
-                      </ResponsiveContainer>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 16, marginTop: 10 }}>
-                        {[
-                          { color: C.jungleTeal, label: "Observed gap", dash: false },
-                          { color: C.dustyDenim, label: "Forecast line",  dash: true  },
-                        ].map(({ color, label, dash }) => (
-                          <span key={label} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: C.textMuted }}>
-                            <svg width="18" height="10">
-                              <line x1="0" y1="5" x2="18" y2="5" stroke={color} strokeWidth="2.5" strokeDasharray={dash ? "5 3" : undefined} />
-                            </svg>
-                            {label}
-                          </span>
-                        ))}
-                      </div>
-                      <p style={{ fontSize: 12, color: C.textMuted, fontStyle: "italic", marginTop: 10, lineHeight: 1.5 }}>
-                        Negative values mark months where the model forecasts a provincial supply shortfall which means more food distributed than donated.
-                      </p>
+                      {loadingHistory ? (
+                        <div style={{ textAlign: "center", padding: "40px 0", color: C.textMuted, fontSize: 14 }}>
+                          Loading chart…
+                        </div>
+                      ) : (
+                        <>
+                          <ResponsiveContainer width="100%" height={280} style={{ outline: "none" }}>
+                            <ComposedChart data={gapChartData} margin={{ top: 4, right: 16, bottom: isMobile ? 40 : 20, left: 10 }}>
+                              <CartesianGrid strokeDasharray="3 3" stroke={C.teaGreen} />
+                              <XAxis
+                                dataKey="date"
+                                tick={{ fontSize: isMobile ? 10 : 13, fill: C.textMuted }}
+                                axisLine={false} tickLine={false}
+                                interval={isMobile ? 1 : 0}
+                                angle={-30} textAnchor="end"
+                                tickFormatter={isMobile ? (v) => { const [m, y] = v.split(" "); return y ? `${m} '${y.slice(2)}` : v; } : undefined}
+                              />
+                              <YAxis
+                                domain={["auto", "auto"]}
+                                tickFormatter={v => v === 0 ? "0" : `${v > 0 ? "+" : ""}${(v / 1000).toFixed(0)}K`}
+                                tick={{ fontSize: 13, fill: C.textMuted }}
+                                axisLine={false} tickLine={false} width={46}
+                              />
+                              <Tooltip content={<ChartTooltip />} />
+                              <ReferenceLine y={0} stroke="#a0b8a0" strokeWidth={1.5} />
+                              <Line type="monotone" dataKey="actualGap" name="Observed gap"   stroke={C.jungleTeal} strokeWidth={1.5} dot={{ r: 2.5, fill: C.jungleTeal }} connectNulls={false} />
+                              <Line type="monotone" dataKey="modelLine" name="Forecast line"    stroke={C.dustyDenim} strokeWidth={1.5} dot={{ r: 2.5, fill: C.dustyDenim }} strokeDasharray="5 3" connectNulls />
+                            </ComposedChart>
+                          </ResponsiveContainer>
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: 16, marginTop: 10 }}>
+                            {[
+                              { color: C.jungleTeal, label: "Observed gap", dash: false },
+                              { color: C.dustyDenim, label: "Forecast line",  dash: true  },
+                            ].map(({ color, label, dash }) => (
+                              <span key={label} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: C.textMuted }}>
+                                <svg width="18" height="10">
+                                  <line x1="0" y1="5" x2="18" y2="5" stroke={color} strokeWidth="2.5" strokeDasharray={dash ? "5 3" : undefined} />
+                                </svg>
+                                {label}
+                              </span>
+                            ))}
+                          </div>
+                          <p style={{ fontSize: 13, color: C.textMuted, fontStyle: "italic", marginTop: 10, lineHeight: 1.5 }}>
+                            Negative values mark months where the model forecasts a provincial supply shortfall which means more food distributed than donated.
+                          </p>
+                        </>
+                      )}
                     </Panel>
                   );
                 })()}
@@ -496,32 +564,32 @@ export default function Provincial() {
                             background: C.surfaceGreen,
                           }}>
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-                              <span style={{ fontSize: 14, fontWeight: 600, color: C.textPrimary }}>{row.month}</span>
+                              <span style={{ fontSize: 15, fontWeight: 600, color: C.textPrimary }}>{row.month}</span>
                               <span style={{
-                                fontSize: 11, fontWeight: 500, padding: "2px 8px", borderRadius: 20,
+                                fontSize: 12, fontWeight: 500, padding: "2px 8px", borderRadius: 20,
                                 background: badgeBg, color: badgeColor,
                               }}>{alertLabel}</span>
                             </div>
                             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
                               <div>
-                                <div style={{ fontSize: 12, color: C.textMuted, marginBottom: 3 }}>Donations in</div>
-                                <div style={{ fontSize: 15, fontWeight: 700, color: C.jungleTeal }}>
+                                <div style={{ fontSize: 13, color: C.textMuted, marginBottom: 3 }}>Donations in</div>
+                                <div style={{ fontSize: 16, fontWeight: 700, color: C.jungleTeal }}>
                                   {(row.LBS_In_forecast / 1000).toFixed(0)}K
-                                  <span style={{ fontSize: 12, fontWeight: 400, color: C.textMuted }}> lbs</span>
+                                  <span style={{ fontSize: 13, fontWeight: 400, color: C.textMuted }}> lbs</span>
                                 </div>
                               </div>
                               <div>
-                                <div style={{ fontSize: 12, color: C.textMuted, marginBottom: 3 }}>Demand out</div>
-                                <div style={{ fontSize: 15, fontWeight: 700, color: "#c0622a" }}>
+                                <div style={{ fontSize: 13, color: C.textMuted, marginBottom: 3 }}>Demand out</div>
+                                <div style={{ fontSize: 16, fontWeight: 700, color: "#c0622a" }}>
                                   {(row.LBS_Out_forecast / 1000).toFixed(0)}K
-                                  <span style={{ fontSize: 12, fontWeight: 400, color: C.textMuted }}> lbs</span>
+                                  <span style={{ fontSize: 13, fontWeight: 400, color: C.textMuted }}> lbs</span>
                                 </div>
                               </div>
                             </div>
-                            <div style={{ fontSize: 12, fontWeight: 600, color: isGap ? "#8b2e1a" : "#1a8b20" }}>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: isGap ? "#8b2e1a" : "#1a8b20" }}>
                               {isGap ? "▼" : "▲"} {(gapAbs / 1000).toFixed(0)}K lbs {isGap ? "shortfall" : "surplus"}
                             </div>
-                            <div style={{ fontSize: 12, color: C.textMuted, marginTop: 5 }}>
+                            <div style={{ fontSize: 13, color: C.textMuted, marginTop: 5 }}>
                               {row.confidence_pct}% model reliability
                             </div>
                           </div>
@@ -531,10 +599,7 @@ export default function Provincial() {
                   </Panel>
                 )}
 
-              </div>
-            )}
-
-          {/* Regional outlook */}
+                {/* Regional outlook */}
                 <Panel>
                   <SectionTitle
                     title="Regional outlook"
@@ -589,6 +654,10 @@ export default function Provincial() {
                   </div>
                 </Panel>
 
+              </div>
+            )}
+
+
             {/* ── MODEL DETAIL TAB ── */}
             {activeTab === "model" && (
               <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -600,8 +669,8 @@ export default function Provincial() {
                       background: C.surfaceGreen, border: `0.5px solid ${C.borderLight}`,
                       borderRadius: 12, padding: "14px 16px",
                     }}>
-                      <div style={{ fontSize: 13, color: C.textSecondary, marginBottom: 6 }}>{s.label}</div>
-                      <div style={{ fontSize: 15, fontWeight: 600, color: C.textPrimary, lineHeight: 1.3 }}>{s.value}</div>
+                      <div style={{ fontSize: 14, color: C.textSecondary, marginBottom: 6 }}>{s.label}</div>
+                      <div style={{ fontSize: 16, fontWeight: 600, color: C.textPrimary, lineHeight: 1.3 }}>{s.value}</div>
                     </div>
                   ))}
                 </div>
@@ -613,17 +682,17 @@ export default function Provincial() {
                     sub="Feature contributions to gap prediction"
                   />
                   {featureData.length === 0 ? (
-                    <div style={{ fontSize: 13, color: C.textMuted, textAlign: "center", padding: "20px 0" }}>
+                    <div style={{ fontSize: 14, color: C.textMuted, textAlign: "center", padding: "20px 0" }}>
                       No feature data available
                     </div>
                   ) : (
-                    <ResponsiveContainer width="100%" height={Math.max(280, featureData.length * 22)}>
-                      <BarChart data={featureData} layout="vertical" margin={{ top: 4, right: isMobile ? 20 : 50, bottom: 0, left: isMobile ? 80 : 120 }}>
+                    <ResponsiveContainer width="100%" height={Math.max(280, featureData.length * 22)} style={{ outline: "none" }}>
+                      <BarChart data={featureData} layout="vertical" margin={{ top: 4, right: isMobile ? 40 : 50, bottom: 0, left: isMobile ? 104 : 120 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke={C.teaGreen} horizontal={false} />
-                        <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 12, fill: C.textMuted }} axisLine={false} tickLine={false} />
-                        <YAxis type="category" dataKey="name" tick={{ fontSize: isMobile ? 10 : 12, fill: C.textSecondary }} axisLine={false} tickLine={false} width={isMobile ? 80 : 120} />
+                        <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 13, fill: C.textMuted }} axisLine={false} tickLine={false} />
+                        <YAxis type="category" dataKey="name" tick={{ fontSize: isMobile ? 9 : 12, fill: C.textSecondary }} axisLine={false} tickLine={false} width={isMobile ? 104 : 120} />
                         <Bar dataKey="importance" name="Importance %" radius={[0, 4, 4, 0]} barSize={14} fill={C.jungleTeal}
-                          label={{ position: "right", fontSize: 12, fill: C.textMuted, formatter: v => `${v}%` }}
+                          label={{ position: "right", fontSize: 13, fill: C.textMuted, formatter: v => `${v}%` }}
                         >
                           {featureData.map((entry, i) => (
                             <Cell key={`cell-${i}`} fill={catColor[entry.category] ?? C.textMuted} />
@@ -636,7 +705,7 @@ export default function Provincial() {
                     {[...new Set(featureData.map(d => d.category))]
                       .sort((a, b) => a === "other" ? 1 : b === "other" ? -1 : 0)
                       .map((cat) => (
-                        <span key={cat} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: C.textMuted }}>
+                        <span key={cat} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: C.textMuted }}>
                           <span style={{ width: 10, height: 10, background: catColor[cat] ?? C.textMuted, display: "inline-block", borderRadius: 2 }} />
                           {CAT_LABEL[cat] ?? cat.charAt(0).toUpperCase() + cat.slice(1)}
                         </span>
@@ -645,7 +714,7 @@ export default function Provincial() {
                   <div style={{
                     marginTop: 14, padding: "10px 14px",
                     background: C.surfaceGreen, borderRadius: 8, border: `0.5px solid ${C.borderLight}`,
-                    fontSize: 13, color: C.textSecondary, lineHeight: 1.6,
+                    fontSize: 14, color: C.textSecondary, lineHeight: 1.6,
                   }}>
                     <strong style={{ color: C.textPrimary }}>Note:</strong> Prophet decomposes long-term trend and seasonality;
                     residuals and external signals are passed to the Random Forest for the gap classification step.
@@ -688,7 +757,7 @@ export default function Provincial() {
                     <div style={{
                       marginTop: 14, padding: "10px 14px",
                       background: C.surfaceGreen, borderRadius: 8, border: `0.5px solid ${C.borderLight}`,
-                      fontSize: 12, color: C.textSecondary, lineHeight: 1.6,
+                      fontSize: 13, color: C.textSecondary, lineHeight: 1.6,
                     }}>
                       Binary classification: shortfall month (gap &lt; 0) vs. surplus (gap ≥ 0).
                       Evaluated on a held-out test set the model was not trained on.
@@ -719,7 +788,7 @@ export default function Provincial() {
                 <Panel>
                   <SectionTitle title="Recent staff entries" sub="Last 5 manually submitted rows" />
                   <div style={{ overflowX: "auto" }}>
-                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
                       <thead>
                         <tr style={{ borderBottom: `1px solid ${C.borderLight}` }}>
                           {["Date", "Inbound", "Outbound", "CPI food", "Unemployment", "Temp", "Notes", "By"].map(h => (
@@ -750,8 +819,75 @@ export default function Provincial() {
             )}
           </>
         )}
-      </div>
+        {/* Footer */}
+        <footer style={{
+          background: `linear-gradient(135deg, ${C.forestGreen} 40%, #2d6a50 75%, #3f826d 100%)`,
+          padding: isMobile ? "28px 20px 32px" : "36px 44px 40px",
+          display: "flex",
+          flexDirection: isMobile ? "column" : "row",
+          alignItems: isMobile ? "flex-start" : "center",
+          gap: isMobile ? 28 : 0,
+          borderTop: `1px solid rgba(208,239,177,0.15)`,
+          marginLeft:   isMobile ? -14 : -28,
+          marginRight:  isMobile ? -14 : -28,
+          marginBottom: isMobile ? -24 : -32,
+        }}>
 
+        {/* Left — Contact */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "flex-start", marginLeft: isMobile ? 0 : 40 }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: C.teaGreen, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 12 }}>
+            Contact us
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <a
+              href="mailto:feeds4good@gmail.com"
+              style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 15, color: "rgba(255,255,255,0.75)", textDecoration: "none" }}
+            >
+              <i className="ti ti-mail" style={{ fontSize: 17, color: C.teaGreen, flexShrink: 0 }} aria-hidden="true" />
+              feeds4good@gmail.com
+            </a>
+            <a
+              href="https://www.instagram.com/feeds4good/"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, color: "rgba(255,255,255,0.75)", textDecoration: "none" }}
+            >
+              <i className="ti ti-brand-instagram" style={{ fontSize: 16, color: C.teaGreen, flexShrink: 0 }} aria-hidden="true" />
+              @feeds4good
+            </a>
+          </div>
+        </div>
+
+        {/* Center — Logo */}
+        <div style={{
+          flex: 1, display: "flex", justifyContent: "center", alignItems: "center",
+          order: isMobile ? -1 : 0,
+          marginBottom: isMobile ? 4 : 0,
+        }}>
+          <img
+            src="/logo-removebg.png"
+            alt="FEEDS logo"
+            style={{ height: isMobile ? 70 : 90, objectFit: "contain", filter: "brightness(0) invert(1)", opacity: 0.9 }}
+          />
+        </div>
+
+        {/* Right — Collaboration */}
+        <div style={{ flex: 1, display: "flex", justifyContent: "flex-start" }}>
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 10, maxWidth: 400 }}>
+            <i className="ti ti-heart-handshake" style={{ fontSize: 18, color: C.teaGreen, flexShrink: 0, marginTop: 2 }} aria-hidden="true" />
+            <div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: "#fff", marginBottom: 5 }}>
+                Built in collaboration with food banks
+              </div>
+              <div style={{ fontSize: 14, color: "rgba(255,255,255,0.6)", lineHeight: 1.65 }}>
+                Developed in partnership with Food Banks Alberta and Red Deer Food Bank to improve food security outcomes across Alberta.
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </footer>
+      </div>{/* end content */}
       </div>{/* end mobile scroll wrapper */}
     </div>
   );
