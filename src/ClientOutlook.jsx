@@ -85,21 +85,22 @@ export default function ClientOutlook() {
 
   // ── Derived values ──────────────────────────────────────────────────────────
   const fcRows    = forecast?.forecast ?? [];
-  const vals      = fcRows.map(r => r.yhat ?? 0);
+  const vals      = fcRows.map(r => r.forecast ?? 0);
   const mean      = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 1010;
 
   // Only show months from next month onwards (skip past/current month)
-  const startOfNextMonth = new Date();
-  startOfNextMonth.setDate(1);
-  startOfNextMonth.setMonth(startOfNextMonth.getMonth() + 1);
-  startOfNextMonth.setHours(0, 0, 0, 0);
+  // r.month is "YYYY-MM-DD" — compare as strings to avoid UTC timezone shift
+  const now          = new Date();
+  const nmMonth      = now.getMonth() + 2 > 12 ? 1 : now.getMonth() + 2;
+  const nmYear       = now.getMonth() + 2 > 12 ? now.getFullYear() + 1 : now.getFullYear();
+  const nextMonthISO = `${nmYear}-${String(nmMonth).padStart(2, "0")}-01`;
 
   const enriched = fcRows
     .map(r => {
-      const val = r.yhat ?? 0;
+      const val = r.forecast ?? 0;
       return { ...r, val, busyness: classify(val, mean) };
     })
-    .filter(r => new Date(r.month) >= startOfNextMonth);
+    .filter(r => r.month >= nextMonthISO);
 
   const quietMonths = enriched.filter(r => r.busyness === "quiet");
   const busyMonths  = enriched.filter(r => r.busyness === "busy");
@@ -185,7 +186,7 @@ export default function ClientOutlook() {
                 {quietMonths.length > 0 && (
                   <p style={{ fontSize: 14, color: C.textSecondary, lineHeight: 1.75, margin: "10px 0 0" }}>
                     <strong style={{ color: C.forestGreen }}>Best upcoming months:</strong>{" "}
-                    {quietMonths.map(r => r.month).join(", ")} — quieter than average.
+                    {quietMonths.map(r => r.label).join(", ")} — quieter than average.
                   </p>
                 )}
               </div>
@@ -245,7 +246,7 @@ export default function ClientOutlook() {
               <ResponsiveContainer width="100%" height={210}>
                 <BarChart data={enriched} margin={{ top: 4, right: 12, bottom: 24, left: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke={C.teaGreen} vertical={false} />
-                  <XAxis dataKey="month" tick={{ fontSize: 10, fill: C.textMuted }} axisLine={false} tickLine={false} angle={-30} textAnchor="end" />
+                  <XAxis dataKey="label" tick={{ fontSize: 10, fill: C.textMuted }} axisLine={false} tickLine={false} angle={-30} textAnchor="end" />
                   <YAxis tick={{ fontSize: 12, fill: C.textMuted }} axisLine={false} tickLine={false} domain={[0, "auto"]} tickFormatter={v => v.toLocaleString()} />
                   <Tooltip content={({ active, payload, label }) => {
                     if (!active || !payload?.length) return null;
@@ -342,14 +343,14 @@ export default function ClientOutlook() {
                       icon: "sun", color: C.jungleTeal,
                       title: "Quietest months",
                       body: quietMonths.length
-                        ? `${quietMonths.map(r => r.month).join(" & ")} — fewer visits forecast, shorter wait times.`
+                        ? `${quietMonths.map(r => r.label).join(" & ")} — fewer visits forecast, shorter wait times.`
                         : "July & December are typically the quietest periods.",
                     },
                     {
                       icon: "alert-triangle", color: "#b85c1f",
                       title: "Busiest periods",
                       body: busyMonths.length
-                        ? `${busyMonths.map(r => r.month).join(" & ")} — highest demand forecast. Visiting earlier in the month helps.`
+                        ? `${busyMonths.map(r => r.label).join(" & ")} — highest demand forecast. Visiting earlier in the month helps.`
                         : "January & March tend to be the busiest periods.",
                     },
                     {
