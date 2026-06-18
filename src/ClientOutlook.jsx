@@ -354,6 +354,70 @@ export default function ClientOutlook() {
           </>
         )}
       </div>
+      <footer style={{
+        background: `linear-gradient(135deg, ${C.forestGreen} 40%, #2d6a50 75%, #3f826d 100%)`,
+        padding: isMobile ? "28px 20px 32px" : "36px 44px 40px",
+        display: "flex",
+        flexDirection: isMobile ? "column" : "row",
+        alignItems: isMobile ? "flex-start" : "center",
+        gap: isMobile ? 28 : 0,
+        borderTop: `1px solid rgba(208,239,177,0.15)`,
+      }}>
+
+        {/* Left — Contact */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "flex-start", marginLeft: isMobile ? 0 : 40 }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: C.teaGreen, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 12 }}>
+            Contact us
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <a
+              href="mailto:feeds4good@gmail.com"
+              style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 15, color: "rgba(255,255,255,0.75)", textDecoration: "none" }}
+            >
+              <i className="ti ti-mail" style={{ fontSize: 17, color: C.teaGreen, flexShrink: 0 }} aria-hidden="true" />
+              feeds4good@gmail.com
+            </a>
+            <a
+              href="https://www.instagram.com/feeds4good/"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, color: "rgba(255,255,255,0.75)", textDecoration: "none" }}
+            >
+              <i className="ti ti-brand-instagram" style={{ fontSize: 16, color: C.teaGreen, flexShrink: 0 }} aria-hidden="true" />
+              @feeds4good
+            </a>
+          </div>
+        </div>
+
+        {/* Center — Logo */}
+        <div style={{
+          flex: 1, display: "flex", justifyContent: "center", alignItems: "center",
+          order: isMobile ? -1 : 0,
+          marginBottom: isMobile ? 4 : 0,
+        }}>
+          <img
+            src="/logo-removebg.png"
+            alt="FEEDS logo"
+            style={{ height: isMobile ? 70 : 90, objectFit: "contain", filter: "brightness(0) invert(1)", opacity: 0.9 }}
+          />
+        </div>
+
+        {/* Right — Collaboration */}
+        <div style={{ flex: 1, display: "flex", justifyContent: "flex-start" }}>
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 10, maxWidth: 400 }}>
+            <i className="ti ti-heart-handshake" style={{ fontSize: 18, color: C.teaGreen, flexShrink: 0, marginTop: 2 }} aria-hidden="true" />
+            <div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: "#fff", marginBottom: 5 }}>
+                Built in collaboration with food banks
+              </div>
+              <div style={{ fontSize: 14, color: "rgba(255,255,255,0.6)", lineHeight: 1.65 }}>
+                Developed in partnership with Food Banks Alberta and Red Deer Food Bank to improve food security outcomes across Alberta.
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </footer>
     </div>
   );
 }
