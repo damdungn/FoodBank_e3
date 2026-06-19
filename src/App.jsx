@@ -254,7 +254,7 @@ export default function App() {
       case "client-outlook": return <ClientOutlook />;
       case "ai-insights":    return <AIInsights />;
       case "about-feeds":    return <AboutFeeds />;
-      case "provincial":     return <Provincial />;
+      // "provincial" is handled by the always-mounted div below
       case "regional-rdfb":  return <Regional defaultBank="rdfb"   lockedBank="rdfb" />;
       case "regional-campus":return <Regional defaultBank="campus" lockedBank="campus" />;
       default:               return <Placeholder title={NAV.flatMap(s => s.items).find(i => i.page === page)?.label || page} />;
@@ -554,7 +554,6 @@ export default function App() {
       </aside>}
 
       {/* ── Page content ───────────────────────────────────────── */}
-      {/* ── Page content ───────────────────────────────────────── */}
       <main style={{
         flex: 1,
         display: "flex",
@@ -563,7 +562,16 @@ export default function App() {
         overflowX: "hidden",
         minWidth: 0,
       }}>
-        {renderPage()}
+        {/* Provincial stays mounted after unlock so data only loads once per session */}
+        {unlocked.provincial && (
+          <div style={{
+            display: page === "provincial" ? "flex" : "none",
+            flexDirection: "column", flex: 1, overflow: "hidden", height: "100%",
+          }}>
+            <Provincial />
+          </div>
+        )}
+        {page !== "provincial" && renderPage()}
       </main>
 
       {/* ── Password modal ──────────────────────────────────────── */}

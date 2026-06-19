@@ -259,31 +259,74 @@ export default function Provincial() {
     ]).then(([rdfb, campus]) => setRegionalOutlook({ rdfb, campus }));
   }, []);
 
-  // Fast endpoints: stat cards and model detail are ready immediately
   useEffect(() => {
-    Promise.all([
+    const CACHE_KEY = "feeds_prov_v2";
+    const CACHE_TTL = 60 * 60 * 1000; // 1 hour
+
+    // Serve cache instantly if still fresh
+    let fromCache = false;
+    try {
+      const raw = localStorage.getItem(CACHE_KEY);
+      if (raw) {
+        const { ts, data } = JSON.parse(raw);
+        if (Date.now() - ts < CACHE_TTL && data) {
+          setHistoryData(data.hist    ?? []);
+          setFeatureData(data.feats   ?? []);
+          setModelStats (data.metrics ?? []);
+          setConfidence (data.summary ?? null);
+          setGapForecast(data.gap     ?? []);
+          setLoadingStats(false);
+          setLoadingHistory(false);
+          fromCache = true;
+        }
+      }
+    } catch (_) {}
+
+    // Always re-fetch — updates cache silently if cache was used, shows spinner if not
+    const histP = fetch(`${API_BASE}/api/provincial/history`)
+      .then(r => r.json()).catch(() => null);
+    const statsP = Promise.all([
       fetch(`${API_BASE}/api/provincial/features`).then(r => r.json()),
       fetch(`${API_BASE}/api/provincial/metrics`).then(r => r.json()),
       fetch(`${API_BASE}/api/model_summary`).then(r => r.json()),
       fetch(`${API_BASE}/api/gap`).then(r => r.json()),
-    ])
-      .then(([feats, metrics, summary, gap]) => {
+    ]).catch(() => null);
+
+    statsP
+      .then(res => {
+        if (!res) return;
+        const [feats, metrics, summary, gap] = res;
         setFeatureData(feats.featureData ?? []);
         setModelStats(metrics.modelStats ?? []);
         setConfidence(summary);
         setGapForecast(gap.forecastGap ?? []);
       })
-      .catch(() => {})
-      .finally(() => setLoadingStats(false));
-  }, []);
+      .finally(() => { if (!fromCache) setLoadingStats(false); });
 
-  // History chart loads independently so it doesn't block stat cards
-  useEffect(() => {
-    fetch(`${API_BASE}/api/provincial/history`)
-      .then(r => r.json())
-      .then(hist => setHistoryData(hist.historyData ?? []))
-      .catch(() => {})
-      .finally(() => setLoadingHistory(false));
+    histP
+      .then(hist => {
+        if (!hist) return;
+        setHistoryData(hist.historyData ?? []);
+      })
+      .finally(() => { if (!fromCache) setLoadingHistory(false); });
+
+    // Write cache once both finish
+    Promise.all([statsP, histP]).then(([statsRes, hist]) => {
+      if (!statsRes || !hist) return;
+      const [feats, metrics, summary, gap] = statsRes;
+      try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify({
+          ts: Date.now(),
+          data: {
+            hist:    hist.historyData    ?? [],
+            feats:   feats.featureData   ?? [],
+            metrics: metrics.modelStats  ?? [],
+            summary: summary             ?? null,
+            gap:     gap.forecastGap     ?? [],
+          },
+        }));
+      } catch (_) {}
+    });
   }, []);
 
   const tabs = [
