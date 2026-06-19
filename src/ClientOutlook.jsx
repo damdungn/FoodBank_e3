@@ -414,7 +414,7 @@ export default function ClientOutlook() {
                 Built in collaboration with food banks
               </div>
               <div style={{ fontSize: 14, color: "rgba(255,255,255,0.6)", lineHeight: 1.65 }}>
-                Developed in partnership with Food Banks Alberta and Red Deer Food Bank to improve food security outcomes across Alberta.
+                Developed in partnership with Food Banks Alberta, Red Deer Food Bank and Campus Food Bank to improve food security outcomes across Alberta.
               </div>
             </div>
           </div>

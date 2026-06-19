@@ -369,7 +369,7 @@ export default function Dashboard({ onNavigate }) {
             {/* Sub-line */}
             <p style={{
               fontSize: 18, fontWeight: 600, color: "rgba(208,239,177,0.85)",
-              margin: 0, lineHeight: 1.6, maxWidth: 520,
+              margin: 0, lineHeight: 1.6, maxWidth: 600,
               animation: "heroSlideUp 0.55s ease both",
               animationDelay: "1.2s",
             }}> Behind every visit to the food bank is a family in need. FEEDS helps food banks see them coming, so no one arrives to empty shelves.</p>
@@ -593,7 +593,7 @@ export default function Dashboard({ onNavigate }) {
                 Built in collaboration with food banks
               </div>
               <div style={{ fontSize: 14, color: "rgba(255,255,255,0.6)", lineHeight: 1.65 }}>
-                Developed in partnership with Food Banks Alberta and Red Deer Food Bank to improve food security outcomes across Alberta.
+                Developed in partnership with Food Banks Alberta, Red Deer Food Bank and Campus Food Bank to improve food security outcomes across Alberta.
               </div>
             </div>
           </div>
