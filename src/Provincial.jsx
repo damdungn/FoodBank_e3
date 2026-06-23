@@ -831,6 +831,7 @@ export default function Provincial() {
           marginLeft:   isMobile ? -14 : -28,
           marginRight:  isMobile ? -14 : -28,
           marginBottom: isMobile ? -24 : -32,
+          marginTop: 40,
         }}>
 
         {/* Left — Contact */}

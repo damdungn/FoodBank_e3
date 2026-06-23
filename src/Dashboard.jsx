@@ -544,6 +544,7 @@ export default function Dashboard({ onNavigate }) {
         alignItems: isMobile ? "flex-start" : "center",
         gap: isMobile ? 28 : 0,
         borderTop: `1px solid rgba(208,239,177,0.15)`,
+        marginTop: 40,
       }}>
 
         {/* Left — Contact */}

@@ -365,6 +365,7 @@ export default function ClientOutlook() {
           marginLeft:   isMobile ? -16 : -28,
           marginRight:  isMobile ? -16 : -28,
           marginBottom: isMobile ? -28 : -32,
+          marginTop: 40,
         }}>
 
         {/* Left — Contact */}

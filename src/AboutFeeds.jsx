@@ -256,12 +256,12 @@ export default function AboutFeeds() {
             boxShadow: "0 2px 12px rgba(34,68,51,0.07)",
           }}>
             <img
-              src="/team.jpg"
+              src="/team.JPG"
               alt="The FEEDS team"
               onError={e => { e.currentTarget.style.display = "none"; e.currentTarget.nextSibling.style.display = "flex"; }}
               style={{
                 width: "100%",
-                maxHeight: isMobile ? 260 : 420,
+                maxHeight: isMobile ? 260 : 600,
                 objectFit: "cover",
                 objectPosition: "center top",
                 display: "block",
@@ -285,7 +285,7 @@ export default function AboutFeeds() {
               fontSize: 14, color: C.textMuted,
               background: C.surfaceGreen,
             }}>
-              The e3 team · University of Alberta · AI4Good Lab 2026
+              The e3 team · University of Alberta · AI4Good Lab 2026 · Team members: Atreyi, Amarachi, Richa, Zoe, Hanh
             </div>
           </div>
         </section>
@@ -451,6 +451,7 @@ export default function AboutFeeds() {
         alignItems: isMobile ? "flex-start" : "center",
         gap: isMobile ? 28 : 0,
         borderTop: `1px solid rgba(208,239,177,0.15)`,
+        marginTop: 40,
       }}>
 
         {/* Left — Contact */}
