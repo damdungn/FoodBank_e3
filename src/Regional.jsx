@@ -851,7 +851,7 @@ export default function Regional({ defaultBank = "rdfb", lockedBank = null }) {
                     <SectionTitle title="About this forecast" sub="" />
                     <div style={{ fontSize: 14, color: C.textSecondary, lineHeight: 1.7 }}>
                       {selectedFB === "campus"
-                        ? "Trained on 36 months of Campus Food Bank visit data (May 2023 – Apr 2026) using Prophet with academic calendar regressors. Exam periods and school-in-session flags are the dominant drivers (Pearson r = 0.48 and 0.36). CV MAPE of 13.8% on 6-month rolling holdouts."
+                        ? "Trained on 36 months of Campus Food Bank visit data (May 2023 – Apr 2026) using Prophet with academic calendar regressors. Exam periods and school-in-session flags are the dominant drivers (Pearson r = 0.48 and 0.36). CV MAPE of 13.8% on 3-month rolling holdouts."
                         : "Trained on 185 months of Red Deer FB data using Prophet with provincial economic regressors (AISH caseload, CPI, school calendar). Features were selected via SHAP analysis on the FBA provincial model where the same drivers predict both provincial outbound and regional hamper demand."
                       }
                     </div>
@@ -881,8 +881,8 @@ export default function Regional({ defaultBank = "rdfb", lockedBank = null }) {
               fontSize: 14, color: C.textSecondary, lineHeight: 1.6,
             }}>
               {selectedFB === "campus"
-                ? "Cross-validation used a 6-month rolling holdout window. CV MAPE of 13.8% reflects forecast error on held-out months. In-sample MAPE (1.4%) reflects fit on the training window."
-                : "Cross-validation used a 3-year rolling window, retraining every 6 months with a 6-month forecast horizon. CV MAPE of 17.7% is the validation missed percentage; in-sample MAPE (10.8%) reflects fit on training data. Hover the metric cards above for plain language explanations."
+                ? "Cross-validation used an expanding window: 18-month initial training, retraining every 3 months with a 3-month forecast horizon. CV MAPE of 13.8% reflects forecast error on held-out months. In-sample MAPE (1.4%) reflects fit on the training window."
+                : "Cross-validation used an expanding window starting from 3 years, retraining every 6 months with a 6-month forecast horizon. CV MAPE of 17.7% is the out-of-sample error; in-sample MAPE (10.8%) reflects fit on training data. Hover the metric cards above for plain language explanations."
               }
             </div>
 
